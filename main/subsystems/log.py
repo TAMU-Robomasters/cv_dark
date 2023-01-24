@@ -86,7 +86,7 @@ def when_finished_processing_frame():
     if display_live_frames:
         image.show()
     
-    if (frame_number % save_rate == 0):
+    if (save_frame_to_file and (frame_number % save_rate == 0)):
         global color_frames
         global depth_frames
         color_frames.append(runtime.color_image)

@@ -8,8 +8,11 @@ import time
 import cv2
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torchvision import transforms
 from torchvision.ops import nms
+from torchvision.utils import save_image
+import kornia as K
 
 from toolbox.globals import print, time_synchronized
 
@@ -30,15 +33,11 @@ class Yolov7(object):
         self.model = torch.hub.load(
             repo_filepath, 'custom', model_filepath, source='local')
 
-        self.tensor_transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Resize((self.input_w, self.input_h)),
-        ])
-
         if acceleration == 'gpu' and torch.cuda.is_available():
             print("[modeling]   gpu_acceleration: ENABLED\n")
             # loaded_model = loaded_model.to(torch.device("cuda"))
             self.device = torch.device("cuda")
+            # print(next(self.model.parameters()).is_cuda)
         else:
             print("[modeling]   Running on CPU\n")
             self.device = torch.device("cpu")
@@ -51,22 +50,39 @@ class Yolov7(object):
 
     def preprocess_image(self, image_pre):
         # takes in (h, w, c) BGR image
-        image_post = cv2.cvtColor(image_pre, cv2.COLOR_BGR2RGB)
-        image_tensor = self.tensor_transform(image_post)
+        # t1 = time_synchronized()
+        image_tensor = torch.as_tensor(image_pre, device=self.device)
+        # image_tensor = torch.from_numpy(image_pre).to(self.device)
+        # t2 = time_synchronized()
+        image_tensor = image_tensor.permute(2, 0, 1)
+        # t3 = time_synchronized()
+        image_tensor = image_tensor[[2, 1, 0]]
+        # t4 = time_synchronized()
         image_tensor = image_tensor.unsqueeze(0)
+        # t5 = time_synchronized()
+        image_tensor = F.interpolate(image_tensor, size=(self.input_w, self.input_h)).div(255.0).half()
+        # t6 = time_synchronized()
+
+        # print(f"\ntensorify: {t2-t1:.3f} s")
+        # print(f"permute: {t3-t2:.3f} s")
+        # print(f"recolor: {t4-t3:.3f} s")
+        # print(f"unsqueeze: {t5-t4:.3f} s")
+        # print(f"resize: {t6-t5:.3f} s")
         return image_tensor, image_pre, image_pre.shape[0], image_pre.shape[1]
 
     @torch.no_grad()
     def infer(self, image_tensor):
-        start = time_synchronized()
-        try:
+        # start = time_synchronized()
+        with torch.cuda.amp.autocast():
+        # try:
             # transfer image to device
-            tensor_input = image_tensor.to(self.device)
-            layer_outputs = self.model(tensor_input)[0]
-        except Exception as error:
-            print(error)
-        end = time_synchronized()
-        return layer_outputs, end - start
+            # print(next(self.model.parameters()).is_cuda)
+            layer_outputs = self.model(image_tensor)[0]
+            # print(self.model.is_cuda)
+        # except Exception as error:
+        #     print(error)
+        # end = time_synchronized()
+        return layer_outputs, 0
 
     def non_max_suppression(self, prediction, conf_thresh=0.25, nms_thresh=0.4):
         """

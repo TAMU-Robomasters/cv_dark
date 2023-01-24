@@ -76,7 +76,7 @@ def init_yolo_v7(model):
 @torch.no_grad()
 def yolo_v7_bounding_boxes(model, frame, minimum_confidence, threshold):
     # NOTE: this code is derived from https://www.pyimagesearch.com/2018/11/12/yolo-object-detection-with-opencv/
-    t0 = time_synchronized()
+    # t0 = time_synchronized()
 
     # initialize our lists of detected bounding boxes, confidences, and class IDs, respectively
     boxes = []
@@ -88,11 +88,11 @@ def yolo_v7_bounding_boxes(model, frame, minimum_confidence, threshold):
 
     labels = []
 
-    t1 = time_synchronized()
+    # t1 = time_synchronized()
 
     try:
         layer_outputs = model.net(frame)
-        t2 = time_synchronized()
+        # t2 = time_synchronized()
         labels = layer_outputs.xyxy[0]
     except Exception as error:
         print(error)
@@ -114,31 +114,31 @@ def yolo_v7_bounding_boxes(model, frame, minimum_confidence, threshold):
             confidences.append(float(box_confidence))
             class_ids.append(class_id)
 
-    t3 = time_synchronized()
+    # t3 = time_synchronized()
 
-    print(f"\n\npreprocess: {t1-t0:.3f} ms")
-    print(f"inference: {t2-t1:.3f} ms")
-    print(f"postprocess: {t3-t2:.3f} ms")
+    # print(f"\n\npreprocess: {t1-t0:.3f} s")
+    # print(f"inference: {t2-t1:.3f} s")
+    # print(f"postprocess: {t3-t2:.3f} s")
 
     return boxes, confidences, class_ids
 
-
+@torch.no_grad()
 def yolo_v7_beta_bounding_boxes(model, frame, minimum_confidence, threshold):
-    t0 = time_synchronized()
+    # t0 = time_synchronized()
 
     image_tensor, image_pre, image_h, image_w = model.yolov7.preprocess_image(
         frame)
 
-    t1 = time_synchronized()
+    # t1 = time_synchronized()
 
     inf_output, inf_time = model.yolov7.infer(image_tensor)
 
-    t2 = time_synchronized()
+    # t2 = time_synchronized()
 
     outputs = model.yolov7.non_max_suppression(
         inf_output, conf_thresh=0.25, nms_thresh=0.20)
 
-    t3 = time_synchronized()
+    # t3 = time_synchronized()
 
     raw_boxes = outputs[0][:, :4]
     confidences = outputs[0][:, 4]
@@ -152,7 +152,7 @@ def yolo_v7_beta_bounding_boxes(model, frame, minimum_confidence, threshold):
     boxes = [BoundingBox.from_points(
         top_left=(x1, y1), bottom_right=(x2, y2)) for x1, y1, x2, y2 in rescaled_boxes]
 
-    t4 = time_synchronized()
+    # t4 = time_synchronized()
 
     # print(f"\n\npreprocess: {t1 - t0:.3f} s")
     # print(f"inference: {t2 - t1:.3f} s")
@@ -160,6 +160,7 @@ def yolo_v7_beta_bounding_boxes(model, frame, minimum_confidence, threshold):
     # print(f"postprocess: {t4 - t3:.3f} s")
 
     return boxes, confidences, class_ids
+    # return [], [], []
 
 
 def yolo_v7_tensor_rt_bounding_boxes(model, frame, minimum_confidence, threshold):

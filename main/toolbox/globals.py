@@ -10,6 +10,7 @@ info = find_and_load(
     "main/info.yaml",
     cd_to_filepath=True,
     parse_args=True,
+    fully_parse_args=True,
     defaults_for_local_data=[
         "GPU=NONE",
         "BOARD=LAPTOP",
