@@ -3,7 +3,6 @@
     ToDo:
         - fix zed camera calibration
         - tensor_rt with zed
-        - install python 3.7 using the deadsnakes source, then retry yolov5
         - have better team detection (manually compute color) so we can lower the minimum_confidence for further recognition
     
     # a central place for filepaths
@@ -29,6 +28,12 @@
             pytorch_model: ./subsystems/modeling/model/yolo_v5.pt
             tensor_rt_file: ./subsystems/modeling/model/yolo_v5.engine
             pickle: ./subsystems/modeling/model/yolo_v5.ignore.pickle
+        yolo_v7:
+            pytorch_model: ./subsystems/modeling/model/011023_yolov7_TINY.pt
+            # pytorch_model: ./subsystems/modeling/model/REP_122222_yolov7.pt
+            tensor_rt_engine: ./subsystems/modeling/model/yolo_v7.engine
+            tensor_rt_plugin: ./subsystems/modeling/plugins/libmyplugins.so
+            path_to_folder: "./../yolov7"
     
     # this file will be generated automatically
     (local_data): ./local_data.ignore.yaml
@@ -48,7 +53,7 @@
                 camera_is_upsidedown: false
             model:
                 load_from_pickle: false
-                which_model: yolo_v5 # yolo_v5 or yolo_v4
+                which_model: yolo_v7 # yolo_v5 or yolo_v4
                 hardware_acceleration: null # one of: [ null, "gpu", "tensor_rt" ]
                 minimum_confidence: 0.3 # should be a value between 0-1
                 threshold: 0.3  # should be a value between 0-1
@@ -95,7 +100,7 @@
                 min_range: 1 # units? meters?
                 max_range: 5
 
-                #power rune
+                # power rune
                 blue_light: [50,40,230]
                 blue_dark: [130,255,255]
                 area_arrow_bound: [30,500]
@@ -186,6 +191,9 @@
         V5:
             model:
                 which_model: yolo_v5
+        V7:
+            model:
+                which_model: yolo_v7
         
         
         BOARD=TX2:
@@ -197,7 +205,7 @@
         BOARD=XAVIER:
             hardware:
                 camera: realsense
-                camera_is_upsidedown: true
+                camera_is_upsidedown: false
             model:
                 hardware_acceleration: "gpu"
             communication:
@@ -214,11 +222,11 @@
             
         CAMERA=ZED:
             hardware:
-                camera: zed
+                camera: zed 
         CAMERA=REALSENSE:
             hardware:
                 camera: realsense
-                camera_is_upsidedown: true
+                camera_is_upsidedown: false
         CAMERA=NONE:
             hardware:
                 camera: null
@@ -236,6 +244,12 @@
                 disable_print: true
                 save_frame_to_file: true
                 display_live_frames: false
+
+        PERF:
+            log:
+                disable_all_logging: false
+                display_live_frames: false
+                save_frame_to_file: false
         
         
         WE_RED:
