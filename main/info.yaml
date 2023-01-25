@@ -32,8 +32,13 @@
             pytorch_model: ./subsystems/modeling/model/011023_yolov7_TINY.pt
             # pytorch_model: ./subsystems/modeling/model/REP_122222_yolov7.pt
             tensor_rt_engine: ./subsystems/modeling/model/yolo_v7.engine
-            tensor_rt_plugin: ./subsystems/modeling/plugins/libmyplugins.so
+            tensor_rt_plugin: ./subsystems/modeling/plugins/yolo_v7_plugins/libmyplugins.so
             path_to_folder: "./../yolov7"
+        yolo_v8:
+            pytorch_model: ./subsystems/modeling/model/011723_v8n.pt
+            # pytorch_model: ./subsystems/modeling/model/REP_122222_yolov7.pt
+            # tensor_rt_engine: ./subsystems/modeling/model/yolo_v7.engine
+            # tensor_rt_plugin: ./subsystems/modeling/plugins/yolo_v7_plugins/libmyplugins.so
     
     # this file will be generated automatically
     (local_data): ./local_data.ignore.yaml
@@ -53,7 +58,7 @@
                 camera_is_upsidedown: false
             model:
                 load_from_pickle: false
-                which_model: yolo_v7 # yolo_v5 or yolo_v4
+                which_model: yolo_v8 # yolo_v5 or yolo_v4
                 hardware_acceleration: null # one of: [ null, "gpu", "tensor_rt" ]
                 minimum_confidence: 0.3 # should be a value between 0-1
                 threshold: 0.3  # should be a value between 0-1
@@ -126,7 +131,7 @@
                 save_frame_to_file: true
                 display_live_frames: false
                 save_rate: 25 # once every __ frames
-                save_to_disk_after: 150 # 1200 frames is about 20 min at 1 frame per second
+                save_to_disk_after: 1000 # 1200 frames is about 20 min at 1 frame per second
                 max_number_of_frames: 4000 # 5000 is consumes about 6GB of ram
             communication:
                 timeout: 0.05
@@ -194,6 +199,9 @@
         V7:
             model:
                 which_model: yolo_v7
+        V8:
+            model:
+                which_model: yolo_v8
         
         
         BOARD=TX2:

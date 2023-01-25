@@ -1,9 +1,9 @@
 # 
 # Custom
 # 
-*.pt
-*.trt
-*.engine
+# *.pt
+# *.trt
+# *.engine
 
 \.idea
 *.nosync*

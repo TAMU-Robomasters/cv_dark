@@ -123,6 +123,13 @@ if config.log.disable_all_logging:
 def save_frames_as_video(path):
     try:
         # save all the color_frames as a video
+
+        # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        # out = cv2.VideoWriter(path, fourcc, 20.0, (color_frames[0].shape[1], color_frames[0].shape[0]))
+
+        # for frame in color_frames:
+        #     out.write(frame)
+
         Video.create_from_frames(color_frames, save_to=path)
         print(f"\n\nvideo output has been saved to {path}")
         
