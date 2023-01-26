@@ -4,7 +4,6 @@ import cv2
 import os
 import time
 import torch
-# from ultralytics.yolo.utils.ops import non_max_suppression
 
 # project imports
 from toolbox.globals import path_to, absolute_path_to, config, print, runtime, time_synchronized
@@ -38,8 +37,9 @@ def init_yolo_v8(model):
 
         # create Yolov8 object
         model.yolov8 = Yolov8(model_filepath=path_to.yolo_v8.pytorch_model,
-                              input_dimension=config.model.input_dimension,
-                              acceleration=config.model.hardware_acceleration)
+                            cfg_filepath=path_to.yolo_v8.settings,
+                            input_dimension=config.model.input_dimension,
+                            acceleration=config.model.hardware_acceleration)
 
         # export data
         model.net = model.yolov8.model
@@ -54,7 +54,7 @@ def yolo_v8_beta_bounding_boxes(model, frame, minimum_confidence, threshold):
 
     # t1 = time_synchronized()
 
-    results, inf_time = model.yolov8.infer(frame)
+    yolo_tens, inf_time = model.yolov8.infer(frame)
 
     # t2 = time_synchronized()
 
@@ -63,7 +63,7 @@ def yolo_v8_beta_bounding_boxes(model, frame, minimum_confidence, threshold):
 
     # print(results)
 
-    # results = model.yolov8.non_max_suppression(results, conf_thres=0.25, iou_thres=0.2)
+    # results = model.yolov8.postprocess_results(yolo_tens, detect_class=False)
 
     # t3 = time_synchronized()
     # print(results[0][:4])
@@ -72,9 +72,9 @@ def yolo_v8_beta_bounding_boxes(model, frame, minimum_confidence, threshold):
 
     # print(results[0])
 
-    raw_boxes = results[0].boxes.xyxy
-    confidences = results[0].boxes.conf
-    class_ids = results[0].boxes.cls
+    raw_boxes = yolo_tens[0].boxes.xyxy
+    confidences = yolo_tens[0].boxes.conf
+    class_ids = yolo_tens[0].boxes.cls
 
     # print(raw_boxes, confidences, class_ids)
 

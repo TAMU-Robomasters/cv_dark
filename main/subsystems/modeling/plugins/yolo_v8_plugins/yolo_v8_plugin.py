@@ -11,7 +11,10 @@ import torch
 import torch.nn.functional as F
 from torchvision import transforms
 from torchvision.ops import nms
+
 from ultralytics import YOLO
+from ultralytics.yolo.utils.ops import non_max_suppression
+# from ultralytics.yolo.v8 import 
 
 from toolbox.globals import print, time_synchronized
 
@@ -20,7 +23,7 @@ class Yolov8(object):
     description: A YOLOv8 class that wraps initialization, preprocess and postprocess ops.
     """
 
-    def __init__(self, model_filepath, input_dimension, acceleration):
+    def __init__(self, cfg_filepath, model_filepath, input_dimension, acceleration):
         # config check
         assert acceleration in ['tensor_rt', 'gpu', None]
         self.acceleration = acceleration
@@ -63,7 +66,7 @@ class Yolov8(object):
         # print(f"recolor: {t4-t3:.3f} s")
         # print(f"unsqueeze: {t5-t4:.3f} s")
         # print(f"resize: {t6-t5:.3f} s")
-        return image_pre, image_pre, image_pre.shape[0], image_pre.shape[1]
+        return image_tensor, image_pre, image_pre.shape[0], image_pre.shape[1]
 
     def infer(self, image_tensor):
         # start = time_synchronized()
@@ -98,3 +101,16 @@ class Yolov8(object):
         boxes[:, 2] = boxes[:, 2] * w_rescaler
         boxes[:, 3] = boxes[:, 3] * h_rescaler
         return boxes
+
+    def postprocess_results(self, yolo_tens, detect_class=False):
+        """
+        description:    Postprocess the results from model inference
+        param:
+            yolo_tens:        A PyTorch Tensor, as output by YOLO
+            detect_class:     Whether to detect class (in case model isn't trained to detect class)
+        return:
+            boxes:
+        """
+        # print(type(yolo_tens[0]))
+        # print(yolo_tens[0].data.device)
+        return
