@@ -1,89 +1,78 @@
-import ctypes
 import os
-import shutil
-import random
 import sys
-import threading
-import time
 import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torchvision import transforms
-from torchvision.ops import nms
 
-from ultralytics import YOLO
+from ultralytics.yolo.engine.predictor import BasePredictor
 from ultralytics.yolo.utils.ops import non_max_suppression
-# from ultralytics.yolo.v8 import 
 
-from toolbox.globals import print, time_synchronized
+from toolbox.globals import print, print_synchronized, time_synchronized
 
 class Yolov8(object):
     """
     description: A YOLOv8 class that wraps initialization, preprocess and postprocess ops.
     """
 
-    def __init__(self, cfg_filepath, model_filepath, input_dimension, acceleration):
+    def __init__(self, model_filepath, input_dimension, acceleration, warmup=True):
         # config check
         assert acceleration in ['tensor_rt', 'gpu', None]
         self.acceleration = acceleration
 
         self.input_w = self.input_h = input_dimension
 
-        # load model locally
-        self.model = YOLO(model_filepath, type='v8')
+        if self.acceleration == 'cpu' or self.acceleration == 'gpu':
+            if self.acceleration == 'gpu' and torch.cuda.is_available():
+                print("[modeling]   gpu_acceleration: ENABLED\n")
+                self.device = torch.device("cuda")
+            else:
+                print("[modeling]   Running on CPU\n")
+                self.device = torch.device("cpu")
+            # load model locally
+            overrides = {'model': model_filepath,
+                        'device': "0" if self.device.type == "cuda" else "cpu",
+                        'half': True,
+                        'imgsz': f'{self.input_w},{self.input_h}'
+                        }
+            self.predictor = BasePredictor(overrides=overrides)
 
-        if acceleration == 'gpu' and torch.cuda.is_available():
-            print("[modeling]   gpu_acceleration: ENABLED\n")
+            self.predictor.setup_model(model=None)
+
+            self.predict = lambda image_tens: self.predictor.model(image_tens)
+
+            self.nms = lambda preds, *args, **kwargs: non_max_suppression(preds, *args, **kwargs)[0]
+
+            if warmup:
+                self.predictor.model.warmup(imgsz=(1, 3, self.input_h, self.input_w))
+                print("\n[modeling]   Warmup complete\n")
+        elif self.acceleration == 'tensor_rt':
+            import subsystems.modeling.plugins.yolo_v8_plugins.v8_inference_engine as trtengine
+            print("[modeling]   TensorRT: ENABLED\n")
             self.device = torch.device("cuda")
-            # print(next(self.model.parameters()).is_cuda)
-        else:
-            print("[modeling]   Running on CPU\n")
-            self.device = torch.device("cpu")
-        
-        self.model.to(self.device)
 
-        self.model.fuse()
-        self.model.info(verbose=True)  # Print model information
+            self.engine = trtengine.init(model_filepath, self.device)
+
+            self.predict = lambda image_tens: trtengine.infer(image_tens, self.engine)
+            
+            # empty nms function because tensorrt does it internally
+            self.nms = lambda preds, *args, **kwargs: preds
+            print("[modeling]   Warning: TensorRT will use prebuilt NMS value of 0.2. To change, rebuild TensorRT engine with new value.\n")
 
     def preprocess_image(self, image_pre):
         # takes in (h, w, c) BGR image
-        # t1 = time_synchronized()
-        image_tensor = torch.as_tensor(image_pre, device=self.device)
-        # image_tensor = torch.from_numpy(image_pre).to(self.device)
-        # t2 = time_synchronized()
-        image_tensor = image_tensor.permute(2, 0, 1)
-        # t3 = time_synchronized()
-        image_tensor = image_tensor[[2, 1, 0]]
-        # t4 = time_synchronized()
-        image_tensor = image_tensor.unsqueeze(0)
-        # t5 = time_synchronized()
-        image_tensor = F.interpolate(image_tensor, size=(self.input_w, self.input_h)).div(255.0).half()
-        # t6 = time_synchronized()
-
-        # print(f"\ntensorify: {t2-t1:.3f} s")
-        # print(f"permute: {t3-t2:.3f} s")
-        # print(f"recolor: {t4-t3:.3f} s")
-        # print(f"unsqueeze: {t5-t4:.3f} s")
-        # print(f"resize: {t6-t5:.3f} s")
+        image_tensor = torch.as_tensor(image_pre, device=self.device) # create torch tensor directly on device (GPU or CPU)
+        image_tensor = image_tensor.permute(2, 0, 1) # HWC to CHW
+        image_tensor = image_tensor[[2, 1, 0]].unsqueeze(0) # RGB to BGR, add batch dimension
+        image_tensor = F.interpolate(image_tensor, size=(self.input_w, self.input_h)).div(255.0) # resize, normalize from 0-255 to 0-1.0
+        # WARNING: tensorrt doesn't support half precision, so we can't use .half() here
+        # TODO: add support for half precision input images but only for GPU acceleration
         return image_tensor, image_pre, image_pre.shape[0], image_pre.shape[1]
 
     def infer(self, image_tensor):
-        # start = time_synchronized()
-        results = self.model.predict(image_tensor)
-        # end = time_synchronized()
-        return results, 0
+        return self.predict(image_tensor)
 
-    def xywh2xyxy(self, x):
-        # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
-        y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-        y[:, 0] = x[:, 0] - x[:, 2] / 2  # top left x
-        y[:, 1] = x[:, 1] - x[:, 3] / 2  # top left y
-        y[:, 2] = x[:, 0] + x[:, 2] / 2  # bottom right x
-        y[:, 3] = x[:, 1] + x[:, 3] / 2  # bottom right y
-        return y
-
-    def rescale_coords_to_original(self, image_h, image_w, boxes):
+    def rescale_coords_to_original(self, boxes, image_post_dim):
         """
         description:    Rescale the coordinates of the boxes from model size to image size
         param:
@@ -93,24 +82,25 @@ class Yolov8(object):
         return:
             boxes:     A boxes numpy, each row is a box [x1, y1, x2, y2]
         """
-        h_rescaler = image_h / self.input_h
-        w_rescaler = image_w / self.input_w
+        h_rescaler = image_post_dim[0] / self.input_h
+        w_rescaler = image_post_dim[1] / self.input_w
 
-        boxes[:, 0] = boxes[:, 0] * w_rescaler
-        boxes[:, 1] = boxes[:, 1] * h_rescaler
-        boxes[:, 2] = boxes[:, 2] * w_rescaler
-        boxes[:, 3] = boxes[:, 3] * h_rescaler
+        boxes[:, [0, 2]] *= w_rescaler
+        boxes[:, [1, 3]] *= h_rescaler
         return boxes
 
-    def postprocess_results(self, yolo_tens, detect_class=False):
+    def postprocess_preds(self, yolo_tens, image_post_h, image_post_w, detect_class=False):
         """
         description:    Postprocess the results from model inference
         param:
             yolo_tens:        A PyTorch Tensor, as output by YOLO
+            image_post_h:     height of image to rescale box coords to
+            image_post_w:     width of image to rescale box coords to
             detect_class:     Whether to detect class (in case model isn't trained to detect class)
         return:
             boxes:
         """
-        # print(type(yolo_tens[0]))
-        # print(yolo_tens[0].data.device)
-        return
+        preds = self.nms(yolo_tens, conf_thres=0.25, iou_thres=0.2)
+
+        preds[:, :4] = self.rescale_coords_to_original(preds[:, :4], (image_post_h, image_post_w)).round()
+        return preds[:, :4], preds[:, 4], preds[:, 5]

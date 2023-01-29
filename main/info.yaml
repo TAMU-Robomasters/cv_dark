@@ -36,10 +36,10 @@
             path_to_folder: "./../yolov7"
         yolo_v8:
             settings: ./subsystems/modeling/model/yolov8/yolov8.yaml
-            # pytorch_model: ./subsystems/modeling/model//yolov8/011723_v8n.pt
-            pytorch_model: ./subsystems/modeling/model/yolov8/011723_v8s.pt
+            # pytorch_model: ./subsystems/modeling/model/yolov8/011723_v8n.pt
+            pytorch_model: ./subsystems/modeling/model/yolov8/011823_v8m.pt
+            tensor_rt_engine: ./subsystems/modeling/model/yolov8/011823_v8m_min.engine
             # pytorch_model: ./subsystems/modeling/model/yolov8//012523_plt_v8n.pt
-            # tensor_rt_engine: ./subsystems/modeling/model/yolo_v7.engine
             # tensor_rt_plugin: ./subsystems/modeling/plugins/yolo_v7_plugins/libmyplugins.so
     
     # this file will be generated automatically
