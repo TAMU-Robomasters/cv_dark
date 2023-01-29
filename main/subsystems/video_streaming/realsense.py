@@ -124,7 +124,7 @@ class VideoStream:
                                                             self.color_intrin,
                                                             self.depth_to_color_extrin,
                                                             self.color_to_depth_extrin,
-                                                            point)
+                                                            point) # color pixel)
         depth = self.depth_frame.get_distance(int(depth_point[0]), int(depth_point[1]))
         return depth
 

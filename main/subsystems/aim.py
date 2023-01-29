@@ -100,18 +100,21 @@ def when_bounding_boxes_refresh():
     current_time = now()
     point_to_aim_at = Position([0,0])
 
-    t1 = time_synchronized()
+    # t1 = time_synchronized()
     # 
     # update core aiming data
     # 
     if found_robot:
         point_to_aim_at = best_bounding_box.center
-        depth_amount = get_distance_from_array(best_bounding_box) # Find depth from camera to robot
+        # depth_amount = get_dist_at_point(best_bounding_box) # Find depth from camera to robot
+        # print("depth_amount: ", depth_amount)
+
+        depth_amount = get_depth_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()])
         depth_out_of_bounds = depth_amount < min_range or depth_amount > max_range
     center_point = Position(point_to_aim_at) # for displaying
     time_circular_buffer.append(current_time)
     
-    t2 = time_synchronized()
+    # t2 = time_synchronized()
 
     # 
     # prediction
@@ -124,7 +127,7 @@ def when_bounding_boxes_refresh():
     if found_robot:
         horizontal_angle, vertical_angle = angle_from_center(point_to_aim_at, screen_center)
     
-    t3 = time_synchronized()
+    # t3 = time_synchronized()
     
     #
     # bullet drop
@@ -144,7 +147,7 @@ def when_bounding_boxes_refresh():
         except Exception as error:
             print(error)
     
-    t4 = time_synchronized()
+    # t4 = time_synchronized()
 
     # 
     # update circular buffers
@@ -161,7 +164,7 @@ def when_bounding_boxes_refresh():
         except Exception as error:
             pass
 
-    t5 = time_synchronized()
+    # t5 = time_synchronized()
         
     # 
     # should_shoot
@@ -192,7 +195,7 @@ def when_bounding_boxes_refresh():
     if time_sum:
         should_shoot = True
         
-    t6 = time_synchronized()
+    # t6 = time_synchronized()
         
 
     # 
@@ -205,7 +208,7 @@ def when_bounding_boxes_refresh():
     if found_robot:
         runtime.aiming.last_target_time = current_time
     
-    t7 = time_synchronized()
+    # t7 = time_synchronized()
     # print(f"\nupdate core aiming data: {t2-t1:.3f} s")
     # print(f"prediction: {t3-t2:.3f} s")
     # print(f"bullet drop: {t4-t3:.3f} s")
@@ -233,15 +236,34 @@ def when_bounding_boxes_refresh():
 # helpers
 # 
 # 
-def get_distance_from_array(bbox):
-    """
-    Determines the depth of a bounding box by choosing and filtering the depths of specific points in the bounding box.
+def get_dist_to_bbox(bbox):
+    t1 = time_synchronized()
+    depth_sample_coords = get_depth_sample_coords(bbox)
+    depth_sample = np.array([get_dist_at_point(point) for point in depth_sample_coords])
+    depth_sample = depth_sample[depth_sample > 0]
+    if len(depth_sample) == 0:
+        return 0
+    t2 = time_synchronized()
+    print(f"get_dist_to_bbox: {t2-t1:.3f} s")
+    return np.median(depth_sample)
 
-    Input: Depth frame and bounding box.
-    Output: Single depth value.
-    """
-    depth_point = video_stream.vid_source.get_depth_at_point([bbox.center[0].item(), bbox.center[1].item()])
+def get_depth_at_color_coords(point):
+    # point is (x, y)
+    depth_point = video_stream.vid_source.get_depth_at_point(point)
     return depth_point
+
+def get_depth_sample_coords(bbox):
+    bbxtl = bbox.x_top_left.item()
+    bbytl = bbox.y_top_left.item()
+    x, y = np.meshgrid(np.linspace(bbxtl, 
+                                   bbxtl + bbox.width.item(),
+                                   num=grid_size,
+                                   endpoint=True).astype(int),
+                       np.linspace(bbytl, 
+                                   bbytl + bbox.height.item(),
+                                   num=grid_size,
+                                   endpoint=True).astype(int))
+    return np.stack((x.flatten(), y.flatten()), axis=1)
 
 def distance(point_1: tuple, point_2: tuple):
     """
@@ -250,7 +272,6 @@ def distance(point_1: tuple, point_2: tuple):
     Input: Two points.
     Output: Distance in pixels.
     """
-
     distance = (sum((p1 - p2)*(p1 - p2) for p1, p2 in zip(point_1, point_2))) ** (1 / 2)
     return distance
 
