@@ -237,20 +237,17 @@ def when_bounding_boxes_refresh():
 # 
 # 
 def get_dist_to_bbox(bbox):
-    t1 = time_synchronized()
     depth_sample_coords = get_depth_sample_coords(bbox)
     depth_sample = np.array([get_dist_at_point(point) for point in depth_sample_coords])
     depth_sample = depth_sample[depth_sample > 0]
     if len(depth_sample) == 0:
         return 0
-    t2 = time_synchronized()
-    print(f"get_dist_to_bbox: {t2-t1:.3f} s")
     return np.median(depth_sample)
 
 def get_depth_at_color_coords(point):
     # point is (x, y)
-    depth_point = video_stream.vid_source.get_depth_at_point(point)
-    return depth_point
+    depth = video_stream.vid_source.get_depth_at_point(point)
+    return depth
 
 def get_depth_sample_coords(bbox):
     bbxtl = bbox.x_top_left.item()
