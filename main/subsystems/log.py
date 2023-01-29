@@ -27,11 +27,13 @@ color_frames = []
 depth_frames = []
 
 # read json
-with open(absolute_path_to.permanent_storage, 'r') as in_file:    permanent_storage = json.load(in_file)
+with open(absolute_path_to.permanent_storage, 'r') as in_file:
+    permanent_storage = json.load(in_file)
 # increment
 permanent_storage["video_count"] += 1
 # write json
-with open(absolute_path_to.permanent_storage, 'w') as outfile: json.dump(permanent_storage, outfile)
+with open(absolute_path_to.permanent_storage, 'w') as outfile:
+    json.dump(permanent_storage, outfile)
 
 # create incremented storage path
 video_count = permanent_storage["video_count"]

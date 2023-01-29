@@ -6,9 +6,12 @@ import numpy as np
 from super_map import LazyDict
 from statistics import mean as average
 
-from toolbox.globals import path_to, config, print, runtime
+from pyrealsense2 import rs2_project_color_pixel_to_depth_pixel
+
+from toolbox.globals import path_to, config, print, runtime, time_synchronized
 from toolbox.geometry_tools import Position, BoundingBox
 from subsystems.aiming.predictor import Predictor
+import subsystems.video_stream as video_stream
 
 # 
 # config
@@ -96,17 +99,19 @@ def when_bounding_boxes_refresh():
     center_point, bullet_drop_point, prediction_point = (None, Position([0,0]), None)
     current_time = now()
     point_to_aim_at = Position([0,0])
-    
+
+    t1 = time_synchronized()
     # 
     # update core aiming data
     # 
     if found_robot:
         point_to_aim_at = best_bounding_box.center
-        depth_amount = get_distance_from_array(depth_image, best_bounding_box) # Find depth from camera to robot
+        depth_amount = get_distance_from_array(best_bounding_box) # Find depth from camera to robot
         depth_out_of_bounds = depth_amount < min_range or depth_amount > max_range
     center_point = Position(point_to_aim_at) # for displaying
     time_circular_buffer.append(current_time)
-        
+    
+    t2 = time_synchronized()
 
     # 
     # prediction
@@ -118,7 +123,9 @@ def when_bounding_boxes_refresh():
     # 
     if found_robot:
         horizontal_angle, vertical_angle = angle_from_center(point_to_aim_at, screen_center)
-        
+    
+    t3 = time_synchronized()
+    
     #
     # bullet drop
     #
@@ -136,7 +143,9 @@ def when_bounding_boxes_refresh():
             vertical_angle += angle_adjustment
         except Exception as error:
             print(error)
-                
+    
+    t4 = time_synchronized()
+
     # 
     # update circular buffers
     # 
@@ -151,6 +160,8 @@ def when_bounding_boxes_refresh():
             vertical_stdev = np.std(y_circular_buffer)
         except Exception as error:
             pass
+
+    t5 = time_synchronized()
         
     # 
     # should_shoot
@@ -181,7 +192,7 @@ def when_bounding_boxes_refresh():
     if time_sum:
         should_shoot = True
         
-            
+    t6 = time_synchronized()
         
 
     # 
@@ -194,6 +205,14 @@ def when_bounding_boxes_refresh():
     if found_robot:
         runtime.aiming.last_target_time = current_time
     
+    t7 = time_synchronized()
+    # print(f"\nupdate core aiming data: {t2-t1:.3f} s")
+    # print(f"prediction: {t3-t2:.3f} s")
+    # print(f"bullet drop: {t4-t3:.3f} s")
+    # print(f"update circular buffers: {t5-t4:.3f} s")
+    # print(f"should_shoot: {t6-t5:.3f} s")
+    # print(f"should_look_around: {t7-t6:.3f} s")
+
     # 
     # update the shared data
     # 
@@ -214,58 +233,15 @@ def when_bounding_boxes_refresh():
 # helpers
 # 
 # 
-def get_distance_from_array(depth_frame_array, bbox):
+def get_distance_from_array(bbox):
     """
     Determines the depth of a bounding box by choosing and filtering the depths of specific points in the bounding box.
 
     Input: Depth frame and bounding box.
     Output: Single depth value.
     """
-    if depth_frame_array is None:
-        return 1
-    try:
-        # this is used to add to the current_x and current_y so that we can get the different points in the 9x9 grid
-        x_interval = bbox.width  / grid_size
-        y_interval = bbox.height / grid_size
-        # stores the x and y of the last point in the grid we got the distance from
-        curr_x = 0
-        curr_y = 0
-        distances = np.array([])
-        # double for loop to go through 2D array of 9x9 grid
-        for _ in range(grid_size):
-            curr_x += x_interval # add the interval you calculated to traverse through the 9x9 grid
-            # print(curr_x)
-            if bbox.x_top_left+curr_x >= len(depth_frame_array[0]):
-                break
-            for _ in range(grid_size):
-                curr_y += y_interval # add the interval you calculated to traverse through the 9x9 grid
-                # gets the distance of the point from the depth frame on the grid and appends to the array
-                # print(curr_y)
-                if bbox.y_top_left+curr_y >= len(depth_frame_array):
-                    break
-                    
-                depth_y = int(bbox.y_top_left+curr_y)
-                depth_x = int(bbox.x_top_left+curr_x)
-                distances = np.append(
-                    distances, 
-                    depth_frame_array[depth_y][depth_x]  /  1000,
-                )
-            curr_y = 0
-        
-        distances = distances[distances!=0.0]   # removes all occurances of 0.0 (areas where there is not enough data return 0.0 as depth)
-        median = np.median(distances)           # gets the median from the array
-        std = np.std(distances)                 # gets the standard deviation from the array
-        modified_distances = []                  # initializes a new array for removing outlier numbers
-        # goes through distances array and adds any values that are less than X*standard deviations and ignores the rest
-        for i in range(np.size(distances)):
-            if abs(distances[i] - median) < 1.5 * std: # tune the standard deviation range for better results
-                modified_distances = np.append(modified_distances,distances[i])
-
-        distance = (np.mean(modified_distances)+np.median(modified_distances))/2
-        return distance if (distance and distance>0 and distance<10) else 1
-    except Exception as error:
-        print(f'''[aiming:get_distance_from_array] error/warning = {error}''')
-        return 1
+    depth_point = video_stream.vid_source.get_depth_at_point([bbox.center[0].item(), bbox.center[1].item()])
+    return depth_point
 
 def distance(point_1: tuple, point_2: tuple):
     """
@@ -275,7 +251,7 @@ def distance(point_1: tuple, point_2: tuple):
     Output: Distance in pixels.
     """
 
-    distance = (sum((p1 - p2) ** 2.0 for p1, p2 in zip(point_1, point_2))) ** (1 / 2)
+    distance = (sum((p1 - p2)*(p1 - p2) for p1, p2 in zip(point_1, point_2))) ** (1 / 2)
     return distance
 
 def angle_from_center(point_to_aim_at, screen_center):

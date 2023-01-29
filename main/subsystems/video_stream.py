@@ -10,18 +10,17 @@ elif config.hardware.camera == 'realsense':
     from subsystems.video_streaming.realsense import VideoStream
 else:
     from subsystems.video_streaming.simulation import VideoStream
-    
-# simplify the export
-frames_function = VideoStream().frames
 
+vid_source = VideoStream()
+frame_func = vid_source.frames
 # 
 # flip if needed
 # 
 if not config.hardware.camera_is_upsidedown:
-    frames = frames_function
+    frames = frame_func
 else:
     def frames():
-        thing = frames_function()
+        thing = frame_func()
         for frame_number, color_image, depth_image in thing:
             yield (
                 frame_number,
