@@ -89,10 +89,12 @@
                 sec_till_lock_lost: 2
                 prediction_time: 2 # time interval in seconds to predict using kalman filters
                 
-                # depth camera
+                # Realsense Camera
                 stream_width: 848
                 stream_height: 480
                 stream_framerate: 60
+                min_depth: 0.2
+                max_depth: 3.0
                 grid_size: 4
                 horizontal_fov: 87
                 vertical_fov: 57
