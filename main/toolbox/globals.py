@@ -34,12 +34,18 @@ runtime = LazyDict()
 original_print = print
 if config.log.disable_print:
     def print(*args, **kwargs): pass  # do nothing
+    def print_synchronized(*args, **kwargs): pass
 else:
     def print(*args, **kwargs):
         # force writing to a file (slows down program but makes log files update immediately)
         kwargs["flush"] = True
         original_print(*args, **kwargs)
-
+    def print_synchronized(*args, **kwargs):
+        # force writing to a file (slows down program but makes log files update immediately)
+        kwargs["flush"] = True
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        original_print(*args, **kwargs)
 
 def time_synchronized():
     # pytorch-accurate time
