@@ -54,6 +54,9 @@ elif which_model == 'yolo_v5':
 elif which_model == 'yolo_v7':
     from subsystems.modeling.yolo_v7 import init_yolo_v7
     init_yolo_v7(model)
+elif which_model == 'yolo_v8':
+    from subsystems.modeling.yolo_v8 import init_yolo_v8
+    init_yolo_v8(model)
 else:
     raise Exception("Model specified under /'model.which_model/' is not supported")
 

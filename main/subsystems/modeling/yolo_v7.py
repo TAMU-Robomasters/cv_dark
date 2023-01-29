@@ -35,7 +35,7 @@ def init_yolo_v7(model):
     if hardware_acceleration == 'tensor_rt':
         print("[modeling]   tensor_rt: ENABLED\n")
 
-        from subsystems.modeling.yolo_v7_trt_plugin import Yolov7TRT
+        from subsystems.modeling.plugins.yolo_v7_plugins.yolo_v7_trt_plugin import Yolov7TRT
 
         # create YoloV7TRT object
         model.yolov7_trt = Yolov7TRT(
@@ -49,7 +49,7 @@ def init_yolo_v7(model):
             model, *args, **kwargs)
 
     else:
-        from subsystems.modeling.yolo_v7_plugin import Yolov7
+        from subsystems.modeling.plugins.yolo_v7_plugins.yolo_v7_plugin import Yolov7
 
         if not os.path.exists(path_to.yolo_v7.path_to_folder):
             raise Exception(
