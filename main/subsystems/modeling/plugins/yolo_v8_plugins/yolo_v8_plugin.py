@@ -47,8 +47,8 @@ class Yolov8(object):
                 self.predictor.model.warmup(imgsz=(1, 3, self.input_h, self.input_w))
                 print("\n[modeling]   Warmup complete\n")
         elif self.acceleration == 'tensor_rt':
-            import subsystems.modeling.plugins.yolo_v8_plugins.v8_inference_engine as trtengine
             print("[modeling]   TensorRT: ENABLED\n")
+            import subsystems.modeling.plugins.yolo_v8_plugins.v8_inference_engine as trtengine
             self.device = torch.device("cuda")
 
             self.engine = trtengine.init(model_filepath, self.device)

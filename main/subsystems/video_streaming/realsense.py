@@ -5,11 +5,15 @@ from super_map import LazyDict
 from toolbox.video_tools import Video
 from toolbox.globals import path_to, config, print, runtime
 
+from time import time
+
 import pyrealsense2 as rs
 
 videostream     = config.videostream
 aiming          = config.aiming
 record_interval = videostream.testing.record_interval
+
+MUS_TO_MS = 1000
 
 runtime.realsense = LazyDict(
     frame=None,
@@ -70,7 +74,10 @@ class VideoStream:
                 self.depth_intrin = self.cfg.get_stream(rs.stream.depth).as_video_stream_profile().get_intrinsics()
                 self.depth_to_color_extrin = self.cfg.get_stream(rs.stream.depth).as_video_stream_profile().get_extrinsics_to(self.cfg.get_stream(rs.stream.color))
                 self.color_to_depth_extrin = self.cfg.get_stream(rs.stream.color).as_video_stream_profile().get_extrinsics_to(self.cfg.get_stream(rs.stream.depth))
-                # print("depth_scale:", self.depth_scale)
+
+                sensors = self.pipeline.get_active_profile().get_device().query_sensors()
+                for sensor in sensors:
+                    sensor.set_option(rs.option.global_time_enabled, False)                # print("depth_scale:", self.depth_scale)
                 # print("color_intrin:", self.color_intrin)
                 # print("depth_intrin:", self.depth_intrin)
                 # print("color fps: ", self.cfg.get_stream(rs.stream.color).fps)
@@ -97,6 +104,11 @@ class VideoStream:
                     runtime.realsense.gyro         = frame[3].as_motion_frame().get_motion_data()
                     self.color_frame = frame.get_color_frame()
                     self.depth_frame = frame.get_depth_frame()
+
+                    capture_time = frame.get_frame_metadata(rs.frame_metadata_value.sensor_timestamp)
+                    frame_time = frame.get_frame_metadata(rs.frame_metadata_value.frame_timestamp)
+                    self.capture_time = (time()*1000) - ((frame_time - capture_time)/MUS_TO_MS)
+                    # print("frame_number:", frame_number, "capture_time:", self.capture_time)
                     yield frame_number, array(self.color_frame.get_data()), array(self.depth_frame.get_data())
                 except Exception as error: # failure to connect to realsense
                     import sys
@@ -125,8 +137,15 @@ class VideoStream:
                                                             self.depth_to_color_extrin,
                                                             self.color_to_depth_extrin,
                                                             point) # color pixel)
+        if (depth_point[0] < 0 or depth_point[1] < 0):
+            return 0
         depth = self.depth_frame.get_distance(int(depth_point[0]), int(depth_point[1]))
         return depth
+    
+    def get_xyz_at_point(self, point):
+        depth = self.get_depth_at_point(point)
+        point_3d = rs.rs2_deproject_pixel_to_point(self.depth_intrin, point, depth)
+        return point_3d
 
     def __del__(self):
         print("Closing Realsense Pipeline")

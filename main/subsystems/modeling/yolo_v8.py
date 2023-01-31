@@ -24,7 +24,6 @@ which_model = config.model.which_model
 def init_yolo_v8(model):
     print("\n[modeling]   YOLO v8 loading")
 
-
     from subsystems.modeling.plugins.yolo_v8_plugins.yolo_v8_plugin import Yolov8
 
     if hardware_acceleration == 'cpu' or hardware_acceleration == 'gpu':

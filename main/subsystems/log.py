@@ -16,6 +16,7 @@ save_to_disk_after        = config.log.save_to_disk_after
 record_video_output_color = absolute_path_to.record_video_output_color
 video_output              = absolute_path_to.video_output
 max_number_of_frames      = config.log.max_number_of_frames
+camera                    = config.hardware.camera
 
 # 
 # init
@@ -52,20 +53,7 @@ def when_finished_processing_frame():
     color_image        = runtime.color_image
     depth_image        = runtime.depth_image
     prev_loop_time     = runtime.prev_loop_time
-    found_robot        = runtime.modeling.found_robot
-    current_confidence = runtime.modeling.current_confidence
-    best_bounding_box  = runtime.modeling.best_bounding_box
     bounding_boxes     = runtime.modeling.bounding_boxes
-    should_shoot       = runtime.aiming.should_shoot
-    horizontal_angle   = runtime.aiming.horizontal_angle
-    vertical_angle     = runtime.aiming.vertical_angle
-    depth_amount       = runtime.aiming.depth_amount
-    pixel_diff         = runtime.aiming.pixel_diff
-    horizonal_stdev    = runtime.aiming.horizonal_stdev
-    vertical_stdev     = runtime.aiming.vertical_stdev
-    center_point       = runtime.aiming.center_point
-    # bullet_drop_point  = runtime.aiming.bullet_drop_point
-    prediction_point   = runtime.aiming.prediction_point
     
     # 
     # compute loop time
@@ -77,7 +65,7 @@ def when_finished_processing_frame():
     # 
     # print
     # 
-    print(f'\nframe#:{f"{frame_number}".rjust(5)},{f"{iteration_time}".rjust(4)}ms, targets={len(bounding_boxes)} ', sep='', end='', flush=True)
+    print(f'\nframe#:{f"{frame_number}".rjust(5)},{f"{iteration_time}".rjust(4)}ms, FPS:{f"{1000//iteration_time}".rjust(3)}, targets={len(bounding_boxes)} ', sep='', end='', flush=True)
     
     # 
     # handle image
@@ -161,26 +149,15 @@ def visualize_depth_frame(depth_frame_array):
 
 
 def generate_image(fps=0):
-    frame_number       = runtime.frame_number
     color_image        = runtime.color_image
-    depth_image        = runtime.depth_image
-    prev_loop_time     = runtime.prev_loop_time
     found_robot        = runtime.modeling.found_robot
     current_confidence = runtime.modeling.current_confidence
     best_bounding_box  = runtime.modeling.best_bounding_box
     bounding_boxes     = runtime.modeling.bounding_boxes
     enemy_boxes        = runtime.modeling.enemy_boxes
-    should_shoot       = runtime.aiming.should_shoot
-    horizontal_angle   = runtime.aiming.horizontal_angle
-    vertical_angle     = runtime.aiming.vertical_angle
-    depth_amount       = runtime.aiming.depth_amount
-    pixel_diff         = runtime.aiming.pixel_diff
-    horizonal_stdev    = runtime.aiming.horizonal_stdev
-    vertical_stdev     = runtime.aiming.vertical_stdev
     center_point       = runtime.aiming.center_point
-    prediction_point   = runtime.aiming.prediction_point
-    confidence_box   = runtime.aiming.confidence_box
-    # bullet_drop_point  = runtime.aiming.bullet_drop_point
+    target_3d          = runtime.aiming.target_3d
+    status             = runtime.aiming.target_status
     
     image = Image(runtime.color_image)
 
@@ -196,24 +173,17 @@ def generate_image(fps=0):
             image.add_bounding_box(each, color=rgb(255, 255, 255))
         for each in enemy_boxes:
             image.add_bounding_box(each, color=rgb(254, 195,  85))
-        # show should_shoot
-        if confidence_box:
-            image.add_bounding_box(confidence_box, color=rgb(254, 195,  85), thickness=4)
         if found_robot:
             image.add_bounding_box(best_bounding_box, color=rgb(240, 113, 120))
             image.add_point(x=center_point.x     , y=center_point.y     , color=rgb(130, 170, 255), radius=10)
-            image.add_point(x=prediction_point.x , y=prediction_point.y , color=rgb(195, 232, 141), radius=5)
+            # image.add_point(x=prediction_point.x , y=prediction_point.y , color=rgb(195, 232, 141), radius=5)
     
     x_location = 30
     y_location = 50
-    image.add_text(text=f"horizontal_angle: { horizontal_angle   :.2f}", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"vertical_angle: {   vertical_angle     :.2f}", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"depth_amount: {     depth_amount       :.2f}", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"pixel_diff: {       pixel_diff         :.2f}", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"horizonal_stdev: {  horizonal_stdev    :.2f}", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"vertical_stdev: {   vertical_stdev     :.2f}", location=(x_location, y_location)); y_location += 50
+    if (camera == "realsense"):
+        image.add_text(text=f"target_3d: {    target_3d          :.2f}", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50
+    image.add_text(text=f"status: {           status.name            }", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"fps: {              fps                :.2f}", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"shoot: {            should_shoot           }", location=(x_location, y_location)); y_location += 50
         
     return image
