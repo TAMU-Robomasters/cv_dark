@@ -48,7 +48,14 @@ class Yolov8(object):
                 print("\n[modeling]   Warmup complete\n")
         elif self.acceleration == 'tensor_rt':
             print("[modeling]   TensorRT: ENABLED\n")
-            import subsystems.modeling.plugins.yolo_v8_plugins.v8_inference_engine as trtengine
+            while True: # workaround for "Inconsistency detected by ld.so: dl-tls.c: 517: _dl_allocate_tls_init: Assertion `listp != NULL' failed!" error
+                try:
+                    import subsystems.modeling.plugins.yolo_v8_plugins.v8_inference_engine as trtengine
+                except Exception as e:
+                    print(e)
+                    print("Trying again...")
+                    continue
+                break
             self.device = torch.device("cuda")
 
             self.engine = trtengine.init(model_filepath, self.device)
