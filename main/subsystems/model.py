@@ -80,7 +80,6 @@ def when_frame_arrives():
     all_boxes, confidences, class_ids = model.get_bounding_boxes(
         frame=frame,
         minimum_confidence=config.model.minimum_confidence,
-        threshold=config.model.threshold,
     )
     screen_center = compute_screen_center(runtime.color_image)
     

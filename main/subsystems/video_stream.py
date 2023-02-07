@@ -12,18 +12,4 @@ else:
     from subsystems.video_streaming.simulation import VideoStream
 
 vid_source = VideoStream()
-frame_func = vid_source.frames
-# 
-# flip if needed
-# 
-if not config.hardware.camera_is_upsidedown:
-    frames = frame_func
-else:
-    def frames():
-        thing = frame_func()
-        for frame_number, color_image, depth_image in thing:
-            yield (
-                frame_number,
-                Image(color_image).rotated_180_degrees().in_cv2_format,
-                Image(depth_image).rotated_180_degrees().in_cv2_format if type(depth_image) != type(None) else None,
-            )
+frames = vid_source.frames

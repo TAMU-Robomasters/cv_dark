@@ -46,7 +46,7 @@ def init_yolo_v8(model):
     model.get_bounding_boxes = lambda *args, **kwargs: yolo_v8_beta_bounding_boxes(
         model, *args, **kwargs)
 
-def yolo_v8_beta_bounding_boxes(model, frame, minimum_confidence, threshold):
+def yolo_v8_beta_bounding_boxes(model, frame, minimum_confidence):
     # t0 = time_synchronized()
 
     image_tensor, image_pre, image_pre_h, image_pre_w = model.yolov8.preprocess_image(
@@ -58,7 +58,7 @@ def yolo_v8_beta_bounding_boxes(model, frame, minimum_confidence, threshold):
 
     # t2 = time_synchronized()
 
-    raw_boxes, confidences, class_ids = model.yolov8.postprocess_preds(yolo_tens, image_pre_h, image_pre_w, detect_class=False)
+    raw_boxes, confidences, class_ids = model.yolov8.postprocess_preds(yolo_tens, image_pre_h, image_pre_w, minimum_confidence, detect_class=False)
 
     # t3 = time_synchronized()
 
