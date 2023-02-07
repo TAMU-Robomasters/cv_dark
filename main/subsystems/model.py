@@ -80,7 +80,6 @@ def when_frame_arrives():
     all_boxes, confidences, class_ids = model.get_bounding_boxes(
         frame=frame,
         minimum_confidence=config.model.minimum_confidence,
-        threshold=config.model.threshold,
     )
     screen_center = compute_screen_center(runtime.color_image)
     
@@ -121,7 +120,7 @@ def get_optimal_bounding_box(boxes, confidences, screen_center, distance):
     """
     # no boxes
     if len(boxes) == 0:
-        return None, 1
+        return None, 0
     
     best_bounding_box = boxes[0]
     best_score = 0
@@ -172,4 +171,4 @@ def filter_team(boxes, confidences, class_ids):
     return enemy_boxes, enemy_confidences, enemy_class_ids
 
 def compute_screen_center(color_image):
-    return (color_image.shape[1] / 2, color_image.shape[0] / 2)
+    return (color_image.shape[1] // 2, color_image.shape[0] // 2)

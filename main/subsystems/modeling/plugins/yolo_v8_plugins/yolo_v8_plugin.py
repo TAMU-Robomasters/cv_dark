@@ -47,8 +47,16 @@ class Yolov8(object):
                 self.predictor.model.warmup(imgsz=(1, 3, self.input_h, self.input_w))
                 print("\n[modeling]   Warmup complete\n")
         elif self.acceleration == 'tensor_rt':
-            import subsystems.modeling.plugins.yolo_v8_plugins.v8_inference_engine as trtengine
             print("[modeling]   TensorRT: ENABLED\n")
+            while True: # workaround for "Inconsistency detected by ld.so: dl-tls.c: 517: _dl_allocate_tls_init: Assertion `listp != NULL' failed!" error
+                try:
+                    import subsystems.modeling.plugins.yolo_v8_plugins.v8_inference_engine as trtengine
+                except Exception as e:
+                    print(e)
+                    print("Trying again...")
+                    continue
+                break
+            print("preinit")
             self.device = torch.device("cuda")
 
             self.engine = trtengine.init(model_filepath, self.device)
@@ -65,8 +73,9 @@ class Yolov8(object):
         image_tensor = image_tensor.permute(2, 0, 1) # HWC to CHW
         image_tensor = image_tensor[[2, 1, 0]].unsqueeze(0) # RGB to BGR, add batch dimension
         image_tensor = F.interpolate(image_tensor, size=(self.input_w, self.input_h)).div(255.0) # resize, normalize from 0-255 to 0-1.0
+        if self.acceleration == 'gpu':
+            image_tensor = image_tensor.half()
         # WARNING: tensorrt doesn't support half precision, so we can't use .half() here
-        # TODO: add support for half precision input images but only for GPU acceleration
         return image_tensor, image_pre, image_pre.shape[0], image_pre.shape[1]
 
     def infer(self, image_tensor):
@@ -89,7 +98,7 @@ class Yolov8(object):
         boxes[:, [1, 3]] *= h_rescaler
         return boxes
 
-    def postprocess_preds(self, yolo_tens, image_post_h, image_post_w, detect_class=False):
+    def postprocess_preds(self, yolo_tens, image_post_h, image_post_w, conf_thres, detect_class=False):
         """
         description:    Postprocess the results from model inference
         param:
@@ -100,7 +109,7 @@ class Yolov8(object):
         return:
             boxes:
         """
-        preds = self.nms(yolo_tens, conf_thres=0.25, iou_thres=0.2)
+        preds = self.nms(yolo_tens, conf_thres=conf_thres, iou_thres=0.2)
 
         preds[:, :4] = self.rescale_coords_to_original(preds[:, :4], (image_post_h, image_post_w)).round()
         return preds[:, :4], preds[:, 4], preds[:, 5]

@@ -1,5 +1,5 @@
 from toolbox.globals import path_to, config, print, runtime
-import serial
+import serial # this is pyserial
 
 serial_port  = config.communication.serial_port
 baudrate     = config.communication.serial_baudrate

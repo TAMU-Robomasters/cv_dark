@@ -57,53 +57,29 @@
             hardware:
                 board: laptop
                 camera: null # "realsense" or "zed"
-                camera_is_upsidedown: false
             model:
                 load_from_pickle: false
                 which_model: yolo_v8 # yolo_v5 or yolo_v4
                 hardware_acceleration: null # one of: [ null, "gpu", "tensor_rt" ]
-                minimum_confidence: 0.3 # should be a value between 0-1
-                threshold: 0.3  # should be a value between 0-1
-                frequency: 30
+                minimum_confidence: 0.25 # should be a value between 0-1
+                # ^ minimum conf not applied when using tensor_rt
                 input_dimension: 416
                 hue_shift_amount: 75 # DONT CHANGE unless you really know what you're doing
                                      # this is the amount that an image needs to be hue shifted to make blue armor panels look like they're red
             aiming:
-                lookback_size: 5 # for confidence about should-shoot or not
-                prediction_method: null # null, linear, kalman
-                linear_tracking_confidence_threshold: 0.80 # 0=dont_care 1=must be a perfect line
-                linear_buffer_size: 30
-                skip_allowance: 2 # number of frames that can be skipped/missed
-                
                 confidence_box_height: 0.5 # 0.4 = 40% percent of image height
                 confidence_box_width: 0.4 # percent
                 
-                bullet_drop: # NOTE: override these values using profiles below (because they need to be different with sentry/standard)
-                    1: 0.02 # at <= __ meter (key), adjust the angle by __ in radians (value)
-                    2: 0.01
-                    3: -0.01
-                    4: -0.08 # 0.3 
-                    5: -0.20 # 0.4
-                
-                disable_bullet_drop: false
-                sec_till_lock_lost: 2
-                prediction_time: 2 # time interval in seconds to predict using kalman filters
-                
-                # depth camera
+                # Realsense Camera
                 stream_width: 848
                 stream_height: 480
                 stream_framerate: 60
+                min_depth: 0.2
+                max_depth: 3.0
                 grid_size: 4
-                horizontal_fov: 87
-                vertical_fov: 57
                 model_fps: 30
-                bullet_velocity: 26
-                length_barrel: .22
-                camera_gap: -.034
-
+                
                 # Shooting Logic
-                min_size_for_stdev: 5
-                std_error_bound: 60
                 min_range: 1 # units? meters?
                 max_range: 5
 
@@ -114,9 +90,6 @@
                 center_image_offset: 20
                 min_area: 400
                 r_timer: 10
-
-                #bullet drop
-                barrel_camera_gap: 0.0364   # in meters
                 
             videostream:
                 simulation:
@@ -161,23 +134,9 @@
         #
         SENTRY:
             bot: sentry
-            aiming:
-                bullet_drop:
-                    1: -0.02 # at <= __ meter (key), adjust the angle by __ in radians (value)
-                    2: -0.01
-                    3: 0.01
-                    4: 0.08 # 0.3 
-                    5: 0.16 # 0.4
         
         STANDARD:
             bot: standard
-            aiming:
-                bullet_drop:
-                    1: 0.02 # at <= __ meter (key), adjust the angle by __ in radians (value)
-                    2: 0.01
-                    3: 0.03
-                    4: -0.08
-                    5: -0.16
         
         GPU=NONE:
             model:
@@ -215,9 +174,8 @@
         BOARD=XAVIER:
             hardware:
                 camera: realsense
-                camera_is_upsidedown: false
             model:
-                hardware_acceleration: "gpu"
+                hardware_acceleration: "tensor_rt"
             communication:
                 serial_port: "/dev/ttyTHS0" # UART serial 0 works but try 1
             log:
@@ -236,7 +194,6 @@
         CAMERA=REALSENSE:
             hardware:
                 camera: realsense
-                camera_is_upsidedown: false
         CAMERA=NONE:
             hardware:
                 camera: null

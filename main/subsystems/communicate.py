@@ -1,11 +1,13 @@
 from ctypes import *
 import serial
-import time
+from time import time
 
 from super_map import LazyDict
 
 from toolbox.globals import path_to, config, print, runtime
 from subsystems.communicating.serial_help import setup_serial_port
+import subsystems.video_stream as video_stream
+# from subsystems.aim import TARGET_STATUS
 
 # 
 # config
@@ -14,9 +16,7 @@ serial_port  = config.communication.serial_port
 baudrate     = config.communication.serial_baudrate
 
 # 
-# 
 # initialize
-# 
 # 
 port = setup_serial_port()
 
@@ -25,37 +25,29 @@ class Message(Structure):
     _pack_ = 1
     _fields_ = [
         ("magic_number"    , c_uint8   ),
-        ("horizontal_angle", c_float   ),
-        ("vertical_angle"  , c_float   ),
-        ("depth"           , c_float   ),
+        ("X"               , c_float   ),
+        ("Y"               , c_float   ),
+        ("Z"               , c_float   ),
+        ("capture_delay"   , c_uint8   ),
         ("status"          , c_uint8   ),
     ]
-message = Message(ord('a'), 0.0, 0.0, 0.0, 0)
+message = Message(ord('a'), 0.0, 0.0, 0.0, 0, 0)
 
-action = LazyDict(
-    LOOK_AROUND=0,
-    LOOK_AT_COORDS=1,
-    FIRE=2,
-)
-
-# 
 # 
 # main
 # 
-# 
 def when_aiming_refreshes():
     global port
-    should_shoot       = runtime.aiming.should_shoot
-    should_look_around = runtime.aiming.should_look_around
-    
-    message.horizontal_angle = float(runtime.aiming.horizontal_angle)
-    message.vertical_angle   = float(runtime.aiming.vertical_angle)
-    message.depth            = float(runtime.aiming.depth_amount)
-    message.status           = action.FIRE if should_shoot else (action.LOOK_AROUND if should_look_around else action.LOOK_AT_COORDS)
-    # UP = negative (for sentry because technically the sentry's camera is upsidedown)
-    # LEFT = negative
-    # values are in radians
-    print(f'''msg({f"horizontal:{message.horizontal_angle:.4f}".rjust(7)},{f"vertical:{message.vertical_angle:.4f}".rjust(7)},{f"depth:{message.depth:.2f}".rjust(7)}, {message.status})''', end=", ")
+    capture_time =  video_stream.vid_source.capture_time
+    capture_delay = min(int(time()*1000 - capture_time), 255) # max 255 ms delay
+
+    # Sending XYZ position (meters), time since frame capture, and status of target relative to front of camera plane
+    message.X = float(runtime.aiming.target_3d[0])
+    message.Y = float(runtime.aiming.target_3d[1])
+    message.Z = float(runtime.aiming.target_3d[2])
+    message.capture_delay = capture_delay
+    message.status = runtime.aiming.target_status.value
+    print(f'''msg({f"X:{message.X:.4f}".rjust(7)}, {f"Y:{message.Y:.4f}".rjust(7)}, {f"Z:{message.Z:.4f}".rjust(7)}, {f"delay:{message.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")
     
     try:
         port.write(bytes(message))
@@ -69,9 +61,7 @@ if port is None:
         pass # do nothing intentionally
 
 # 
-# 
 # helpers
-# 
 # 
 def read_input():
     """

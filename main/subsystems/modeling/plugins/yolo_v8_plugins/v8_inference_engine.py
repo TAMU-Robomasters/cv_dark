@@ -9,8 +9,6 @@ from numpy import ndarray
 import torch
 import tensorrt as trt
 from torch import Tensor
-from torchvision.ops import batched_nms
-import torch.nn.functional as F
 
 class TRTModule(torch.nn.Module):
     dtypeMapping = {
