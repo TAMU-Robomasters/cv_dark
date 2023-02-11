@@ -6,6 +6,8 @@ from toolbox.video_tools import Video
 from toolbox.image_tools import Image, rgb
 from toolbox.pickle_tools import large_pickle_save
 
+from subsystems.aim import DEPTH_COMPATIBLE
+
 # 
 # config
 # 
@@ -60,8 +62,7 @@ def when_finished_processing_frame():
     # 
     now_in_miliseconds = int(now() * 1000)
     iteration_time = now_in_miliseconds-prev_loop_time
-    runtime.prev_loop_time = now_in_miliseconds
-    
+    runtime.prev_loop_time = now_in_miliseconds    
     # 
     # print
     # 
@@ -178,10 +179,11 @@ def generate_image(fps=0):
             image.add_point(x=center_point.x     , y=center_point.y     , color=rgb(130, 170, 255), radius=10)
             # image.add_point(x=prediction_point.x , y=prediction_point.y , color=rgb(195, 232, 141), radius=5)
     
+    disp_target_3d = [round(x, 3) for x in target_3d]
     x_location = 30
     y_location = 50
-    if (camera == "realsense"):
-        image.add_text(text=f"target_3d: {    target_3d          :.2f}", location=(x_location, y_location)); y_location += 50
+    if (DEPTH_COMPATIBLE):
+        image.add_text(text=f"target_3d: {    disp_target_3d         }", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"status: {           status.name            }", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"fps: {              fps                :.2f}", location=(x_location, y_location)); y_location += 50

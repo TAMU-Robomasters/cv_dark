@@ -26,6 +26,7 @@ MIN_RANGE                            = config.aiming.min_range
 MAX_RANGE                            = config.aiming.max_range
 CAMERA                               = config.hardware.camera
 DEPTH_COMPATIBLE                     = CAMERA == 'realsense' or CAMERA == 'zed'
+POSE_COMPATIBLE                      = CAMERA == 'zed'
 
 # 
 # shared data (imported by modeling and integration)
@@ -58,9 +59,16 @@ def when_bounding_boxes_refresh():
         if DEPTH_COMPATIBLE:
             target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()])
             # print(f"\ntarget_3d: {target_3d}")
-        target_status = TARGET_STATUS.TARGET_FOUND
+            if target_3d is not None:
+                target_status = TARGET_STATUS.TARGET_FOUND
+        else:
+            target_status = TARGET_STATUS.TARGET_FOUND
         
-        center_point = Position(best_bounding_box.center) # for displaying
+        center_point = Position(best_bounding_box.center) # for logging/displays
+
+    # if POSE_COMPATIBLE:
+    #     video_stream.vid_source.get_position()
+    #     video_stream.vid_source.get_orientation()
 
     # update the shared data
     runtime.aiming.target_status      = target_status
@@ -73,8 +81,6 @@ def when_bounding_boxes_refresh():
 def get_xyz_at_color_coords(point):
     # point is [x, y], return tuple (x, y, z)
     point_3d = video_stream.vid_source.get_xyz_at_point(point)
-    point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
-    # X is right/left, Y is forward/backward, Z is up/down
     return point_3d
 
 def get_dist_to_bbox(bbox):
@@ -98,32 +104,32 @@ def get_depth_sample_coords(bbox):
                                    endpoint=True).astype(int))
     return np.stack((x.flatten(), y.flatten()), axis=1)
 
-def distance(point_1: tuple, point_2: tuple):
-    """
-    Returns the distance between two points.
+# def distance(point_1: tuple, point_2: tuple):
+#     """
+#     Returns the distance between two points.
 
-    Input: Two points.
-    Output: Distance in pixels.
-    """
-    distance = (sum((p1 - p2)*(p1 - p2) for p1, p2 in zip(point_1, point_2))) ** (1 / 2)
-    return distance
+#     Input: Two points.
+#     Output: Distance in pixels.
+#     """
+#     distance = (sum((p1 - p2)**2 for p1, p2 in zip(point_1, point_2))) ** (1 / 2)
+#     return distance
 
-def angle_from_center(point_to_aim_at, screen_center, horizontal_fov, vertical_fov):
-    """
-    Returns the x and y angles between the screen_center of the image and the screen_center of a bounding box.
+# def angle_from_center(point_to_aim_at, screen_center, horizontal_fov, vertical_fov):
+#     """
+#     Returns the x and y angles between the screen_center of the image and the screen_center of a bounding box.
 
-    We send screen_center instead of importing 
-    from info.yaml since recorded video footage could be different resolutions.
+#     We send screen_center instead of importing 
+#     from info.yaml since recorded video footage could be different resolutions.
 
-    Input: Bounding box and camera screen_center.
-    Output: Horizontal and vertical angle in radians.
-    """
+#     Input: Bounding box and camera screen_center.
+#     Output: Horizontal and vertical angle in radians.
+#     """
 
-    x_bbox_center, y_bbox_center, x_cam_center, y_cam_center = point_to_aim_at[0], screen_center[1]*2-point_to_aim_at[1], screen_center[0], screen_center[1]
+#     x_bbox_center, y_bbox_center, x_cam_center, y_cam_center = point_to_aim_at[0], screen_center[1]*2-point_to_aim_at[1], screen_center[0], screen_center[1]
 
-    horizontal_angle = ((x_bbox_center-x_cam_center)/x_cam_center)*(horizontal_fov/2)
-    vertical_angle = ((y_bbox_center-y_cam_center)/y_cam_center)*(vertical_fov/2)
+#     horizontal_angle = ((x_bbox_center-x_cam_center)/x_cam_center)*(horizontal_fov/2)
+#     vertical_angle = ((y_bbox_center-y_cam_center)/y_cam_center)*(vertical_fov/2)
 
-    # print("horizontal_angle:",f"{horizontal_angle:.4f}"," vertical_angle:", f"{vertical_angle:.4f}", end=", ")
+#     # print("horizontal_angle:",f"{horizontal_angle:.4f}"," vertical_angle:", f"{vertical_angle:.4f}", end=", ")
 
-    return math.radians(horizontal_angle),math.radians(vertical_angle)
+#     return math.radians(horizontal_angle),math.radians(vertical_angle)

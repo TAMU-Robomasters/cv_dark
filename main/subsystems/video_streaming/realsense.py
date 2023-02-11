@@ -138,13 +138,15 @@ class VideoStream:
                                                             self.color_to_depth_extrin,
                                                             point) # color pixel)
         if (depth_point[0] < 0 or depth_point[1] < 0):
-            return 0
+            return None
         depth = self.depth_frame.get_distance(int(depth_point[0]), int(depth_point[1]))
         return depth
     
     def get_xyz_at_point(self, point):
         depth = self.get_depth_at_point(point)
-        point_3d = rs.rs2_deproject_pixel_to_point(self.depth_intrin, point, depth)
+        return depth if depth is None
+        point_3d = rs.rs2_deproject_pixel_to_point(self.depth_intrin, point, depth) # X is right/left, Y is forward/backward, Z is up/down
+        point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
         return point_3d
 
     def __del__(self):
