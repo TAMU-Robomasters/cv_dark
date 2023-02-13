@@ -144,7 +144,8 @@ class VideoStream:
     
     def get_xyz_at_point(self, point):
         depth = self.get_depth_at_point(point)
-        return depth if depth is None
+        if depth is None:
+            return None
         point_3d = rs.rs2_deproject_pixel_to_point(self.depth_intrin, point, depth) # X is right/left, Y is forward/backward, Z is up/down
         point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
         return point_3d

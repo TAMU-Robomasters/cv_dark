@@ -19,6 +19,7 @@ record_video_output_color = absolute_path_to.record_video_output_color
 video_output              = absolute_path_to.video_output
 max_number_of_frames      = config.log.max_number_of_frames
 camera                    = config.hardware.camera
+runtime.benchmark         = config.mode == 'benchmark'
 
 # 
 # init
@@ -48,7 +49,8 @@ video_depth_output_path = f'{absolute_path_to.record_video_output_color}{video_c
 # main
 # 
 # 
-runtime.prev_loop_time = 0 # init time value
+runtime.prev_loop_time = int(now() * 1000) # init time value
+runtime.total_fps = 0
 def when_finished_processing_frame():
     # import data
     frame_number       = runtime.frame_number
@@ -62,6 +64,7 @@ def when_finished_processing_frame():
     # 
     now_in_miliseconds = int(now() * 1000)
     iteration_time = now_in_miliseconds-prev_loop_time
+    runtime.total_fps += (1000/(iteration_time))
     runtime.prev_loop_time = now_in_miliseconds    
     # 
     # print
@@ -91,12 +94,19 @@ def when_finished_processing_frame():
         # 
         if len(color_frames) % save_to_disk_after == 0:
             save_frames_as_video(path=video_color_output_path)
-        
+
+    if runtime.benchmark and runtime.frame_number == config.stop_after:
+            print("\nBenchmark Complete")
+            when_iteration_stops()
+            exit()
 
 def when_iteration_stops():
-    save_frames_as_video(
-        path=video_color_output_path,
-    )
+    avg_fps = runtime.total_fps / runtime.frame_number
+    print(f"\naverage FPS: {avg_fps:.2f}")
+    if (save_frame_to_file):
+        save_frames_as_video(
+            path=video_color_output_path,
+        )
 
 # 
 # disable log check

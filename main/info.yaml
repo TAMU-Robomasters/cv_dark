@@ -217,7 +217,10 @@
                 disable_all_logging: false
                 display_live_frames: false
                 save_frame_to_file: false
-        
+
+        BENCH:
+            mode: benchmark
+            stop_after: 479 # frames
         
         WE_RED:
             our_team_color: 'red'
