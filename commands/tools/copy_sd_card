@@ -22,7 +22,8 @@ then
     sudo umount "$input_disk" 2>/dev/null
     if ! [ -e "$target_path" ]
     then
-        sudo dd if="$input_disk" of="$target_path" bs=1M status=progress
+        one_megabyte=1048576
+        sudo dd if="$input_disk" of="$target_path" bs=$one_megabyte status=progress
     else
         echo "it looks like there's already a file at: $target_path"
         echo "please delete it or move it"
