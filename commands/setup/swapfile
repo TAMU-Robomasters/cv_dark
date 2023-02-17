@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 storage_12GB_in_blocks=12582912
-dd if=/dev/zero of=/swapfile bs=1024 count=$storage_12GB_in_blocks
+dd if=/dev/zero of=/swapfile bs=1024 count=$storage_12GB_in_blocks status=progress
 ls -l /swapfile
 mkswap /swapfile
 swapon -a /swapfile
