@@ -19,7 +19,13 @@ then
     echo "I'm going to duplicate it to your current directory as: drive.img"
     echo "Here's the full path: $target_path"
     echo "okay?";read ANSWER;echo
-    sudo umount "$input_disk" 2>/dev/null
+    if [ "$(uname)" = "Darwin" ] 
+    then
+        diskutil unmount "$input_disk" 2>/dev/null
+        diskutil unmountDisk "$input_disk" 2>/dev/null
+    else
+        sudo umount "$input_disk" 2>/dev/null
+    fi
     if ! [ -e "$target_path" ]
     then
         one_megabyte=1048576
