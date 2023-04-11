@@ -7,7 +7,7 @@ import numpy as np
 from time import time
 
 from toolbox.video_tools import Video
-from toolbox.globals import path_to, config, print, runtime
+from toolbox.globals import path_to, config, print, runtime, time_synchronized
 
 
 videostream = config.videostream
@@ -29,9 +29,9 @@ class VideoStream:
         init_params.camera_resolution = getattr(sl.RESOLUTION, config.zed.resolution)
         init_params.depth_mode        = getattr(sl.DEPTH_MODE, config.zed.depth_mode)
         init_params.coordinate_units  = getattr(sl.UNIT      , config.zed.unit      )
-        init_params.coordinate_system = sl.COORDINATE_SYSTEM.LEFT_HANDED_Y_UP
-        init_params.depth_minimum_distance = 0.3
-        init_params.depth_maximum_distance = 10.0
+        init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Z_UP
+        init_params.depth_minimum_distance = aiming.min_depth
+        init_params.depth_maximum_distance = aiming.max_depth
 
         self.capture_time = 0
                 
@@ -69,76 +69,30 @@ class VideoStream:
         #             resolution.height,
         #             sl.MAT_TYPE.MAT_TYPE_8U_C4,
         #             memory_type=sl.MEM.MEM_GPU)
-        self.depth_frame = sl.Mat(self.image_size.width, self.image_size.height, sl.MAT_TYPE.U8_C4)
+        # self.depth_frame = sl.Mat(self.image_size.width, self.image_size.height, sl.MAT_TYPE.U8_C4)
 
         self.point_cloud = sl.Mat()
-    
-    # def frames(self):
-    #     """
-    #     Returns a generator that outputs color and depth frames. Save the frames on the fly if video recording is enabled.
-
-    #     Input: None
-    #     Output: A generator which will produce color and depth images at each step.
-    #     """
-    #     frame_number = 0
-    #     # retry after failure
-    #     while True:
-    #         while self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:
-    #             frame_number += 1
-
-    #             # TODO - if using depth and left camera view, have to reconcile them with an additional transformation
-    #             self.zed.retrieve_image(self.color_frame, sl.VIEW.LEFT, sl.MEM.CPU, self.image_size)
-    #             self.zed.retrieve_measure(self.depth_frame, sl.MEASURE.DEPTH, sl.MEM.CPU, self.image_size)
-                
-    #             self.pose_state = self.zed.get_position(self.zed_pose, sl.REFERENCE_FRAME.WORLD)
-    #             # Convert images to ocv format, remove alpha channel
-    #             # self.color_frame = self.color_frame.get_data()
-    #             # self.depth_frame = self.depth_frame.get_data()
-    #             # Add frame to video recording based on recording frequency
-    #             if self.video_output and (frame_number % videostream.testing.record_interval == 0):
-    #                 print(" saving_frame:",frame_number)
-    #                 self.video_output.write(self.color_frame.get_data())
-    #             # cv2.imshow('img', depth_frame)
-    #             # cv2.waitKey(100)
-    #             yield frame_number, self.color_frame.get_data(), self.depth_frame.get_data()
-    #         if config.mode == 'development':
-    #             print("VideoStream: unable to retrieve frame.")
-    #             print('(retrying)')
 
     def frames(self):
         from itertools import count
-        video_output_write = self.video_output and self.video_output.write
-
-        gpu_color_frame = cv2.cuda_GpuMat()
 
         def generator():
             for frame_number in count(1):
                 if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:
+                    t1 = time_synchronized()
                     self.zed.retrieve_image(self.color_frame, sl.VIEW.LEFT, sl.MEM.CPU, self.image_size)
                     # self.zed.retrieve_measure(self.depth_frame, sl.MEASURE.DEPTH, sl.MEM.CPU, self.image_size)
-                
+                    t2 = time_synchronized()
                     self.pose_state = self.zed.get_position(self.zed_pose, sl.REFERENCE_FRAME.WORLD)
-
-                    # gpu_color_frame.upload(self.color_frame.get_data())
-                    
-                    # color_img_rgb = cv2.cuda.cvtColor(gpu_color_frame, cv2.COLOR_RGBA2RGB)
+                    t3 = time_synchronized()
                     color_img_rgb = cv2.cvtColor(self.color_frame.get_data(), cv2.COLOR_RGBA2RGB)
-            
+                    t4 = time_synchronized()
+                    print(f"capture: {t2-t1:.2f}, pose: {t3-t2:.2f}, cvt: {t4-t3:.2f}")
                     yield frame_number, color_img_rgb, None # self.depth_frame.get_data()
                 else:
                     print("VideoStream: unable to retrieve frame.")
                     print('(retrying)')
-        
-        if not video_output_write:
-            return generator()
-        else:
-            def wrapper():
-                for frame_number, color_image, depth_image in generator():
-                    if frame_number % record_interval == 0:
-                        print(" saving_frame:",frame_number)
-                        video_output_write(color_image)
-                    yield frame_data
-            return wrapper()
+        return generator()
 
     def get_xyz_at_point(self, point):
         self.zed.retrieve_measure(self.point_cloud, sl.MEASURE.XYZRGBA)
@@ -191,13 +145,15 @@ class VideoStream:
             c += 1
             file_path = color_video_location.replace(".do_not_sync",datetime.datetime.now().strftime("%Y-%m-%d")+"_"+str(c)+".do_not_sync")
 
+        # print(self.zed.get_camera_information().camera_framerate)
+        
         # Start up video output
         gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location="+file_path
-        video_output = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER, 0, float(aiming.framerate), (int(aiming.stream_width), int(aiming.stream_height)))
+        video_output = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER, 0, float(self.zed.get_camera_information().camera_framerate), (int(self.image_size.width), int(self.image_size.height)))
         if not video_output.isOpened():
             print("Failed to open output")
 
-        return video_output    
+        return video_output
     
     def save_video_if_needed(self):
         # Save video output

@@ -58,7 +58,7 @@ def when_bounding_boxes_refresh():
     if found_robot:
         if DEPTH_COMPATIBLE:
             target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()])
-            # print(f"\ntarget_3d: {target_3d}")
+            print(f"\ntarget_3d: {target_3d}")
             if target_3d is not None:
                 target_status = TARGET_STATUS.TARGET_FOUND
         else:

@@ -11,6 +11,7 @@ pyston_lite.enable()
 
 # Run detection infinitely
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
+    # t1 = time_synchronized()
     model.when_frame_arrives()
     # t2 = time_synchronized()
     aim.when_bounding_boxes_refresh()

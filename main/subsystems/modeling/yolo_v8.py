@@ -49,8 +49,7 @@ def init_yolo_v8(model):
 def yolo_v8_beta_bounding_boxes(model, frame, minimum_confidence):
     # t0 = time_synchronized()
 
-    image_tensor, image_pre, image_pre_h, image_pre_w = model.yolov8.preprocess_image(
-        frame)
+    image_tensor, image_pre, image_pre_h, image_pre_w = model.yolov8.preprocess_image(frame)
 
     # t1 = time_synchronized()
 
@@ -62,8 +61,7 @@ def yolo_v8_beta_bounding_boxes(model, frame, minimum_confidence):
 
     # t3 = time_synchronized()
 
-    boxes = [BoundingBox.from_points(
-        top_left=(x1, y1), bottom_right=(x2, y2)) for x1, y1, x2, y2 in raw_boxes]
+    boxes = [BoundingBox.from_points(top_left=(x1, y1), bottom_right=(x2, y2)) for x1, y1, x2, y2 in raw_boxes]
 
     # t4 = time_synchronized()
 

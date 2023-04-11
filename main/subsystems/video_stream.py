@@ -1,5 +1,6 @@
 from toolbox.globals import path_to, config, print
 from toolbox.image_tools import Image
+from toolbox.camera_threader import CameraThreader
 
 # 
 # select which file to import from
@@ -12,4 +13,7 @@ else:
     from subsystems.video_streaming.simulation import VideoStream
 
 vid_source = VideoStream()
-frames = vid_source.frames
+vid_threader = CameraThreader(vid_source)
+# frames = vid_source.frames
+frames = vid_threader.frames
+# vid_threader.start()
