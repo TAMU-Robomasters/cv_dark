@@ -5,6 +5,8 @@ import os
 import time
 from super_map import LazyDict
 
+from math import dist
+
 # project imports
 from toolbox.globals import path_to, config, print, runtime
 from toolbox.geometry_tools import BoundingBox, Position
@@ -94,7 +96,6 @@ def when_frame_arrives():
         boxes=enemy_boxes,
         confidences=confidences,
         screen_center=screen_center,
-        distance=aiming.distance,
     )
     
     # export data
@@ -111,7 +112,7 @@ def when_frame_arrives():
 # helpers
 # 
 # 
-def get_optimal_bounding_box(boxes, confidences, screen_center, distance):
+def get_optimal_bounding_box(boxes, confidences, screen_center):
     """
     Decide the single best bounding box to aim at using a score system.
 
@@ -119,26 +120,27 @@ def get_optimal_bounding_box(boxes, confidences, screen_center, distance):
     Output: Best bounding box and its confidence.
     """
     # no boxes
-    if len(boxes) == 0:
+    if not boxes:
         return None, 0
-    
-    best_bounding_box = boxes[0]
+    if len(boxes) == 1:
+        return boxes[0], confidences[0]
+
+    best_box = boxes[0]
     best_score = 0
-    confidence = 0
-    normalization_constant = distance((screen_center[0]*2,screen_center[1]*2),(screen_center[0],screen_center[1])) # Find constant used to scale distance part of score to 1
+    best_conf = 0
+
+    normalization_constant = dist((screen_center[0]*2,screen_center[1]*2),(screen_center[0],screen_center[1])) # Find constant used to scale distance part of score to 1
 
     # Sequentially iterate through all bounding boxes
-    for i in range(len(boxes)):
-        bbox = boxes[i]
-        score = (1 - distance(screen_center,(bbox[0] + bbox[2] / 2, bbox[1] + bbox[3] / 2))/ normalization_constant) + confidences[i] # Compute score using distance and confidence
+    for conf, box in zip(confidences, boxes):
+        score = (1 - dist(screen_center,(box[0] + box[2]/2, box[1] + box[3]/2)) / normalization_constant) + conf # Compute score using distance and confidence
 
         # Make current box the best if its score is the best so far
         if score > best_score:
-            best_bounding_box = boxes[i]
+            best_bounding_box = box
+            best_conf = conf    
             best_score = score
-            confidence = confidences[i]
-    
-    return best_bounding_box, confidence
+    return best_box, best_conf
 
 
 if which_model == 'yolo_v5':
@@ -151,6 +153,7 @@ else:
         red=0,
         blue=1,
     )
+
 def filter_team(boxes, confidences, class_ids):
     """
     Filter bounding boxes based on team color.

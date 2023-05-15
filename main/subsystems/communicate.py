@@ -42,9 +42,12 @@ def when_aiming_refreshes():
     capture_delay = min(int(time()*1000 - capture_time), 255) # max 255 ms delay
 
     # Sending XYZ position (meters), time since frame capture, and status of target relative to front of camera plane
-    message.X = float(runtime.aiming.target_3d[0])
-    message.Y = float(runtime.aiming.target_3d[1])
-    message.Z = float(runtime.aiming.target_3d[2])
+    if runtime.aiming.target_3d is None:
+        message.X = message.Y = message.Z = 0.0
+    else:
+        message.X = float(runtime.aiming.target_3d[0])
+        message.Y = float(runtime.aiming.target_3d[1])
+        message.Z = float(runtime.aiming.target_3d[2])
     message.capture_delay = capture_delay
     message.status = runtime.aiming.target_status.value
     print(f'''msg({f"X:{message.X:.4f}".rjust(7)}, {f"Y:{message.Y:.4f}".rjust(7)}, {f"Z:{message.Z:.4f}".rjust(7)}, {f"delay:{message.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")

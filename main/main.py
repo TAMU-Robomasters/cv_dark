@@ -10,9 +10,6 @@ import pyston_lite
 pyston_lite.enable()
 
 # Run detection infinitely
-
-average_fps = 0
-
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
     # t1 = time_synchronized()
     model.when_frame_arrives()
@@ -24,9 +21,7 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
     log.when_finished_processing_frame()
     # t5 = time_synchronized()
     # print(f'\nframe {runtime.frame_number} took {t5-t1:.3f} seconds. model: {t2-t1:.3f}, aim: {t3-t2:.3f}, communicate: {t4-t3:.3f}, log: {t5-t4:.3f}')
-    # average_fps = (average_fps + 1/(t5-t1)) / 2
     # print(f'average fps: {average_fps:.2f}')
-
-# print(f'average fps: {average_fps:.2f}')
-
+# print(runtime.frame_number)
+# print(f'average fps: {total_fps/runtime.frame_number:.2f}')
 log.when_iteration_stops()
