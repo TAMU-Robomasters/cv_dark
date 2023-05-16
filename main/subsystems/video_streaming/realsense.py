@@ -127,25 +127,36 @@ class VideoStream:
             return wrapper()
     
     def get_depth_at_point(self, point):
-        depth_point = rs.rs2_project_color_pixel_to_depth_pixel(self.depth_frame.get_data(),
-                                                            self.depth_scale,
-                                                            self.depth_min,
-                                                            self.depth_max,
-                                                            self.depth_intrin,
-                                                            self.color_intrin,
-                                                            self.depth_to_color_extrin,
-                                                            self.color_to_depth_extrin,
-                                                            point) # color pixel)
-        if (depth_point[0] < 0 or depth_point[1] < 0):
+        depth_point = rs.rs2_project_color_pixel_to_depth_pixel(
+            self.depth_frame.get_data(),
+            self.depth_scale,
+            self.depth_min,
+            self.depth_max,
+            self.depth_intrin,
+            self.color_intrin,
+            self.depth_to_color_extrin,
+            self.color_to_depth_extrin,
+            point
+        ) # color pixel)
+        if depth_point[0] < 0 or depth_point[1] < 0:
             return None
         depth = self.depth_frame.get_distance(int(depth_point[0]), int(depth_point[1]))
         return depth
     
     def get_xyz_at_point(self, point):
+        """
+            Example:
+                x,y,x = video.get_xyz_at_point([1,2])
+                
+            Summary:
+                X is right/left          # FIXME: is positive X left or right?
+                Y is forward/backward    # FIXME: is positive Y forward or backwards?
+                Z is up/down             # FIXME: is positive Z up or down?
+        """
         depth = self.get_depth_at_point(point)
         if depth is None:
             return None
-        point_3d = rs.rs2_deproject_pixel_to_point(self.depth_intrin, point, depth) # X is right/left, Y is forward/backward, Z is up/down
+        point_3d = rs.rs2_deproject_pixel_to_point(self.depth_intrin, point, depth) 
         point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
         return point_3d
 

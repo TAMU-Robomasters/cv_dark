@@ -78,21 +78,33 @@ def get_xyz_at_color_coords(point):
 
 def get_dist_to_bbox(bbox):
     depth_sample_coords = get_depth_sample_coords(bbox)
-    depth_sample = np.array([video_stream.vid_source.get_depth_at_point(point) for point in depth_sample_coords])
+    depth_sample = np.array(
+        [
+            video_stream.vid_source.get_depth_at_point(point)
+                for point in depth_sample_coords
+        ]
+    )
     depth_sample = depth_sample[depth_sample > 0]
     if len(depth_sample) == 0:
         return 0
     return np.median(depth_sample)
 
+
 def get_depth_sample_coords(bbox):
     bbxtl = bbox.x_top_left.item()
     bbytl = bbox.y_top_left.item()
-    x, y = np.meshgrid(np.linspace(bbxtl, 
-                                   bbxtl + bbox.width.item(),
-                                   num=3,
-                                   endpoint=True).astype(int),
-                       np.linspace(bbytl, 
-                                   bbytl + bbox.height.item(),
-                                   num=3,
-                                   endpoint=True).astype(int))
+    x, y = np.meshgrid(
+        np.linspace(
+            bbxtl,
+            bbxtl + bbox.width.item(),
+            num=3,
+            endpoint=True
+        ).astype(int),
+        np.linspace(
+            bbytl,
+            bbytl + bbox.height.item(),
+            num=3,
+            endpoint=True
+        ).astype(int),
+    )
     return np.stack((x.flatten(), y.flatten()), axis=1)
