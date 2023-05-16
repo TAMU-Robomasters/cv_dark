@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/bid-p/yolov7.git
+	branch = main
+	commit = 91cb6b0b3032c94b4f3ad49fd2559e18a1707da5
+	parent = 4ebafc2bc51afebd4fe6b94c4dafb61056d31593
+	method = merge
+	cmdver = 0.4.1
