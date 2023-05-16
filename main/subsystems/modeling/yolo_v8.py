@@ -26,6 +26,7 @@ def init_yolo_v8(model):
 
     from subsystems.modeling.plugins.yolo_v8_plugins.yolo_v8_plugin import Yolov8
 
+    checked_path = None
     if hardware_acceleration == 'cpu' or hardware_acceleration == 'gpu':
         if not os.path.exists(path_to.yolo_v8.pytorch_model):
             raise Exception(

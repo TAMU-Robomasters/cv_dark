@@ -64,7 +64,7 @@
             model:
                 load_from_pickle: false
                 which_model: yolo_v8 # yolo_v5 or yolo_v4
-                hardware_acceleration: null # one of: [ null, "gpu", "tensor_rt" ]
+                hardware_acceleration: 'cpu' # one of: [ 'cpu', "gpu", "tensor_rt" ]
                 minimum_confidence: 0.25 # should be a value between 0-1
                 # ^ minimum conf not applied when using tensor_rt
                 input_dimension: 416
@@ -144,7 +144,7 @@
         
         GPU=NONE:
             model:
-                hardware_acceleration: null
+                hardware_acceleration: 'cpu'
         GPU=TENSOR_RT: &tensor_rt
             model:
                 hardware_acceleration: "tensor_rt"

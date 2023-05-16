@@ -18,7 +18,7 @@ which_model                   = config.model.which_model
 load_from_pickle              = config.model.load_from_pickle
 
 # config check
-assert hardware_acceleration in ['tensor_rt', 'gpu', None]
+assert hardware_acceleration in ['tensor_rt', 'gpu', 'cpu']
 
 # 
 # 

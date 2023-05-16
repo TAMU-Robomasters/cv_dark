@@ -23,7 +23,7 @@ which_model           = config.model.which_model
 hue_shift_amount      = config.model.hue_shift_amount
 
 # config check
-assert hardware_acceleration in ['tensor_rt', 'gpu', None]
+assert hardware_acceleration in ['tensor_rt', 'gpu', 'cpu',]
 
 # 
 # shared data (imported by aiming and integration)

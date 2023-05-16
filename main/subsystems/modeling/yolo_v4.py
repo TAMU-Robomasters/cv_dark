@@ -16,7 +16,7 @@ hardware_acceleration = config.model.hardware_acceleration
 input_dimension       = config.model.input_dimension
 which_model           = config.model.which_model
 # config check
-assert hardware_acceleration in ['tensor_rt', 'gpu', None]
+assert hardware_acceleration in ['tensor_rt', 'gpu', 'cpu']
 
 # 
 # 
