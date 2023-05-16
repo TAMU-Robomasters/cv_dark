@@ -1,3 +1,0 @@
-[submodule "tensorrtx"]
-	path = tensorrtx
-	url = https://github.com/wang-xinyu/tensorrtx.git
