@@ -13,9 +13,9 @@ videostream     = config.videostream
 aiming          = config.aiming
 record_interval = videostream.testing.record_interval
 
-MUS_TO_MS = 1000
+MICRO_SECONDS_TO_MILISECONDS = 1000
 
-runtime.realsense = LazyDict(
+runtime.camera = LazyDict(
     frame=None,
     acceleration=LazyDict(x=0,y=0,z=0),
     gyro=LazyDict(x=0,y=0,z=0),
@@ -98,15 +98,15 @@ class VideoStream:
         def generator():
             for frame_number in count(1): # starting at 1
                 try:
-                    frame = runtime.realsense.frame = self.pipeline.wait_for_frames()
-                    runtime.realsense.acceleration = frame[2].as_motion_frame().get_motion_data()
-                    runtime.realsense.gyro         = frame[3].as_motion_frame().get_motion_data()
+                    frame = runtime.camera.frame = self.pipeline.wait_for_frames()
+                    runtime.camera.acceleration = frame[2].as_motion_frame().get_motion_data()
+                    runtime.camera.gyro         = frame[3].as_motion_frame().get_motion_data()
                     self.color_frame = frame.get_color_frame()
                     self.depth_frame = frame.get_depth_frame()
 
                     capture_time = frame.get_frame_metadata(rs.frame_metadata_value.sensor_timestamp)
                     frame_time = frame.get_frame_metadata(rs.frame_metadata_value.frame_timestamp)
-                    self.capture_time = (time()*1000) - ((frame_time - capture_time)/MUS_TO_MS)
+                    self.capture_time = (time()*1000) - ((frame_time - capture_time)/MICRO_SECONDS_TO_MILISECONDS)
                     # print("frame_number:", frame_number, "capture_time:", self.capture_time)
                     yield frame_number, array(self.color_frame.get_data()), array(self.depth_frame.get_data())
                 except Exception as error: # failure to connect to realsense
