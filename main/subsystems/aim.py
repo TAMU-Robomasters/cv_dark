@@ -80,7 +80,7 @@ def when_bounding_boxes_refresh():
 # 
 def get_xyz_at_color_coords(point):
     # point is [x, y], return tuple (x, y, z)
-    point_3d = video_stream.vid_source.get_xyz_at_point(point)
+    point_3d = video_stream.vid_source.get_xyz_at_color_point(point)
     return point_3d
 
 def get_dist_to_bbox(bbox):
@@ -103,33 +103,3 @@ def get_depth_sample_coords(bbox):
                                    num=3,
                                    endpoint=True).astype(int))
     return np.stack((x.flatten(), y.flatten()), axis=1)
-
-# def distance(point_1: tuple, point_2: tuple):
-#     """
-#     Returns the distance between two points.
-
-#     Input: Two points.
-#     Output: Distance in pixels.
-#     """
-#     distance = (sum((p1 - p2)**2 for p1, p2 in zip(point_1, point_2))) ** (1 / 2)
-#     return distance
-
-# def angle_from_center(point_to_aim_at, screen_center, horizontal_fov, vertical_fov):
-#     """
-#     Returns the x and y angles between the screen_center of the image and the screen_center of a bounding box.
-
-#     We send screen_center instead of importing 
-#     from info.yaml since recorded video footage could be different resolutions.
-
-#     Input: Bounding box and camera screen_center.
-#     Output: Horizontal and vertical angle in radians.
-#     """
-
-#     x_bbox_center, y_bbox_center, x_cam_center, y_cam_center = point_to_aim_at[0], screen_center[1]*2-point_to_aim_at[1], screen_center[0], screen_center[1]
-
-#     horizontal_angle = ((x_bbox_center-x_cam_center)/x_cam_center)*(horizontal_fov/2)
-#     vertical_angle = ((y_bbox_center-y_cam_center)/y_cam_center)*(vertical_fov/2)
-
-#     # print("horizontal_angle:",f"{horizontal_angle:.4f}"," vertical_angle:", f"{vertical_angle:.4f}", end=", ")
-
-#     return math.radians(horizontal_angle),math.radians(vertical_angle)
