@@ -7,7 +7,6 @@ from super_map import LazyDict
 from toolbox.globals import path_to, config, print, runtime
 from subsystems.communicating.serial_help import setup_serial_port
 import subsystems.video_stream as video_stream
-# from subsystems.aim import TARGET_STATUS
 
 # 
 # config

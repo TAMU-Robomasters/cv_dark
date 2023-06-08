@@ -57,10 +57,14 @@
             hardware:
                 board: laptop
                 camera: null # "realsense" or "zed"
+                camera_has_depth: false
+                camera_has_pose: false
+                camera_has_acceleration: false
+                camera_has_gyro: false
             model:
                 load_from_pickle: false
                 which_model: yolo_v8 # yolo_v5 or yolo_v4
-                hardware_acceleration: null # one of: [ null, "gpu", "tensor_rt" ]
+                hardware_acceleration: 'cpu' # one of: [ 'cpu', "gpu", "tensor_rt" ]
                 minimum_confidence: 0.25 # should be a value between 0-1
                 # ^ minimum conf not applied when using tensor_rt
                 input_dimension: 416
@@ -140,7 +144,7 @@
         
         GPU=NONE:
             model:
-                hardware_acceleration: null
+                hardware_acceleration: 'cpu'
         GPU=TENSOR_RT: &tensor_rt
             model:
                 hardware_acceleration: "tensor_rt"
@@ -191,6 +195,8 @@
         CAMERA=ZED:
             hardware:
                 camera: zed
+                camera_has_depth: true
+                camera_has_pose: true
             aiming:
                 # zed stream width/height pulled from camera on initialization
                 stream_framerate: 30
@@ -199,6 +205,10 @@
         CAMERA=REALSENSE:
             hardware:
                 camera: realsense
+                camera_has_depth: true
+                camera_has_pose: false
+                camera_has_acceleration: true
+                camera_has_gyro: true
             aiming:
                 stream_width: 848
                 stream_height: 480

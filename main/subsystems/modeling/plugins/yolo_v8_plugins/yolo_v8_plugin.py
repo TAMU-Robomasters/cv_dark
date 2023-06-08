@@ -14,15 +14,23 @@ class Yolov8(object):
     """
     description: A YOLOv8 class that wraps initialization, preprocess and postprocess ops.
     """
-
+    
     def __init__(self, model_filepath, input_dimension, acceleration, warmup=True):
         # config check
-        assert acceleration in ['tensor_rt', 'gpu', None]
+        assert acceleration in ['tensor_rt', 'gpu', 'cpu', None ]
         self.acceleration = acceleration
+        if acceleration == 'gpu' and torch.cuda.is_available():
+            print("[modeling]   gpu_acceleration: ENABLED\n")
+            # loaded_model = loaded_model.to(torch.device("cuda"))
+            self.device = torch.device("cuda")
+            # print(next(self.model.parameters()).is_cuda)
+        else:
+            print("[modeling]   Running on CPU\n")
+            self.device = torch.device("cpu")
 
         self.input_w = self.input_h = input_dimension
 
-        if self.acceleration == 'cpu' or self.acceleration == 'gpu':
+        if self.acceleration in [ None, "cpu", "gpu"]:
             if self.acceleration == 'gpu' and torch.cuda.is_available():
                 print("[modeling]   gpu_acceleration: ENABLED\n")
                 self.device = torch.device("cuda")
@@ -66,6 +74,8 @@ class Yolov8(object):
             # empty nms function because tensorrt does it internally
             self.nms = lambda preds, *args, **kwargs: preds
             print("[modeling]   Warning: TensorRT will use prebuilt NMS value of 0.2. To change, rebuild TensorRT engine with new value.\n")
+        else:
+            raise Exception(f'''acceleration == {acceleration}''')
 
     def preprocess_image(self, image_pre):
         # takes in (h, w, c) BGR image

@@ -7,8 +7,6 @@ import numpy as np
 from super_map import LazyDict
 from statistics import mean as average
 
-from pyrealsense2 import rs2_project_color_pixel_to_depth_pixel
-
 from toolbox.globals import path_to, config, print, runtime, time_synchronized
 from toolbox.geometry_tools import Position, BoundingBox
 from subsystems.aiming.predictor import Predictor
@@ -25,8 +23,8 @@ class TARGET_STATUS(Enum):
 MIN_RANGE                            = config.aiming.min_range
 MAX_RANGE                            = config.aiming.max_range
 CAMERA                               = config.hardware.camera
-DEPTH_COMPATIBLE                     = CAMERA == 'realsense' or CAMERA == 'zed'
-POSE_COMPATIBLE                      = CAMERA == 'zed'
+DEPTH_COMPATIBLE                     = config.hardware.camera_has_depth
+POSE_COMPATIBLE                      = config.hardware.camera_has_pose
 
 # 
 # shared data (imported by modeling and integration)
@@ -43,10 +41,9 @@ runtime.aiming = LazyDict(
 def when_bounding_boxes_refresh():
     found_robot       = runtime.modeling.found_robot
     best_bounding_box = runtime.modeling.best_bounding_box
-    acceleration      = runtime.realsense.acceleration if CAMERA == 'realsense' else None
-    gyro              = runtime.realsense.gyro         if CAMERA == 'realsense' else None
+    acceleration      = runtime.camera.acceleration if config.hardware.camera_has_acceleration else None
+    gyro              = runtime.camera.gyro         if config.hardware.camera_has_gyro         else None
 
-    # t1 = time_synchronized()
     # Reset target info at beginning of loop
     center_point = Position((0, 0))
     target_3d = (0, 0, 0)
@@ -66,10 +63,6 @@ def when_bounding_boxes_refresh():
         
         center_point = Position(best_bounding_box.center) # for logging/displays
 
-    # if POSE_COMPATIBLE:
-    #     video_stream.vid_source.get_position()
-    #     video_stream.vid_source.get_orientation()
-
     # update the shared data
     runtime.aiming.target_status      = target_status
     runtime.aiming.target_3d          = target_3d
@@ -85,21 +78,33 @@ def get_xyz_at_color_coords(point):
 
 def get_dist_to_bbox(bbox):
     depth_sample_coords = get_depth_sample_coords(bbox)
-    depth_sample = np.array([video_stream.vid_source.get_depth_at_point(point) for point in depth_sample_coords])
+    depth_sample = np.array(
+        [
+            video_stream.vid_source.get_depth_at_point(point)
+                for point in depth_sample_coords
+        ]
+    )
     depth_sample = depth_sample[depth_sample > 0]
     if len(depth_sample) == 0:
         return 0
     return np.median(depth_sample)
 
+
 def get_depth_sample_coords(bbox):
     bbxtl = bbox.x_top_left.item()
     bbytl = bbox.y_top_left.item()
-    x, y = np.meshgrid(np.linspace(bbxtl, 
-                                   bbxtl + bbox.width.item(),
-                                   num=3,
-                                   endpoint=True).astype(int),
-                       np.linspace(bbytl, 
-                                   bbytl + bbox.height.item(),
-                                   num=3,
-                                   endpoint=True).astype(int))
+    x, y = np.meshgrid(
+        np.linspace(
+            bbxtl,
+            bbxtl + bbox.width.item(),
+            num=3,
+            endpoint=True
+        ).astype(int),
+        np.linspace(
+            bbytl,
+            bbytl + bbox.height.item(),
+            num=3,
+            endpoint=True
+        ).astype(int),
+    )
     return np.stack((x.flatten(), y.flatten()), axis=1)
