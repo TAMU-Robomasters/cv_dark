@@ -26,6 +26,9 @@ black = "^22.3.0"
 pandas = "^1.4.3"
 seaborn = "^0.11.2"
 torchvision = "0.13.1"
+ultralytics = "^8.0.103"
+pyston-lite = "^2.3.5"
+omegaconf = "2.3.0"
 [tool.poetry.dev-dependencies]
 
 [build-system]

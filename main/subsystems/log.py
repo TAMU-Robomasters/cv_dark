@@ -6,7 +6,6 @@ from toolbox.video_tools import Video
 from toolbox.image_tools import Image, rgb
 from toolbox.pickle_tools import large_pickle_save
 
-from subsystems.aim import DEPTH_COMPATIBLE
 
 # 
 # config
@@ -19,7 +18,8 @@ record_video_output_color = absolute_path_to.record_video_output_color
 video_output              = absolute_path_to.video_output
 max_number_of_frames      = config.log.max_number_of_frames
 camera                    = config.hardware.camera
-runtime.benchmark         = config.mode == 'benchmark'
+DEPTH_COMPATIBLE          = config.hardware.camera_has_depth
+SHOULD_BENCHMARK          = config.mode == 'benchmark'
 
 # 
 # init
@@ -80,7 +80,7 @@ def when_finished_processing_frame():
     if display_live_frames:
         image.show()
     
-    if (save_frame_to_file and (frame_number % save_rate == 0)):
+    if save_frame_to_file and (frame_number % save_rate == 0):
         global color_frames
         global depth_frames
         color_frames.append(runtime.color_image)
@@ -95,7 +95,7 @@ def when_finished_processing_frame():
         if len(color_frames) % save_to_disk_after == 0:
             save_frames_as_video(path=video_color_output_path)
 
-    if runtime.benchmark and runtime.frame_number == config.stop_after:
+    if SHOULD_BENCHMARK and runtime.frame_number == config.stop_after:
             print("\nBenchmark Complete")
             when_iteration_stops()
             exit()
@@ -192,7 +192,7 @@ def generate_image(fps=0):
     disp_target_3d = [round(x, 3) for x in target_3d]
     x_location = 30
     y_location = 50
-    if (DEPTH_COMPATIBLE):
+    if DEPTH_COMPATIBLE:
         image.add_text(text=f"target_3d: {    disp_target_3d         }", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"status: {           status.name            }", location=(x_location, y_location)); y_location += 50

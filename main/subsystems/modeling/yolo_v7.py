@@ -18,7 +18,7 @@ input_dimension = config.model.input_dimension
 which_model = config.model.which_model
 
 # config check
-assert hardware_acceleration in ['tensor_rt', 'gpu', None]
+assert hardware_acceleration in ['tensor_rt', 'gpu', 'cpu']
 
 #
 #
@@ -59,7 +59,7 @@ def init_yolo_v7(model):
                 f"model not found at {path_to.yolo_v7.pytorch_model}")
 
         # config check
-        assert hardware_acceleration in ['tensor_rt', 'gpu', None]
+        assert hardware_acceleration in ['tensor_rt', 'gpu', 'cpu']
 
         # create Yolov7 object
         model.yolov7 = Yolov7(repo_filepath=path_to.yolo_v7.path_to_folder,
