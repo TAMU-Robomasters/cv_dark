@@ -151,10 +151,10 @@ class VideoStream:
         depth = self.depth_frame.get_distance(int(depth_point[0]), int(depth_point[1]))
         return depth
     
-    def get_xyz_at_point(self, point):
+    def get_xyz_at_color_point(self, point):
         """
             Example:
-                x,y,x = video.get_xyz_at_point([1,2])
+                x,y,x = video.get_xyz_at_color_point([1,2])
                 
             Summary:
                 X is right/left          # FIXME: is positive X left or right?
