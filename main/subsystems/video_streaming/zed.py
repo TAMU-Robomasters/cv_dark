@@ -34,7 +34,7 @@ class VideoStream:
         init_params.depth_maximum_distance = aiming.max_depth
 
         self.capture_time = 0
-                
+
         err = self.zed.open(init_params)
         while err != sl.ERROR_CODE.SUCCESS:
             print('VideoStream: Failed to open ZED camera! Retrying...')
