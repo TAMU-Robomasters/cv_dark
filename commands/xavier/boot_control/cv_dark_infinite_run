@@ -2,8 +2,12 @@
 
 
 # 
-# note: all this file does is login as the xavier user, cd to the repo, and then run the "xavier/boot_control/boot_command.ignore"
-#       this handles logging output to a file
+# note: when the boot script runs NOTHING is setup
+#       this script:
+#       1. sets up all the normal user stuff
+#       2. logs all output to $HOME/boot.log
+#       3. runs cv_dark/commands/xavier/boot_control/boot_command.ignore IN A LOOP
+# 
 
 username="xavier"
 home="/home/$username"
