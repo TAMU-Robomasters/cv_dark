@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+
+
+# 
+# note: all this file does is login as the xavier user, cd to the repo, and then run the "xavier/boot_control/boot_command.ignore"
+#       this handles logging output to a file
+
 username="xavier"
 home="/home/$username"
 boot_log="$home/boot.log"
@@ -13,23 +19,19 @@ then
 fi
 rm -f "$boot_log"
 
+
 sudo runuser - "$username" -c '
-    echo starting
-    . "/home/xavier/repos/cv_dark/commands/xavier/boot_control/boot_command.ignore"
-    echo process died
+    while true
+    do
+        cd /home/xavier/repos/cv_dark/
+        . "/home/xavier/repos/cv_dark/commands/xavier/boot_control/boot_command.ignore"
+        
+        echo "#"
+        echo "#"
+        echo "#"
+        echo "# PROCESS DIED RESTARTING"
+        echo "#"
+        echo "#"
+        echo "#"
+    done
 '  2>>"$boot_log" 1>>"$boot_log"
-# {
-    
-#     # laod the home of the xavier so that python3 is the correct python and PYTHONPATH (and other env vars) are setup
-#     . "/home/xavier/.zshrc"
-    
-    
-#     # echo "# "                           >>"$boot_log"
-#     # echo "# "                           >>"$boot_log"
-#     # echo "# PROCESS DIED: TRYING AGAIN" >>"$boot_log"
-#     # echo "# "                           >>"$boot_log"
-#     # echo "# "                           >>"$boot_log"
-#     # while true
-#     # do
-#     # done
-# } 2>>"$boot_log" 1>>"$boot_log"
