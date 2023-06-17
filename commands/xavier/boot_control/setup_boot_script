@@ -35,12 +35,29 @@ then
     echo 'file: '"$filepath"
     echo '
         username="xavier"
+        home="/home/$username"
         # laod the home of the xavier so that python3 is the correct python and PYTHONPATH (and other env vars) are setup
         . "/home/$username/.zshrc"
         
+        boot_log="$home/boot.log"
+        old_boot_log="$home/boot.old.log"
+        # handle logging file
+        rm -f "$old_boot_log"
+        # copy old file
+        if [ -f "$boot_log" ]
+        then
+            cp "$boot_log" "$old_boot_log"
+        fi
+        rm -f "$boot_log"
+        
         while true
         do
-            python3 "/home/xavier/repos/cv_dark/main/main.py" @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME
+            python3 "/home/xavier/repos/cv_dark/main/main.py" @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME 2>&1 1>>boot.log
+            echo "# "                           >>boot.log
+            echo "# "                           >>boot.log
+            echo "# PROCESS DIED: TRYING AGAIN" >>boot.log
+            echo "# "                           >>boot.log
+            echo "# "                           >>boot.log
         done
     ' > "$filepath"
     chmod ugo+x "$filepath"
