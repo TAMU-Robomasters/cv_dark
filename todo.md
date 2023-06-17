@@ -5,6 +5,6 @@
 - fix glibc issue
 
 - clone all SD cards
-- try the nvme drive
+- try the nvme drive: https://github.com/jetsonhacks/bootFromExternalStorage
 
 - calibrate realsense
