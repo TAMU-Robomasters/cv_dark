@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-sudo bash -c <<'HEREDOC_NAME'
+read -r -d '' stuff_for_sudo <<'HEREDOC_NAME'
 
-echo "#"
-echo "# writing to /etc/systemd/system/xavier_boot.service"
-echo "#"
 echo '[Unit]
 Description=CV Dark Boot
 After=network.target
@@ -23,6 +20,10 @@ sudo systemctl start cv_dark_boot
 
 HEREDOC_NAME
 
+echo "#"
+echo "# writing to /etc/systemd/system/xavier_boot.service"
+echo "#"
+sudo bash -c "$stuff_for_sudo"
 
 echo "#"
 echo "# ensuring executable"
