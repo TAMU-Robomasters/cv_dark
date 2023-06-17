@@ -4,16 +4,16 @@ sudo bash -c <<'HEREDOC_NAME'
 echo "#"
 echo "# writing to /etc/systemd/system/xavier_boot.service"
 echo "#"
-echo '"'"'[Unit]
+echo '[Unit]
 Description=CV Dark Boot
 After=network.target
 
 [Service]
-ExecStart=sudo /home/xavier/repos/cv_dark/commands/cv_dark_infinite_run
+ExecStart=sudo /home/xavier/repos/cv_dark/commands/xavier/boot_control/cv_dark_infinite_run.ignore
 
 [Install]
 WantedBy=default.target
-'"'"' > /etc/systemd/system/cv_dark_boot.service
+' > /etc/systemd/system/cv_dark_boot.service
 
 echo "#"
 echo "# starting services"
@@ -21,6 +21,26 @@ echo "#"
 sudo systemctl enable cv_dark_boot
 sudo systemctl start cv_dark_boot
 
-echo "done; restart should now work"
-
 HEREDOC_NAME
+
+
+echo "#"
+echo "# ensuring executable"
+echo "#"
+filepath="/home/xavier/repos/cv_dark/commands/xavier/boot_control/cv_dark_infinite_run.ignore"
+if ! { [ -f "$filepath" ] && [ -r "$filepath" ] && [ -x "$filepath" ]; }
+then
+    echo 'NOTE: change this file if this bot uses the ZED camera'
+    echo 'file: '"$filepath"
+    echo '
+        username="xavier"
+        # laod the home of the xavier so that python3 is the correct python and PYTHONPATH (and other env vars) are setup
+        . "/home/$username/.zshrc"
+        
+        while true
+        do
+            python3 "/home/xavier/repos/cv_main/main/main.py" @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME
+        done
+    ' > "$filepath"
+fi
+echo "done; restart should now work"

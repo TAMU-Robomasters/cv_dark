@@ -22,3 +22,10 @@ Its the home of all Tamu RoboMaster's cool code. (If you're looking for *boring*
     from toolbox.globals import path_to, config
     config.our_team_color
     ```
+
+# How to Setup New Xavier
+
+```sh
+sudo ./commands/reset_zerotier
+sudo ./commands/xavier/boot_control/setup_boot_script
+```
