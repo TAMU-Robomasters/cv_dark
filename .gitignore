@@ -4,7 +4,7 @@
 # *.pt
 # *.trt
 # *.engine
-
+tensorrtx/*
 \.idea
 *.nosync*
 **/*.dont-sync
