@@ -43,5 +43,6 @@ then
             python3 "/home/xavier/repos/cv_main/main/main.py" @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME
         done
     ' > "$filepath"
+    chmod ugo+x "$filepath"
 fi
 echo "done; restart should now work"
