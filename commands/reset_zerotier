@@ -7,4 +7,7 @@ sudo rm /var/lib/zerotier-one/identity.public
 
 sudo service zerotier-one start
 
+echo "Waiting 10 seconds for ZeroTier service to start before attempting to join network..."
+sleep 10
+
 sudo zerotier-cli join a84ac5c10a5ef3b8
