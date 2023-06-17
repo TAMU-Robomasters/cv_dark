@@ -73,7 +73,7 @@ def when_bounding_boxes_refresh():
 # 
 def get_xyz_at_color_coords(point):
     # point is [x, y], return tuple (x, y, z)
-    point_3d = video_stream.vid_source.get_xyz_at_point(point)
+    point_3d = video_stream.vid_source.get_xyz_at_color_point(point)
     return point_3d
 
 def get_dist_to_bbox(bbox):

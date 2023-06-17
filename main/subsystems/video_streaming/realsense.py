@@ -15,6 +15,8 @@ record_interval = videostream.testing.record_interval
 
 MICRO_SECONDS_TO_MILISECONDS = 1000
 
+align = rs.align(rs.stream.color)
+
 runtime.camera = LazyDict(
     frame=None,
     acceleration=LazyDict(x=0,y=0,z=0),
@@ -101,6 +103,12 @@ class VideoStream:
                     frame = runtime.camera.frame = self.pipeline.wait_for_frames()
                     runtime.camera.acceleration = frame[2].as_motion_frame().get_motion_data()
                     runtime.camera.gyro         = frame[3].as_motion_frame().get_motion_data()
+
+                    # Frame Alignment
+                    # aligned_frames = align.process(frame)
+                    # self.color_frame = aligned_frames.get_color_frame()
+                    # self.depth_frame = aligned_frames.get_depth_frame()
+
                     self.color_frame = frame.get_color_frame()
                     self.depth_frame = frame.get_depth_frame()
 
@@ -143,10 +151,10 @@ class VideoStream:
         depth = self.depth_frame.get_distance(int(depth_point[0]), int(depth_point[1]))
         return depth
     
-    def get_xyz_at_point(self, point):
+    def get_xyz_at_color_point(self, point):
         """
             Example:
-                x,y,x = video.get_xyz_at_point([1,2])
+                x,y,x = video.get_xyz_at_color_point([1,2])
                 
             Summary:
                 X is right/left          # FIXME: is positive X left or right?
@@ -158,6 +166,9 @@ class VideoStream:
             return None
         point_3d = rs.rs2_deproject_pixel_to_point(self.depth_intrin, point, depth) 
         point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
+
+        point_3d[1] += -0.0042 # offset Y to front of glass
+        point_3d[0] += -0.0325 # offset X to center of glass
         return point_3d
 
     def __del__(self):

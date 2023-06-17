@@ -144,7 +144,7 @@ def yolo_v4_get_bounding_boxes(model, frame, minimum_confidence, threshold):
 
                     confidences.append(float(this_confidence))
                     class_ids.append(class_id)
-       
+
     # make each box a proper class instead of just a list
     boxes = [ BoundingBox(each) for each in boxes ]
     

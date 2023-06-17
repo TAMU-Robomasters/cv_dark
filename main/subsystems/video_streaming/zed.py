@@ -34,7 +34,7 @@ class VideoStream:
         init_params.depth_maximum_distance = aiming.max_depth
 
         self.capture_time = 0
-                
+
         err = self.zed.open(init_params)
         while err != sl.ERROR_CODE.SUCCESS:
             print('VideoStream: Failed to open ZED camera! Retrying...')
@@ -94,7 +94,7 @@ class VideoStream:
                     print('(retrying)')
         return generator()
 
-    def get_xyz_at_point(self, point):
+    def get_xyz_at_color_point(self, point):
         self.zed.retrieve_measure(self.point_cloud, sl.MEASURE.XYZRGBA)
         point_3d = self.point_cloud.get_value(point[0], point[1])
         if (point_3d[0] != sl.ERROR_CODE.SUCCESS):
