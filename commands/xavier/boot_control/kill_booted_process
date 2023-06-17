@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-ps aux | grep -v $$ |  grep -E "cv_dark_infinite_run.ignore" | awk '{ print $2 }' | sudo xargs kill -9
+ps aux | grep -v $$ |  grep -E "cv_dark_infinite_run" | awk '{ print $2 }' | sudo xargs kill -9

@@ -6,7 +6,7 @@ Description=CV Dark Boot
 After=network.target
 
 [Service]
-ExecStart=sudo /home/xavier/repos/cv_dark/commands/xavier/boot_control/cv_dark_infinite_run.ignore
+ExecStart=sudo /home/xavier/repos/cv_dark/commands/xavier/boot_control/cv_dark_infinite_run
 
 [Install]
 WantedBy=default.target
@@ -28,37 +28,13 @@ sudo bash -c "$stuff_for_sudo"
 echo "#"
 echo "# ensuring executable"
 echo "#"
-filepath="/home/xavier/repos/cv_dark/commands/xavier/boot_control/cv_dark_infinite_run.ignore"
+filepath="/home/xavier/repos/cv_dark/commands/xavier/boot_control/boot_command.ignore"
 if ! { [ -f "$filepath" ] && [ -r "$filepath" ] && [ -x "$filepath" ]; }
 then
     echo 'NOTE: change this file if this bot uses the ZED camera'
     echo 'file: '"$filepath"
     echo '
-        username="xavier"
-        home="/home/$username"
-        # laod the home of the xavier so that python3 is the correct python and PYTHONPATH (and other env vars) are setup
-        . "/home/$username/.zshrc"
-        
-        boot_log="$home/boot.log"
-        old_boot_log="$home/boot.old.log"
-        # handle logging file
-        rm -f "$old_boot_log"
-        # copy old file
-        if [ -f "$boot_log" ]
-        then
-            cp "$boot_log" "$old_boot_log"
-        fi
-        rm -f "$boot_log"
-        
-        while true
-        do
-            python3 "/home/xavier/repos/cv_dark/main/main.py" @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME 2>&1 1>>"$boot_log"
-            echo "# "                           >>"$boot_log"
-            echo "# "                           >>"$boot_log"
-            echo "# PROCESS DIED: TRYING AGAIN" >>"$boot_log"
-            echo "# "                           >>"$boot_log"
-            echo "# "                           >>"$boot_log"
-        done
+        python3 "/home/xavier/repos/cv_dark/main/main.py" @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME
     ' > "$filepath"
     chmod ugo+x "$filepath"
 fi
