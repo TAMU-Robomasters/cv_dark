@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+sudo bash -c <<'HEREDOC_NAME'
+
+echo "#"
+echo "# writing to /etc/systemd/system/xavier_boot.service"
+echo "#"
+echo '"'"'[Unit]
+Description=CV Dark Boot
+After=network.target
+
+[Service]
+ExecStart=sudo /home/xavier/repos/cv_dark/commands/cv_dark_infinite_run
+
+[Install]
+WantedBy=default.target
+'"'"' > /etc/systemd/system/cv_dark_boot.service
+
+echo "#"
+echo "# starting services"
+echo "#"
+sudo systemctl enable cv_dark_boot
+sudo systemctl start cv_dark_boot
+
+echo "done; restart should now work"
+
+HEREDOC_NAME
