@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+sudo systemctl stop zerotier-one
+
+sudo rm /var/lib/zerotier-one/identity.secret
+sudo rm /var/lib/zerotier-one/identity.public
+
+sudo service zerotier-one start
+
+sudo zerotier-cli join a84ac5c10a5ef3b8
