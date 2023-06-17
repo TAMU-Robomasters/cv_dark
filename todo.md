@@ -1,4 +1,6 @@
-- log output 
+- log boot output 
+- copy SD card to disk
+- write to NVMe
 - create `we_red` and `we_blue`
 - write to frames using OpenCV writer
 - have a way of disabling networking
