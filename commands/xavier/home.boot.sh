@@ -1,7 +1,7 @@
 
         # give self access to port (which resets on boot for some reason)
         echo 'trying to give myself access to the port'
-        username="xavier3"
+        username="xavier"
         pass="$(cat "/home/$username/.pass")"
         sudo -S usermod -a -G dialout $username <<< "$pass" && echo "gave self access"
 

@@ -2,63 +2,63 @@
 please work
 trying to give myself access to the port
 trying to load zshrc
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/00_00_link_from_bash.zsh
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/00_01_nvidia_defaults.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/00_03_nvidia_bash_defaults.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_00_linux_keybindings.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_00_zsh_settings.zsh
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_01_enable_globbing.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_01_oh_my_zsh.zsh
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_02_00_setup_cuda.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_02_enable_globbing.zsh
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_03_tab_completion.zsh
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_04_zsh_autosuggest.zsh
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_05_zsh_syntax_highlighting.zsh
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_06_no_bad_aliases.zsh
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_07_spaceship_prompt.zsh
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/01_11_set_editor_var.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/02_00_10_ensure_nix.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/02_00_universal_tools.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/02_01_mac_tools.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/02_02_00_ensure_cv_main.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/02_04_wasmer.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/02_11_00_ensure_git.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/03_00_00_cmake.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/03_01_git_tools.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/03_03_add_local_bin_to_path.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/04_02_00_realsense.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/04_04_docker_tools.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/05_00_00_gtk_fix.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/05_01_00_setup_python.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/05_02_python3.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/05_03_nix.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/05_04_rust.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/06_00_00_setup_venv.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/06_01_ld_path.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/06_01_setup_cuda.bash
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/092_000_doit_function.sh
-[.zshrc] loading: /home/xavier4/Terminal//shells/zsh/events/rc/10_50_zoxide_setup.zsh
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/00_00_link_from_bash.zsh
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/00_01_nvidia_defaults.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/00_03_nvidia_bash_defaults.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_00_linux_keybindings.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_00_zsh_settings.zsh
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_01_enable_globbing.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_01_oh_my_zsh.zsh
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_02_00_setup_cuda.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_02_enable_globbing.zsh
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_03_tab_completion.zsh
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_04_zsh_autosuggest.zsh
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_05_zsh_syntax_highlighting.zsh
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_06_no_bad_aliases.zsh
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_07_spaceship_prompt.zsh
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/01_11_set_editor_var.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_00_10_ensure_nix.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_00_universal_tools.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_01_mac_tools.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_02_00_ensure_cv_main.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_04_wasmer.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_11_00_ensure_git.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/03_00_00_cmake.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/03_01_git_tools.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/03_03_add_local_bin_to_path.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/04_02_00_realsense.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/04_04_docker_tools.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/05_00_00_gtk_fix.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/05_01_00_setup_python.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/05_02_python3.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/05_03_nix.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/05_04_rust.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/06_00_00_setup_venv.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/06_01_ld_path.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/06_01_setup_cuda.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/092_000_doit_function.sh
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/10_50_zoxide_setup.zsh
 trying to run cv_main
 total 295988
-drwxrwxr-x  7 xavier4 xavier3      4096 Jun 26 12:52 commands/
-drwxrwxr-x  2 xavier4 xavier3      4096 May  1 00:08 data/
-drwxrwxr-x  3 xavier4 xavier3      4096 Jun 25 04:56 documentation/
-drwxrwxr-x  8 xavier4 xavier3      4096 Jun 26 17:48 .git/
-drwxrwxr-x  8 xavier4 xavier3      4096 Jun 26 17:41 main/
-drwxrwxr-x  2 xavier4 xavier3      4096 Jun 25 04:56 scripts/
-drwxrwxr-x 11 xavier4 xavier3      4096 Apr 28 07:35 settings/
-drwxrwxr-x  2 xavier4 xavier3      4096 Apr 28 07:35 .vscode/
-lrwxrwxrwx  1 xavier4 xavier3        23 Jun 25 09:17 boot.ignore.log -> /home/xavier4/.boot.log
-lrwxrwxrwx  1 xavier4 xavier3        22 Jun 25 09:17 boot.ignore.sh -> /home/xavier4/.boot.sh*
--rw-rw-r--  1 xavier4 xavier3      8959 May  1 10:42 .gitignore
-lrwxrwxrwx  1 xavier4 xavier3        22 Jun 21 20:21 on_boot.ignore.bash -> /home/xavier3/.boot.sh
--rw-rw-r--  1 xavier4 xavier3    956445 Jun 26 15:41 output.ignore.pstats
--rw-r--r--  1 xavier4 xavier3    161945 Jun 25 17:03 poetry.lock
--rw-r--r--  1 xavier4 xavier3       752 Jun 25 17:03 pyproject.toml
--rw-rw-r--  1 xavier4 xavier3       705 May  1 00:08 README.md
--rw-rw-r--  1 xavier4 xavier3         0 Apr 28 07:35 requirements.txt
--rw-rw-r--  1 xavier4 xavier3   3832852 Jun 26 15:41 result.do_not_sync.mp4
--rw-r--r--  1 xavier4 xavier3 298081211 Jun 25 06:10 torch-1.9.0.ignore.whl
+drwxrwxr-x  7 xavier xavier      4096 Jun 26 12:52 commands/
+drwxrwxr-x  2 xavier xavier      4096 May  1 00:08 data/
+drwxrwxr-x  3 xavier xavier      4096 Jun 25 04:56 documentation/
+drwxrwxr-x  8 xavier xavier      4096 Jun 26 17:48 .git/
+drwxrwxr-x  8 xavier xavier      4096 Jun 26 17:41 main/
+drwxrwxr-x  2 xavier xavier      4096 Jun 25 04:56 scripts/
+drwxrwxr-x 11 xavier xavier      4096 Apr 28 07:35 settings/
+drwxrwxr-x  2 xavier xavier      4096 Apr 28 07:35 .vscode/
+lrwxrwxrwx  1 xavier xavier        23 Jun 25 09:17 boot.ignore.log -> /home/xavier/.boot.log
+lrwxrwxrwx  1 xavier xavier        22 Jun 25 09:17 boot.ignore.sh -> /home/xavier/.boot.sh*
+-rw-rw-r--  1 xavier xavier      8959 May  1 10:42 .gitignore
+lrwxrwxrwx  1 xavier xavier        22 Jun 21 20:21 on_boot.ignore.bash -> /home/xavier/.boot.sh
+-rw-rw-r--  1 xavier xavier    956445 Jun 26 15:41 output.ignore.pstats
+-rw-r--r--  1 xavier xavier    161945 Jun 25 17:03 poetry.lock
+-rw-r--r--  1 xavier xavier       752 Jun 25 17:03 pyproject.toml
+-rw-rw-r--  1 xavier xavier       705 May  1 00:08 README.md
+-rw-rw-r--  1 xavier xavier         0 Apr 28 07:35 requirements.txt
+-rw-rw-r--  1 xavier xavier   3832852 Jun 26 15:41 result.do_not_sync.mp4
+-rw-r--r--  1 xavier xavier 298081211 Jun 25 06:10 torch-1.9.0.ignore.whl
 python stuff is running on: 7181
 
 [modeling] YOLO v5 loading
@@ -6904,4 +6904,4 @@ VideoStream: error while getting frames: Frame didn't arrive within 5000 <class 
 VideoStream: error while getting frames: Frame didn't arrive within 5000 <class 'RuntimeError'>
 (retrying)
 
-xavier4 in cv_main at xavier4-desktop on  master [$?] took 3s 
+xavier in cv_main at xavier-desktop on  master [$?] took 3s 
