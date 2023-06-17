@@ -68,13 +68,7 @@ else:
 # 
 # 
 def when_frame_arrives():
-    if our_team_color == 'red':
-        # change all the blue panels to red with hue shifting
-        frame = Image(runtime.color_image).shift_hue(hue_shift_amount).in_cv2_format
-    elif our_team_color == 'blue':
-        frame = runtime.color_image # we don't need to modify the image
-    else:
-        raise Exception(f''' our_team_color:{our_team_color} which was not red or blue''')
+    frame = runtime.color_image
     
     # 
     # all boxes
@@ -83,13 +77,14 @@ def when_frame_arrives():
         frame=frame,
         minimum_confidence=config.model.minimum_confidence,
     )
-    screen_center = compute_screen_center(runtime.color_image)
     
+    screen_center = compute_screen_center(frame)
+    # print("Screen center: " + str(screen_center))
     # 
-    # remove our-team
+    # remove our team
     # 
     if config.filter_team_color:
-        enemy_boxes, confidences, class_ids = filter_team(list(all_boxes), confidences, class_ids)
+        enemy_boxes, confidences, class_ids = filter_plate_color(all_boxes, confidences, class_ids, our_team_color)
     
     # best box
     best_bounding_box, current_confidence = get_optimal_bounding_box(
@@ -133,15 +128,15 @@ def get_optimal_bounding_box(boxes, confidences, screen_center):
 
     # Sequentially iterate through all bounding boxes
     for conf, box in zip(confidences, boxes):
-        score = (1 - dist(screen_center,(box[0] + box[2]/2, box[1] + box[3]/2)) / normalization_constant) + conf # Compute score using distance and confidence
-
+        # print(box.center)
+        score = (1 - dist(screen_center, box.center) / normalization_constant) + (0.75 * conf) # Compute score using distance and confidence
         # Make current box the best if its score is the best so far
         if score > best_score:
             best_bounding_box = box
-            best_conf = conf    
+            best_conf = conf
             best_score = score
+    # print("Plate score: " + str(best_score))
     return best_box, best_conf
-
 
 if which_model == 'yolo_v5':
     color_to_class_id = dict(
@@ -154,24 +149,25 @@ else:
         blue=1,
     )
 
-def filter_team(boxes, confidences, class_ids):
+def filter_plate_color(boxes, confidences, class_ids, color_to_remove):
     """
     Filter bounding boxes based on team color.
 
-    Input: All boxes, confidences, class_ids
-    Output: Enemy boxes, confidences, and class_ids
+    Input: Zipped model result of boxes, confidences, and class_ids
+    Output: Filtered boxes, confidences, and class_ids
     """
-    enemy_boxes = []
-    enemy_confidences = []
-    enemy_class_ids = []
-    
-    for index in range(len(boxes)):
-        if class_ids[index] != color_to_class_id['blue']: # always shoot at red, we use hue shifting to make blue things red
-            enemy_boxes.append(boxes[index])
-            enemy_confidences.append(confidences[index])
-            enemy_class_ids.append(class_ids[index])
+    filtered_boxes = []
+    filtered_confidences = []
+    filtered_class_ids = []
 
-    return enemy_boxes, enemy_confidences, enemy_class_ids
+    # only do this if there are boxes
+    if boxes:
+        filtered_data = [(box, conf, class_id) for box, conf, class_id in zip(boxes, confidences, class_ids) if class_id == color_to_class_id[color_to_remove]]
+        # only unzip if there are boxes left after filtering
+        if filtered_data:
+            filtered_boxes, filtered_confidences, filtered_class_ids = zip(*filtered_data)
+    return filtered_boxes, filtered_confidences, filtered_class_ids
 
 def compute_screen_center(color_image):
+    # print("Color image shape: " + str(color_image.shape))
     return (color_image.shape[1] // 2, color_image.shape[0] // 2)
