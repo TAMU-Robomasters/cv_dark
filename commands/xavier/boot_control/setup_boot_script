@@ -53,11 +53,11 @@ then
         while true
         do
             python3 "/home/xavier/repos/cv_dark/main/main.py" @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME 2>&1 1>>"$boot_log"
-            echo "# "                           >>boot.log
-            echo "# "                           >>boot.log
-            echo "# PROCESS DIED: TRYING AGAIN" >>boot.log
-            echo "# "                           >>boot.log
-            echo "# "                           >>boot.log
+            echo "# "                           >>"$boot_log"
+            echo "# "                           >>"$boot_log"
+            echo "# PROCESS DIED: TRYING AGAIN" >>"$boot_log"
+            echo "# "                           >>"$boot_log"
+            echo "# "                           >>"$boot_log"
         done
     ' > "$filepath"
     chmod ugo+x "$filepath"
