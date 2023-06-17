@@ -40,7 +40,7 @@ then
         
         while true
         do
-            python3 "/home/xavier/repos/cv_main/main/main.py" @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME
+            python3 "/home/xavier/repos/cv_dark/main/main.py" @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME
         done
     ' > "$filepath"
     chmod ugo+x "$filepath"
