@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
-ps aux | grep -v $$ | grep -v grep |  grep -E "cv_dark_infinite_run" | awk '{ print $2 }' | sudo xargs kill -9
-ps aux | grep -v $$ | grep -v grep |  grep -E "cv_dark" | awk '{ print $2 }' | sudo xargs kill -9
+ps aux | grep -v $$ | grep -v grep |  grep -E "cv_dark" | awk '{ print $2 }' | sudo xargs kill -9 2>/dev/null
+ps aux | grep -v $$ | grep -v grep |  grep -E "cv_dark" | awk '{ print $2 }' | sudo xargs kill -9 2>/dev/null
+ps aux | grep -v $$ | grep -v grep |  grep -E "cv_dark" | awk '{ print $2 }' | sudo xargs kill -9 2>/dev/null
