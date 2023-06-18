@@ -1,4 +1,4 @@
-- log boot output 
+- DONE: log boot output
 - copy SD card to disk
 - write to NVMe
 - create `we_red` and `we_blue`
