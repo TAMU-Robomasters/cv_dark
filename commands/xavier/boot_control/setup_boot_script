@@ -34,7 +34,7 @@ then
     echo 'NOTE: change this file if this bot uses the ZED camera'
     echo 'file: '"$filepath"
     echo '
-        python3 "/home/xavier/repos/cv_dark/main/main.py" @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME
+        python3 "/home/xavier/repos/cv_dark/main/main.py" @WE_BLUE @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME
     ' > "$filepath"
     chmod ugo+x "$filepath"
 fi

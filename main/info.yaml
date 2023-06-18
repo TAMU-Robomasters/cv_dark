@@ -52,7 +52,7 @@
             our_team_color: 'blue' # 'red' or 'blue'
             filter_team_color: true
             mode: development
-            process_name: cv_main
+            process_name: cv_dark
             bot: sentry # sentry or standard
             hardware:
                 board: laptop

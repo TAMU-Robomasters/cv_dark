@@ -1,6 +1,6 @@
 ### How do I get this code to run?
 
-Set [documentation/setup.md](https://github.com/TAMU-Robomasters/cv_main/blob/master/documentation/setup.md)
+Set [documentation/setup.md](https://github.com/TAMU-Robomasters/cv_dark/blob/master/documentation/setup.md)
 
 ### What is this repo?
 

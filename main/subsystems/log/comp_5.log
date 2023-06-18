@@ -20,7 +20,7 @@ trying to load zshrc
 [.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_00_10_ensure_nix.bash
 [.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_00_universal_tools.bash
 [.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_01_mac_tools.bash
-[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_02_00_ensure_cv_main.bash
+[.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_02_00_ensure_cv_dark.bash
 [.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_04_wasmer.bash
 [.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/02_11_00_ensure_git.bash
 [.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/03_00_00_cmake.bash
@@ -38,7 +38,7 @@ trying to load zshrc
 [.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/06_01_setup_cuda.bash
 [.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/092_000_doit_function.sh
 [.zshrc] loading: /home/xavier/Terminal//shells/zsh/events/rc/10_50_zoxide_setup.zsh
-trying to run cv_main
+trying to run cv_dark
 total 295988
 drwxrwxr-x  7 xavier xavier      4096 Jun 26 12:52 commands/
 drwxrwxr-x  2 xavier xavier      4096 May  1 00:08 data/
@@ -6904,4 +6904,4 @@ VideoStream: error while getting frames: Frame didn't arrive within 5000 <class 
 VideoStream: error while getting frames: Frame didn't arrive within 5000 <class 'RuntimeError'>
 (retrying)
 
-xavier in cv_main at xavier-desktop on  master [$?] took 3s 
+xavier in cv_dark at xavier-desktop on  master [$?] took 3s 

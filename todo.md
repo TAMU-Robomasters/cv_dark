@@ -1,4 +1,5 @@
 - DONE: log boot output
+- maybe delete cv
 - copy SD card to disk
 - write to NVMe
 - create `we_red` and `we_blue`
