@@ -1,5 +1,5 @@
 - DONE: log boot output
-- maybe delete cv
+- maybe delete `xavier/repos/cv_main`
 - copy SD card to disk
 - write to NVMe
 - create `we_red` and `we_blue`
