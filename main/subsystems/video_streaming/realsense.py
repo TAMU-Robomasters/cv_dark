@@ -135,6 +135,7 @@ class VideoStream:
             return wrapper()
     
     def get_depth_at_point(self, point):
+        print("color point:", point)
         depth_point = rs.rs2_project_color_pixel_to_depth_pixel(
             self.depth_frame.get_data(),
             self.depth_scale,
@@ -146,24 +147,28 @@ class VideoStream:
             self.color_to_depth_extrin,
             point
         ) # color pixel)
+        print("depth point:", depth_point)
         if depth_point[0] < 0 or depth_point[1] < 0:
+            print("returned none")
             return None
         depth = self.depth_frame.get_distance(int(depth_point[0]), int(depth_point[1]))
+        print("depth:", depth)
         return depth
     
-    def get_xyz_at_color_point(self, point):
+    def get_xyz_at_color_point(self, point, depth=None):
         """
             Example:
-                x,y,x = video.get_xyz_at_color_point([1,2])
+                x,y,z = video.get_xyz_at_color_point([1,2])
                 
             Summary:
                 X is right/left          # FIXME: is positive X left or right?
                 Y is forward/backward    # FIXME: is positive Y forward or backwards?
                 Z is up/down             # FIXME: is positive Z up or down?
         """
-        depth = self.get_depth_at_point(point)
         if depth is None:
-            return None
+            depth = self.get_depth_at_point(point)
+            if depth is None:
+                return None
         point_3d = rs.rs2_deproject_pixel_to_point(self.depth_intrin, point, depth) 
         point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
 

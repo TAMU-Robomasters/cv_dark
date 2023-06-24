@@ -54,6 +54,7 @@ def when_bounding_boxes_refresh():
     # 
     if found_robot:
         if DEPTH_COMPATIBLE:
+            # target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()], get_dist_to_bbox(best_bounding_box))
             target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()])
             print(f"\ntarget_3d: {target_3d}")
             if target_3d is not None:
@@ -71,39 +72,48 @@ def when_bounding_boxes_refresh():
 # 
 # helpers
 # 
-def get_xyz_at_color_coords(point):
+def get_xyz_at_color_coords(point, depth=None):
     # point is [x, y], return tuple (x, y, z)
-    point_3d = video_stream.vid_source.get_xyz_at_color_point(point)
+    point_3d = video_stream.vid_source.get_xyz_at_color_point(point, depth=depth)
     return point_3d
 
 def get_dist_to_bbox(bbox):
-    depth_sample_coords = get_depth_sample_coords(bbox)
+    depth_sample_coords = get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.5, height_coverage=0.5)
     depth_sample = np.array(
-        [
-            video_stream.vid_source.get_depth_at_point(point)
-                for point in depth_sample_coords
-        ]
+        [video_stream.vid_source.get_depth_at_point(point) for point in depth_sample_coords]
     )
-    depth_sample = depth_sample[depth_sample > 0]
+    depth_sample = depth_sample[depth_sample != None]
+    depth_sample = depth_sample[depth_sample != 0]
+    depth_sample = reject_depth_outliers(depth_sample)
+    # print(f"depth_sample: {depth_sample}")
     if len(depth_sample) == 0:
         return 0
-    return np.median(depth_sample)
+    return np.mean(depth_sample)
 
+def reject_depth_outliers(depth_sample):
+    ''' Use median absolute deviation to reject outliers in depth sample '''
+    median = np.median(depth_sample)
+    mad = np.median(np.abs(depth_sample - median))
+    return depth_sample[np.abs(depth_sample - median) < 3 * mad]
 
-def get_depth_sample_coords(bbox):
-    bbxtl = bbox.x_top_left.item()
-    bbytl = bbox.y_top_left.item()
+def get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.5, height_coverage=0.5):
+    bbox_width_coverage = bbox.width.item() * width_coverage
+    bbox_height_coverage = bbox.height.item() * height_coverage
+
+    bbxtl = bbox.center[0].item() - (bbox_width_coverage / 2)
+    bbytl = bbox.center[1].item() - (bbox_height_coverage / 2)
+
     x, y = np.meshgrid(
         np.linspace(
             bbxtl,
-            bbxtl + bbox.width.item(),
-            num=3,
+            bbxtl + bbox_width_coverage,
+            num=points_per_dimension,
             endpoint=True
         ).astype(int),
         np.linspace(
             bbytl,
-            bbytl + bbox.height.item(),
-            num=3,
+            bbytl + bbox_height_coverage,
+            num=points_per_dimension,
             endpoint=True
         ).astype(int),
     )
