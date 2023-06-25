@@ -156,18 +156,33 @@ class VideoStream:
         """
             Example:
                 x,y,z = video.get_xyz_at_color_point([1,2])
-                
-            Summary:
-                X is right/left          # FIXME: is positive X left or right?
-                Y is forward/backward    # FIXME: is positive Y forward or backwards?
-                Z is up/down             # FIXME: is positive Z up or down?
         """
-        point_3d = rs.rs2_deproject_pixel_to_point(self.depth_intrin, point, depth) 
-        point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
+        point_3d = rs.rs2_deproject_pixel_to_point(self.color_intrin, point, depth)
 
-        point_3d[1] += -0.0042 # offset Y to front of glass
-        point_3d[0] += -0.0325 # offset X to center of glass
+        point_3d = retransform_3d_point_to_coordinate_system(point)
+
+        point_3d = offset_3d_point_to_camera_center(point_3d)
         return point_3d
+
+    def retransform_3d_point_to_coordinate_system(self, point):
+        """
+        Summary:
+            X is positive right/negative left
+            Y is positive forward/negative backward
+            Z is positive up/negative down
+        """
+        point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
+        return point_3d
+
+    def offset_3d_point_to_camera_center(self, point):
+        """
+        page 92, https://www.intelrealsense.com/wp-content/uploads/2023/03/Intel-RealSense-D400-Series-Datasheet-March-2023.pdf?_ga=2.223938584.2067846121.1687651427-893813184.1647464980
+        """
+        point_3d[1] += -0.0042 # offset Y to front of glass
+        point_3d[0] += 0.0325 # offset color camera X to center of glass 
+        # point_3d[0] += -0.0325 # offset depth camera X to center of glass
+        return point_3d
+
 
     def __del__(self):
         print("Closing Realsense Pipeline")

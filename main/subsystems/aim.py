@@ -86,7 +86,7 @@ def get_xyz_at_color_coords(point, depth=None):
     return point_3d
 
 def get_dist_to_bbox(bbox):
-    depth_sample_coords = get_depth_sample_coords(bbox, points_per_dimension=2, width_coverage=0.5, height_coverage=0.5)
+    depth_sample_coords = get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.5, height_coverage=0.5)
     aim_start = perf_counter()
     depth_sample = np.array([video_stream.vid_source.get_depth_at_point(point) for point in depth_sample_coords])
     aim_end = perf_counter()
