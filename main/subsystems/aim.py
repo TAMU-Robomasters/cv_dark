@@ -1,6 +1,6 @@
 import math
 import collections
-from time import time as now
+from time import time, perf_counter
 from enum import Enum
 
 import numpy as np
@@ -74,6 +74,8 @@ def when_bounding_boxes_refresh():
     runtime.aiming.target_status      = target_status
     runtime.aiming.target_3d          = target_3d
     runtime.aiming.center_point       = center_point
+    
+
 
 # 
 # helpers
@@ -84,18 +86,19 @@ def get_xyz_at_color_coords(point, depth=None):
     return point_3d
 
 def get_dist_to_bbox(bbox):
-    depth_sample_coords = get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.5, height_coverage=0.5)
-    depth_sample = np.array(
-        [video_stream.vid_source.get_depth_at_point(point) for point in depth_sample_coords]
-    )
-    depth_sample = depth_sample[depth_sample != None]
-    depth_sample = depth_sample[depth_sample != 0]
-    depth_sample = reject_depth_outliers(depth_sample)
+    depth_sample_coords = get_depth_sample_coords(bbox, points_per_dimension=2, width_coverage=0.5, height_coverage=0.5)
+    aim_start = perf_counter()
+    depth_sample = np.array([video_stream.vid_source.get_depth_at_point(point) for point in depth_sample_coords])
+    aim_end = perf_counter()
+    print(f"Took: {(aim_end - aim_start)*1000} ms")
+    # depth_sample = depth_sample[depth_sample != None]
+    # depth_sample = depth_sample[depth_sample != 0]
+    # depth_sample = reject_depth_outliers(depth_sample)
     print(f"depth_sample: {depth_sample}")
-    if len(depth_sample) == 0:
-        return None
-    # if np.mean(depth_sample) > 5 or np.mean(depth_sample) < 0:
-    #     quit()
+    # if len(depth_sample) == 0:
+    #     return None
+    # # if np.mean(depth_sample) > 5 or np.mean(depth_sample) < 0:
+    # #     quit()
     return np.mean(depth_sample)
 
 def reject_depth_outliers(depth_sample):
