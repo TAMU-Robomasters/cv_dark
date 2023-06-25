@@ -54,14 +54,20 @@ def when_bounding_boxes_refresh():
     # 
     if found_robot:
         if DEPTH_COMPATIBLE:
-            # target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()], get_dist_to_bbox(best_bounding_box))
-            target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()])
+            sampled_depth = get_dist_to_bbox(best_bounding_box)
+            # if sampled_depth is None:
+            #     target_status = TARGET_STATUS.TARGET_NONE
+            # else:
+            target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()], sampled_depth)
+            # target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()])
             print(f"\ntarget_3d: {target_3d}")
             if target_3d is not None:
                 target_status = TARGET_STATUS.TARGET_FOUND
         else:
             target_status = TARGET_STATUS.TARGET_FOUND
         
+        # if target_3d[1] < 0:
+        #     quit()
         center_point = Position(best_bounding_box.center) # for logging/displays
 
     # update the shared data
@@ -85,9 +91,11 @@ def get_dist_to_bbox(bbox):
     depth_sample = depth_sample[depth_sample != None]
     depth_sample = depth_sample[depth_sample != 0]
     depth_sample = reject_depth_outliers(depth_sample)
-    # print(f"depth_sample: {depth_sample}")
+    print(f"depth_sample: {depth_sample}")
     if len(depth_sample) == 0:
-        return 0
+        return None
+    # if np.mean(depth_sample) > 5 or np.mean(depth_sample) < 0:
+    #     quit()
     return np.mean(depth_sample)
 
 def reject_depth_outliers(depth_sample):

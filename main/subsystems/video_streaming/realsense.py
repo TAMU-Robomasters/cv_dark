@@ -147,12 +147,14 @@ class VideoStream:
             self.color_to_depth_extrin,
             point
         ) # color pixel)
-        print("depth point:", depth_point)
+        # print("depth point:", depth_point)
         if depth_point[0] < 0 or depth_point[1] < 0:
             print("returned none")
             return None
         depth = self.depth_frame.get_distance(int(depth_point[0]), int(depth_point[1]))
-        print("depth:", depth)
+        if depth < self.depth_min or depth > self.depth_max:
+            print(f"depth: {depth} is out of range")
+            return None
         return depth
     
     def get_xyz_at_color_point(self, point, depth=None):
