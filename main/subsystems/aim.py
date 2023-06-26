@@ -55,16 +55,16 @@ def when_bounding_boxes_refresh():
     if found_robot:
         if DEPTH_COMPATIBLE:
             sampled_depth = get_dist_to_bbox(best_bounding_box)
-            # if sampled_depth is None:
-            #     target_status = TARGET_STATUS.TARGET_NONE
-            # else:
-            target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()], sampled_depth)
-            # target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()])
-            print(f"\ntarget_3d: {target_3d}")
-            if target_3d is not None:
-                target_status = TARGET_STATUS.TARGET_FOUND
-            else:
+            if sampled_depth is None:
                 target_status = TARGET_STATUS.TARGET_NONE
+            else:
+                target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()], sampled_depth)
+                print(f"\ntarget_3d: {target_3d}")
+            # target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()])
+            if target_3d is None:
+                target_status = TARGET_STATUS.TARGET_NONE
+            else:
+                target_status = TARGET_STATUS.TARGET_FOUND
         else:
             target_status = TARGET_STATUS.TARGET_FOUND
         
@@ -93,14 +93,18 @@ def get_dist_to_bbox(bbox):
     depth_sample = np.array([video_stream.vid_source.get_depth_at_point(point) for point in depth_sample_coords])
     aim_end = perf_counter()
     print(f"Took: {(aim_end - aim_start)*1000} ms")
-    # depth_sample = depth_sample[depth_sample != None]
-    # depth_sample = depth_sample[depth_sample != 0]
-    # depth_sample = reject_depth_outliers(depth_sample)
+    if len(depth_sample) == 0:
+        return None
+    depth_sample = depth_sample[depth_sample != None]
+    if len(depth_sample) == 0:
+        return None
+    depth_sample = depth_sample[depth_sample != 0]
+    if len(depth_sample) == 0:
+        return None
+    depth_sample = reject_depth_outliers(depth_sample)
     print(f"depth_sample: {depth_sample}")
-    # if len(depth_sample) == 0:
-    #     return None
-    # # if np.mean(depth_sample) > 5 or np.mean(depth_sample) < 0:
-    # #     quit()
+    # if np.mean(depth_sample) > 5 or np.mean(depth_sample) < 0:
+    #     quit()
     return np.mean(depth_sample)
 
 def reject_depth_outliers(depth_sample):
