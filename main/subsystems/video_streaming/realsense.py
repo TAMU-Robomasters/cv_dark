@@ -159,12 +159,12 @@ class VideoStream:
         """
         point_3d = rs.rs2_deproject_pixel_to_point(self.color_intrin, point, depth)
 
-        point_3d = retransform_3d_point_to_coordinate_system(point)
+        point_3d = retransform_3d_point_to_coordinate_system(point_3d)
 
         point_3d = offset_3d_point_to_camera_center(point_3d)
         return point_3d
 
-    def retransform_3d_point_to_coordinate_system(self, point):
+    def retransform_3d_point_to_coordinate_system(self, point_3d):
         """
         Summary:
             X is positive right/negative left
@@ -174,7 +174,7 @@ class VideoStream:
         point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
         return point_3d
 
-    def offset_3d_point_to_camera_center(self, point):
+    def offset_3d_point_to_camera_center(self, point_3d):
         """
         page 92, https://www.intelrealsense.com/wp-content/uploads/2023/03/Intel-RealSense-D400-Series-Datasheet-March-2023.pdf?_ga=2.223938584.2067846121.1687651427-893813184.1647464980
         """
