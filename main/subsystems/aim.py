@@ -63,6 +63,8 @@ def when_bounding_boxes_refresh():
             print(f"\ntarget_3d: {target_3d}")
             if target_3d is not None:
                 target_status = TARGET_STATUS.TARGET_FOUND
+            else:
+                target_status = TARGET_STATUS.TARGET_NONE
         else:
             target_status = TARGET_STATUS.TARGET_FOUND
         
@@ -107,7 +109,7 @@ def reject_depth_outliers(depth_sample):
     mad = np.median(np.abs(depth_sample - median))
     return depth_sample[np.abs(depth_sample - median) < 3 * mad]
 
-def get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.5, height_coverage=0.5):
+def get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.25, height_coverage=0.25):
     bbox_width_coverage = bbox.width.item() * width_coverage
     bbox_height_coverage = bbox.height.item() * height_coverage
 

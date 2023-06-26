@@ -194,8 +194,8 @@ def generate_image(fps=0):
     
     x_location = 30
     y_location = 50
-    if DEPTH_COMPATIBLE:
-        disp_target_3d = [round(x, 3) for x in target_3d] if target_3d else ["NAN, NAN, NAN"]
+    disp_target_3d = [round(x, 3) for x in target_3d]
+    if DEPTH_COMPATIBLE and status != 0:
         image.add_text(text=f"target_3d: {    disp_target_3d         }", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"status: {           status.name            }", location=(x_location, y_location)); y_location += 50

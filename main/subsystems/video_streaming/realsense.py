@@ -151,7 +151,7 @@ class VideoStream:
         #     print(f"depth: {depth} is out of range")
         #     return None
         return depth
-    
+
     def get_xyz_at_color_point(self, point, depth=None):
         """
             Example:
@@ -159,9 +159,9 @@ class VideoStream:
         """
         point_3d = rs.rs2_deproject_pixel_to_point(self.color_intrin, point, depth)
 
-        point_3d = retransform_3d_point_to_coordinate_system(point_3d)
+        point_3d = self.retransform_3d_point_to_coordinate_system(point_3d)
 
-        point_3d = offset_3d_point_to_camera_center(point_3d)
+        point_3d = self.offset_3d_point_to_camera_center(point_3d)
         return point_3d
 
     def retransform_3d_point_to_coordinate_system(self, point_3d):
@@ -171,18 +171,17 @@ class VideoStream:
             Y is positive forward/negative backward
             Z is positive up/negative down
         """
-        point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
-        return point_3d
+        point[1], point[2] = point[2], -point[1]
+        return point
 
     def offset_3d_point_to_camera_center(self, point_3d):
         """
         page 92, https://www.intelrealsense.com/wp-content/uploads/2023/03/Intel-RealSense-D400-Series-Datasheet-March-2023.pdf?_ga=2.223938584.2067846121.1687651427-893813184.1647464980
         """
-        point_3d[1] += -0.0042 # offset Y to front of glass
-        point_3d[0] += 0.0325 # offset color camera X to center of glass 
-        # point_3d[0] += -0.0325 # offset depth camera X to center of glass
-        return point_3d
-
+        point[0] -= 0.0325 # offset color camera X to center of glass
+        point[1] += -0.0042 # offset Y to front of glass
+        # point[0] += -0.0325 # offset depth camera X to center of glass
+        return point
 
     def __del__(self):
         print("Closing Realsense Pipeline")
