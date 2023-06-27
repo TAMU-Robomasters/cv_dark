@@ -107,12 +107,13 @@
             log:
                 disable_all_logging: false
                 disable_print: false
-                save_frame_to_file: true
+                save_frame_to_file: false
                 display_live_frames: false
                 save_depth: false
                 save_rate: 25 # once every __ frames
                 save_to_disk_after: 350 # 1200 frames is about 20 min at 1 frame per second
                 max_number_of_frames: 4000 # 5000 is consumes about 6GB of ram
+                save_depth: false
             communication:
                 timeout: 0.05
                 serial_baudrate: 115200
@@ -242,12 +243,12 @@
 
         LOG:
             log:
-                disable_all_logging: false
-                display_live_frames: false
-                save_frame_to_file: false
-                # save_rate: 1 # every frame (1 frame per frame)
-                # save_frame_to_file: true
-                # save_depth: false
+                # disable_all_logging: false
+                # display_live_frames: false
+                # save_frame_to_file: false
+                save_rate: 1 # every frame (1 frame per frame)
+                save_frame_to_file: true
+                save_depth: false
 
         BENCH:
             mode: benchmark

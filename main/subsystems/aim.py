@@ -117,19 +117,24 @@ def get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.25, h
     bbox_width_coverage = bbox.width.item() * width_coverage
     bbox_height_coverage = bbox.height.item() * height_coverage
 
-    bbxtl = bbox.center[0].item() - (bbox_width_coverage / 2)
-    bbytl = bbox.center[1].item() - (bbox_height_coverage / 2)
+    print(runtime.color_image.shape)
+
+    bbxtl = max(bbox.center[0].item() - (bbox_width_coverage // 2), 0)
+    bbytl = max(bbox.center[1].item() - (bbox_height_coverage // 2), 0)
+
+    bbxbr = min(bbxtl + bbox_width_coverage, runtime.color_image.shape[1] - 1)
+    bbybr = min(bbytl + bbox_height_coverage, runtime.color_image.shape[0] - 1)
 
     x, y = np.meshgrid(
         np.linspace(
             bbxtl,
-            bbxtl + bbox_width_coverage,
+            bbxbr,
             num=points_per_dimension,
             endpoint=True
         ).astype(int),
         np.linspace(
             bbytl,
-            bbytl + bbox_height_coverage,
+            bbybr,
             num=points_per_dimension,
             endpoint=True
         ).astype(int),

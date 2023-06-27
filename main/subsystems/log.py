@@ -43,8 +43,7 @@ with open(absolute_path_to.permanent_storage, 'w') as outfile:
 # create incremented storage path
 video_count = permanent_storage["video_count"]
 video_color_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.ignore.mp4'
-if DEPTH_COMPATIBLE and save_depth:
-    video_depth_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.depth.ignore.pickle'
+video_depth_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.depth.ignore.pickle'
 
 # 
 # 
@@ -85,18 +84,22 @@ def when_finished_processing_frame():
     if save_frame_to_file and (frame_number % save_rate == 0):
         global color_frames
         global depth_frames
-        color_frames.append(runtime.color_image)
-        color_frames = color_frames[-config.log.max_number_of_frames:] # hard limit the number of color_frames in ram
+        # color_frames.append(color_image)
+        # print(color_image.shape)
+        # color_frames = color_frames[-config.log.max_number_of_frames:] # hard limit the number of color_frames in ram
         
-        if DEPTH_COMPATIBLE and save_depth:
-            depth_frames.append(runtime.depth_image)
-            depth_frames = depth_frames[-config.log.max_number_of_frames:] # hard limit the number of color_frames in ram
+    #     # print(runtime.color_image)
+    #     print(runtime.depth_image)
+
+    #     if DEPTH_COMPATIBLE:
+    #         depth_frames.append(runtime.depth_image)
+    #         depth_frames = depth_frames[-config.log.max_number_of_frames:] # hard limit the number of color_frames in ram
         
-        # 
-        # check for saving to disk
-        # 
-        if len(color_frames) % save_to_disk_after == 0:
-            save_frames_as_video(path=video_color_output_path)
+    #     # 
+    #     # check for saving to disk
+    #     # 
+    #     if len(color_frames) % save_to_disk_after == 0:
+    #         save_frames_as_video(path=video_color_output_path)
 
     if SHOULD_BENCHMARK and runtime.frame_number == config.stop_after:
             print("\nBenchmark Complete")
@@ -137,7 +140,7 @@ def save_frames_as_video(path):
         Video.create_from_frames(color_frames, save_to=path)
         print(f"\n\nvideo output has been saved to {path}")
         
-        if DEPTH_COMPATIBLE and video_depth_output_path and save_depth:
+        if video_depth_output_path:
             large_pickle_save(variable=depth_frames, file_path=video_depth_output_path)
     except Exception as error:
         pass

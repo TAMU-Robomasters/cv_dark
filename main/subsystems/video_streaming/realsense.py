@@ -14,7 +14,7 @@ videostream     = config.videostream
 aiming          = config.aiming
 record_interval = videostream.testing.record_interval
 
-MICRO_SECONDS_TO_MILISECONDS = 1000
+MICRO_SECONDS_TO_MILLISECONDS = 1000
 
 align = rs.align(rs.stream.color)
 
@@ -109,19 +109,18 @@ class VideoStream:
                     # Frame Alignment
                     aligned_frames = align.process(frame)
 
+                    self.color_frame = runtime.color_image = aligned_frames.get_color_frame()
+                    self.depth_frame = runtime.depth_image = aligned_frames.get_depth_frame()
 
-                    self.color_frame = aligned_frames.get_color_frame()
-                    self.depth_frame = aligned_frames.get_depth_frame()
-
-                    if not self.depth_frame or not self.color_frame:
-                        continue
+                    # if not self.depth_frame or not self.color_frame:
+                    #     continue
 
                     # self.color_frame = frame.get_color_frame()
                     # self.depth_frame = frame.get_depth_frame()
 
                     capture_time = frame.get_frame_metadata(rs.frame_metadata_value.sensor_timestamp)
                     frame_time = frame.get_frame_metadata(rs.frame_metadata_value.frame_timestamp)
-                    self.capture_time = (time()*1000) - ((frame_time - capture_time) / MICRO_SECONDS_TO_MILISECONDS)
+                    self.capture_time = (time()*1000) - ((frame_time - capture_time) / MICRO_SECONDS_TO_MILLISECONDS)
                     # print("frame_number:", frame_number, "capture_time:", self.capture_time)
                     align_end = perf_counter()
                     align_elapsed = (align_end - align_start) * 1000
@@ -129,6 +128,7 @@ class VideoStream:
                     yield frame_number, np.asanyarray(self.color_frame.get_data()), np.asanyarray(self.depth_frame.get_data())
                 except Exception as error: # failure to connect to realsense
                     import sys
+                    print(error)
                     print("VideoStream: error while getting frames:", error, sys.exc_info()[0])
                     print('(retrying)')
         
