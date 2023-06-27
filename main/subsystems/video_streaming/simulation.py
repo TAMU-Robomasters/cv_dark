@@ -14,7 +14,7 @@ class VideoStream:
         self.video_object = Video(path=simulation.input_file)
         
         if simulation.grab_method == 'threaded_frame':
-            self.threaded_object = CameraThreader(self, update_rate=simulation.threaded_update_rate)
+            self.threadhreaded_object = CameraThreader(self, update_rate=simulation.threaded_update_rate)
         elif simulation.grab_method == 'next_frame':
             pass # no special setup but demo the case for consistency and the error message
         elif simulation.grab_method == 'latest_frame':
@@ -29,8 +29,8 @@ class VideoStream:
     
     def frames(self, non_threaded=False):
         if not non_threaded and simulation.grab_method == 'threaded_frame':
-            while not self.threaded_object.stopped:
-                yield self.threaded_object.frame
+            while not self.threadhreaded_object.stopped:
+                yield self.threadhreaded_object.frame # NOTE: has the slight possibility of sending the same frame twice
         else:
             # for now it simply doesn't exist
             depth_frame = None
@@ -69,23 +69,22 @@ class CameraThreader:
         self.frame = None
 
         self.stopped = True
-        self.t = Thread(target=self.update, args=())
-        self.t.daemon = True
+        self.thread = Thread(target=self.update, args=())
+        self.thread.daemon = True
         
         self.start()
 
     def start(self):
         self.stopped = False
-        self.t.start()
+        self.thread.start()
 
     def update(self):
         for self.frame in self.video_stream.frames(non_threaded=True):
             sleep(self.update_rate)
-            if self.stopped:
-                break
-                 
+        self.stopped = True
+        
     def stop(self):
         self.stopped = True
 
     def __del__(self):
-        self.t.join()
+        self.thread.join()
