@@ -5,6 +5,7 @@ from toolbox.globals import path_to, config, print, runtime, absolute_path_to
 from toolbox.video_tools import Video
 from toolbox.image_tools import Image, rgb
 from toolbox.pickle_tools import large_pickle_save
+from toolbox.cold_storage import ColdStorage
 
 
 # 
@@ -25,26 +26,15 @@ SHOULD_BENCHMARK          = config.mode == 'benchmark'
 # 
 # init
 # 
-video_depth_output_path = None
-video_color_output_path = video_output
-
-color_frames = []
-depth_frames = []
-
-# read json
-with open(absolute_path_to.permanent_storage, 'r') as in_file:
-    permanent_storage = json.load(in_file)
-# increment
+permanent_storage = ColdStorage(path=absolute_path_to.permanent_storage)
 permanent_storage["video_count"] += 1
-# write json
-with open(absolute_path_to.permanent_storage, 'w') as outfile:
-    json.dump(permanent_storage, outfile)
 
 # create incremented storage path
 video_count = permanent_storage["video_count"]
-video_color_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.ignore.mp4'
-if DEPTH_COMPATIBLE and save_depth:
-    video_depth_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.depth.ignore.pickle'
+video_color_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.color.ignore.mp4'
+video_depth_output_path = None
+if depth_compatible and save_depth:
+    video_depth_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.depth.ignore.mp4'
 
 # 
 # 
