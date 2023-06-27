@@ -2,7 +2,7 @@ import json
 from time import time as now
 
 from toolbox.globals import path_to, config, print, runtime, absolute_path_to
-from toolbox.video_tools import Video
+from toolbox.video_tools import Video, VideoWriter
 from toolbox.image_tools import Image, rgb
 from toolbox.pickle_tools import large_pickle_save
 from toolbox.cold_storage import ColdStorage
@@ -15,13 +15,11 @@ display_live_frames       = config.log.display_live_frames
 save_frame_to_file        = config.log.save_frame_to_file
 save_depth                = config.log.save_depth
 save_rate                 = config.log.save_rate
-save_to_disk_after        = config.log.save_to_disk_after
 record_video_output_color = absolute_path_to.record_video_output_color
 video_output              = absolute_path_to.video_output
-max_number_of_frames      = config.log.max_number_of_frames
 camera                    = config.hardware.camera
-DEPTH_COMPATIBLE          = config.hardware.camera_has_depth
-SHOULD_BENCHMARK          = config.mode == 'benchmark'
+depth_compatible          = config.hardware.camera_has_depth
+should_benchmark          = config.mode == 'benchmark'
 
 # 
 # init
@@ -36,6 +34,9 @@ video_depth_output_path = None
 if depth_compatible and save_depth:
     video_depth_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.depth.ignore.mp4'
 
+color_video_writer = VideoWriter(save_to=video_color_output_path, fps=config.log.estimated_framerate)
+depth_video_writer = VideoWriter(save_to=video_depth_output_path, fps=config.log.estimated_framerate) if video_depth_output_path else None
+
 # 
 # 
 # main
@@ -44,6 +45,9 @@ if depth_compatible and save_depth:
 runtime.prev_loop_time = int(now() * 1000) # init time value
 runtime.total_fps = 0
 def when_finished_processing_frame():
+    global color_video_writer
+    global depth_video_writer
+    
     # import data
     frame_number       = runtime.frame_number
     color_image        = runtime.color_image
@@ -66,41 +70,36 @@ def when_finished_processing_frame():
     # 
     # handle image
     # 
-    if display_live_frames or (save_frame_to_file and (frame_number % save_rate == 0)):
+    should_save_frame = (save_frame_to_file and (frame_number % save_rate == 0))
+    if display_live_frames or should_save_frame:
         image = generate_image(1000/iteration_time)
     
     if display_live_frames:
         image.show()
     
-    if save_frame_to_file and (frame_number % save_rate == 0):
-        global color_frames
-        global depth_frames
-        color_frames.append(runtime.color_image)
-        color_frames = color_frames[-config.log.max_number_of_frames:] # hard limit the number of color_frames in ram
+    if should_save_frame:
+        color_video_writer.add_frame(runtime.color_image)
         
-        if DEPTH_COMPATIBLE and save_depth:
-            depth_frames.append(runtime.depth_image)
-            depth_frames = depth_frames[-config.log.max_number_of_frames:] # hard limit the number of color_frames in ram
-        
-        # 
-        # check for saving to disk
-        # 
-        if len(color_frames) % save_to_disk_after == 0:
-            save_frames_as_video(path=video_color_output_path)
+        if depth_compatible and save_depth:
+            # FIXME: this probably wont work as-is because
+            # depth images are z16 video/image format instead of rbg8
+            # the fix would be to convert the numpy array into an array that looks like a grayscale image
+            # I think the z16 pixels are floats, so they would need to be multiplied by, idk 100, and then converted to ints
+            depth_video_writer.add_frame(runtime.depth_image)
 
-    if SHOULD_BENCHMARK and runtime.frame_number == config.stop_after:
-            print("\nBenchmark Complete")
-            when_iteration_stops()
-            exit()
+    if should_benchmark and runtime.frame_number == config.stop_after:
+        print("\nBenchmark Complete")
+        when_iteration_stops()
+        exit()
 
 def when_iteration_stops():
+    # NOTE: this function might get run a couple times at exit (main.py calls it)
     avg_fps = runtime.total_fps / runtime.frame_number
     print(f"\naverage FPS: {avg_fps:.2f}")
-    if (save_frame_to_file):
-        save_frames_as_video(
-            path=video_color_output_path,
-        )
-
+    if save_frame_to_file:
+        color_video_writer.save()
+        if save_depth and depth_video_writer:
+            depth_video_writer.save()
 # 
 # disable log check
 # 
@@ -114,24 +113,6 @@ if config.log.disable_all_logging:
 # helpers
 # 
 # 
-def save_frames_as_video(path):
-    try:
-        # save all the color_frames as a video
-
-        # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        # out = cv2.VideoWriter(path, fourcc, 20.0, (color_frames[0].shape[1], color_frames[0].shape[0]))
-
-        # for frame in color_frames:
-        #     out.write(frame)
-
-        Video.create_from_frames(color_frames, save_to=path)
-        print(f"\n\nvideo output has been saved to {path}")
-        
-        if DEPTH_COMPATIBLE and video_depth_output_path and save_depth:
-            large_pickle_save(variable=depth_frames, file_path=video_depth_output_path)
-    except Exception as error:
-        pass
-
 def visualize_depth_frame(depth_frame_array):
     """
     Displays a depth frame in a visualized color format.
@@ -184,7 +165,7 @@ def generate_image(fps=0):
     
     x_location = 30
     y_location = 50
-    if DEPTH_COMPATIBLE:
+    if depth_compatible:
         disp_target_3d = [round(x, 3) for x in target_3d] if target_3d else ["NAN, NAN, NAN"]
         image.add_text(text=f"target_3d: {    disp_target_3d         }", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50

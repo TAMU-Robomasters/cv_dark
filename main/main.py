@@ -1,3 +1,4 @@
+import atexit
 from toolbox.globals import config, print, runtime, time_synchronized
 
 import subsystems.video_stream as video_stream
@@ -9,6 +10,7 @@ import pyston_lite
 
 pyston_lite.enable()
 synchronized_debug = False
+atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_iteration_stops" (its not perfectly reliable, but better than nothing)
 
 # Run detection infinitely
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
