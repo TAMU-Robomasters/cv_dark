@@ -12,7 +12,7 @@ from toolbox.geometry_tools import Position, BoundingBox
 from subsystems.aiming.predictor import Predictor
 import subsystems.video_stream as video_stream
 
-class TARGET_STATUS(Enum):
+class TargetStatus(Enum):
     TARGET_NONE = 0
     TARGET_FOUND = 1
     TARGET_ENGAGE = 2
@@ -20,17 +20,17 @@ class TARGET_STATUS(Enum):
 # 
 # config
 # 
-MIN_RANGE                            = config.aiming.min_range
-MAX_RANGE                            = config.aiming.max_range
-CAMERA                               = config.hardware.camera
-DEPTH_COMPATIBLE                     = config.hardware.camera_has_depth
-POSE_COMPATIBLE                      = config.hardware.camera_has_pose
+MIN_RANGE           = config.aiming.min_range
+MAX_RANGE           = config.aiming.max_range
+CAMERA              = config.hardware.camera
+DEPTH_COMPATIBLE    = config.hardware.camera_has_depth
+POSE_COMPATIBLE     = config.hardware.camera_has_pose
 
 # 
 # shared data (imported by modeling and integration)
 # 
 runtime.aiming = LazyDict(
-    target_status = TARGET_STATUS.TARGET_NONE,
+    target_status = TargetStatus.TARGET_NONE,
     target_3d = (0, 0, 0),
     center_point = Position((0, 0)),
 )
@@ -47,7 +47,7 @@ def when_bounding_boxes_refresh():
     # Reset target info at beginning of loop
     center_point = Position((0, 0))
     target_3d = (0, 0, 0)
-    target_status = TARGET_STATUS.TARGET_NONE
+    target_status = TargetStatus.TARGET_NONE
 
     # 
     # update core aiming data
@@ -56,15 +56,15 @@ def when_bounding_boxes_refresh():
         if DEPTH_COMPATIBLE:
             sampled_depth = get_dist_to_bbox(best_bounding_box)
             # if sampled_depth is None:
-            #     target_status = TARGET_STATUS.TARGET_NONE
+            #     target_status = TargetStatus.TARGET_NONE
             # else:
             target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()], sampled_depth)
             # target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()])
             print(f"\ntarget_3d: {target_3d}")
             if target_3d is not None:
-                target_status = TARGET_STATUS.TARGET_FOUND
+                target_status = TargetStatus.TARGET_FOUND
         else:
-            target_status = TARGET_STATUS.TARGET_FOUND
+            target_status = TargetStatus.TARGET_FOUND
         
         # if target_3d[1] < 0:
         #     quit()
