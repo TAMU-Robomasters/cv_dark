@@ -20,10 +20,9 @@ class VideoStream:
         elif simulation.grab_method == 'latest_frame':
             print('Loading all frames into ram for simulated testing')
             self.all_frames = tuple(self.video_object.frames())
-            print(f'Found {len(all_frames)} frames')
+            print(f'Found {len(self.all_frames)} frames')
             self.start_time = None
-            self.framesrate = simulated_output
-            self.used_frames = set([])
+            self.frame_rate = simulation.assumed_framerate
         else:
             raise Exception(f'simulated VideoStream was created, but config.videostream.simulation.grab_frame was {simulation.grab_frame} instead of one of ["next_frame", "latest_frame"]')
     
@@ -46,7 +45,7 @@ class VideoStream:
                 for frame_number in itertools.count(1):
                     # figure out which frame should be retrieved based on the elapsed time
                     seconds_since_start = time.time() - self.start_time 
-                    which_frame_index = int(seconds_since_start * self.framesrate)
+                    which_frame_index = int(seconds_since_start * self.frame_rate)
                     # stop if too much time has passed
                     if which_frame_index >= len(self.all_frames):
                         break
