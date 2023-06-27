@@ -186,9 +186,15 @@ class VideoWriter:
         # create new video source if not yet initilized
         #
         if self.writer == None:
+            # ensure the parent folder exists
+            import os
+            directory = os.path.dirname(self.save_to)
+            if directory == '': directory = '.'
+            os.makedirs(directory, exist_ok=True)
+            
+            # get frame dimensions
             frame_height, frame_width = frame.shape[:2]
             frame_dimensions = (frame_width, frame_height)
-            print(f'''frame_dimensions = {frame_dimensions}''')
             self.writer = cv2.VideoWriter(self.save_to, cv2.VideoWriter_fourcc(*'mp4v'), self.fps, frame_dimensions)
         
         # save the frame
