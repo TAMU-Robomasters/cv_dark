@@ -62,6 +62,8 @@ elif which_model == 'yolo_v8':
 else:
     raise Exception("Model specified under /'model.which_model/' is not supported")
 
+np.seterr(all='raise')
+
 # 
 # 
 # main function

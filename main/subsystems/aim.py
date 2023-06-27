@@ -60,11 +60,11 @@ def when_bounding_boxes_refresh():
             else:
                 target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()], sampled_depth)
                 print(f"\ntarget_3d: {target_3d}")
-            # target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()])
-            if target_3d is None:
-                target_status = TARGET_STATUS.TARGET_NONE
-            else:
-                target_status = TARGET_STATUS.TARGET_FOUND
+                # target_3d = get_xyz_at_color_coords([best_bounding_box.center[0].item(), best_bounding_box.center[1].item()])
+                if target_3d is None:
+                    target_status = TARGET_STATUS.TARGET_NONE
+                else:
+                    target_status = TARGET_STATUS.TARGET_FOUND
         else:
             target_status = TARGET_STATUS.TARGET_FOUND
         
@@ -102,6 +102,8 @@ def get_dist_to_bbox(bbox):
     if len(depth_sample) == 0:
         return None
     depth_sample = reject_depth_outliers(depth_sample)
+    if len(depth_sample) == 0:
+        return None
     print(f"depth_sample: {depth_sample}")
     # if np.mean(depth_sample) > 5 or np.mean(depth_sample) < 0:
     #     quit()
