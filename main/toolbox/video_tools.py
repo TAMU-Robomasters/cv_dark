@@ -171,3 +171,38 @@ class Video(object):
         
         # combine the resulting frames into a video, which will write to a file
         new_video.release()
+    
+class VideoWriter:
+    def __init__(self, *, save_to, fps=30):
+        self.is_finished = False
+        self.writer = None
+        self.number_of_pending_frames = 0
+        self.save_to = save_to
+        self.fps = fps
+    
+    def add_frame(self, frame):
+        self.number_of_pending_frames += 1
+        # 
+        # create new video source if not yet initilized
+        #
+        if self.writer == None:
+            frame_height, frame_width = frame.shape[:2]
+            frame_dimensions = (frame_width, frame_height)
+            print(f'''frame_dimensions = {frame_dimensions}''')
+            self.writer = cv2.VideoWriter(self.save_to, cv2.VideoWriter_fourcc(*'mp4v'), self.fps, frame_dimensions)
+        
+        # save the frame
+        self.writer.write(frame)
+    
+    # manual cleanup 
+    def save(self):
+        if not self.is_finished and self.writer:
+            print(f'''saving {self.number_of_pending_frames} frames to: {self.save_to}''')
+            # combine the resulting frames into a video, which will write to a file
+            self.writer.release()
+        self.is_finished = True
+    
+    # auto-cleanup if manual cleanup never called
+    def __del__(self):
+        self.save()
+    
