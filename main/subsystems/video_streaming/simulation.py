@@ -27,21 +27,21 @@ class VideoStream:
         else:
             raise Exception(f'simulated VideoStream was created, but config.videostream.simulation.grab_frame was {simulation.grab_frame} instead of one of ["next_frame", "latest_frame"]')
     
-    def frames(self):
-        if simulation.grab_method == 'threaded_frame':
+    def frames(self, non_threaded=False):
+        if not non_threaded and simulation.grab_method == 'threaded_frame':
             while not self.threaded_object.stopped:
-                yield next(iter(self.threaded_object.frames))
+                yield self.threaded_object.frame
         else:
             # for now it simply doesn't exist
             depth_frame = None
             
             # just pass along the frames
-            if simulation.grab_method == 'next_frame':
+            if simulation.grab_method == 'next_frame' or simulation.grab_method == 'threaded_frame':
                 frame_number = 0
                 for color_frame in self.video_object.frames():
                     frame_number += 1
                     yield frame_number, color_frame, depth_frame
-            elif simulation.grab_method == 'next_frame':
+            elif simulation.grab_method == 'latest_frame':
                 self.start_time = time.time()
                 for frame_number in itertools.count(1):
                     # figure out which frame should be retrieved based on the elapsed time
@@ -52,6 +52,8 @@ class VideoStream:
                         break
                     
                     yield frame_number, self.all_frames[which_frame_index], depth_frame
+            else:
+                raise Exception(f'''Unknown config.videostream.simulation.grab_method: {config.videostream.simulation.grab_method}, expected one of: [ 'next_frame', 'latest_frame', 'threaded_frame' ]''')
         
     def save_video_if_needed(self):
         pass
@@ -62,8 +64,9 @@ class CameraThreader:
     def __init__(self, video_stream, update_rate=0.001):
         from threading import Thread
         self.video_stream = video_stream
-        self.frames = None
-        self.update_rate = 0.001
+        self.update_rate = update_rate
+        
+        self.frame = None
 
         self.stopped = True
         self.t = Thread(target=self.update, args=())
@@ -76,10 +79,11 @@ class CameraThreader:
         self.t.start()
 
     def update(self):
-        while not self.stopped:
-            self.frames = self.video_stream.frames()
-            sleep(self.update_rate) #1ms
-    
+        for self.frame in self.video_stream.frames(non_threaded=True):
+            sleep(self.update_rate)
+            if self.stopped:
+                break
+                 
     def stop(self):
         self.stopped = True
 
