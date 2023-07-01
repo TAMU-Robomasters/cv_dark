@@ -10,7 +10,7 @@ from statistics import mean as average
 from toolbox.globals import path_to, config, print, runtime, time_synchronized
 from toolbox.geometry_tools import Position, BoundingBox
 from subsystems.aiming.predictor import Predictor
-import subsystems.video_stream as video_stream
+from subsystems.video_stream import video_stream
 
 class TargetStatus(Enum):
     TARGET_NONE = 0
@@ -80,13 +80,13 @@ def when_bounding_boxes_refresh():
 # 
 def get_xyz_at_color_coords(point, depth=None):
     # point is [x, y], return tuple (x, y, z)
-    point_3d = video_stream.vid_source.get_xyz_at_color_point(point, depth=depth)
+    point_3d = video_stream.get_xyz_at_color_point(point, depth=depth)
     return point_3d
 
 def get_dist_to_bbox(bbox):
     depth_sample_coords = get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.5, height_coverage=0.5)
     depth_sample = np.array(
-        [video_stream.vid_source.get_depth_at_point(point) for point in depth_sample_coords]
+        [video_stream.get_depth_at_point(point) for point in depth_sample_coords]
     )
     depth_sample = depth_sample[depth_sample != None]
     depth_sample = depth_sample[depth_sample != 0]

@@ -11,4 +11,5 @@ elif config.hardware.camera == 'realsense':
 else:
     from subsystems.video_streaming.simulation import VideoStream
 
-frames = VideoStream().frames
+video_stream = VideoStream()
+frames = video_stream.frames

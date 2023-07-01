@@ -6,7 +6,7 @@ from super_map import LazyDict
 
 from toolbox.globals import path_to, config, print, runtime
 from subsystems.communicating.serial_help import setup_serial_port
-import subsystems.video_stream as video_stream
+from subsystems.video_stream import video_stream
 
 # 
 # config
@@ -37,7 +37,7 @@ message = Message(ord('a'), 0.0, 0.0, 0.0, 0, 0)
 # 
 def when_aiming_refreshes():
     global port
-    capture_time =  video_stream.vid_source.capture_time
+    capture_time =  video_stream.capture_time
     capture_delay = min(int(time()*1000 - capture_time), 255) # max 255 ms delay
 
     # Sending XYZ position (meters), time since frame capture, and status of target relative to front of camera plane
