@@ -20,7 +20,6 @@ our_team_color        = config.our_team_color
 hardware_acceleration = config.model.hardware_acceleration
 input_dimension       = config.model.input_dimension
 which_model           = config.model.which_model
-hue_shift_amount      = config.model.hue_shift_amount
 
 # config check
 assert hardware_acceleration in ['tensor_rt', 'gpu', 'cpu',]
@@ -71,8 +70,7 @@ np.seterr(all='raise')
 # 
 def when_frame_arrives():
     if our_team_color == 'red':
-        # change all the blue panels to red with hue shifting
-        frame = Image(runtime.color_image).shift_hue(hue_shift_amount).in_cv2_format
+        frame = runtime.color_image # we don't need to modify the image
     elif our_team_color == 'blue':
         frame = runtime.color_image # we don't need to modify the image
     else:
@@ -180,7 +178,11 @@ def filter_team(boxes, confidences, class_ids):
     enemy_class_ids = []
     
     for index in range(len(boxes)):
-        if class_ids[index] != color_to_class_id['blue']: # always shoot at red, we use hue shifting to make blue things red
+        if our_team_color == 'red' and class_ids[index] != color_to_class_id['red']:
+            enemy_boxes.append(boxes[index])
+            enemy_confidences.append(confidences[index])
+            enemy_class_ids.append(class_ids[index])
+        if our_team_color == 'blue' and class_ids[index] != color_to_class_id['blue']:
             enemy_boxes.append(boxes[index])
             enemy_confidences.append(confidences[index])
             enemy_class_ids.append(class_ids[index])
