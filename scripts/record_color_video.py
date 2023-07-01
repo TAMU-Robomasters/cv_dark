@@ -8,8 +8,8 @@ from toolbox.video_tools import Video
 from toolbox.image_tools import Image
 from toolbox.globals import path_to, config, print
 
-stream_width = config.aiming.stream_width
-stream_height = config.aiming.stream_height
+stream_width = config.aiming.color_stream_width
+stream_height = config.aiming.color_stream_height
 framerate = config.aiming.stream_framerate
 time_record = config.videostream.testing.record_time
 

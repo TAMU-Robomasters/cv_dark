@@ -9,8 +9,8 @@ import subsystems.aiming.depth_camera as dc
 from toolbox.globals import path_to, config, print
 
 npy_frames_location = path_to.npy_frames
-stream_width = config.aiming.stream_width
-stream_height = config.aiming.stream_height
+stream_width = config.aiming.color_stream_width
+stream_height = config.aiming.color_stream_height
 kalman_video_path = path_to.kalman_video
 framerate = config.aiming.stream_framerate
 grid_size = config.aiming.grid_size

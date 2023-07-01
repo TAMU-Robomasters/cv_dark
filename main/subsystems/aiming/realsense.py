@@ -64,8 +64,8 @@ class VideoStream:
             device = find_device_that_supports_advanced_mode() # self.pipeline.get_active_profile().get_device()
             rs.rs400_advanced_mode(device).load_json(json.dumps(config.realsense_settings))
         conf = rs.config()
-        conf.enable_stream(rs.stream.depth, depth_stream_width, depth_stream_height, rs.format.z16, framerate)  # this starts the depth stream and sets the size and format
-        conf.enable_stream(rs.stream.color, color_stream_width, color_stream_height, rs.format.bgr8, framerate) # this starts the color stream and set the size and format
+        conf.enable_stream(rs.stream.depth, stream_width, stream_height, rs.format.z16, framerate)  # this starts the depth stream and sets the size and format
+        conf.enable_stream(rs.stream.color, stream_width, stream_height, rs.format.bgr8, framerate) # this starts the color stream and set the size and format
         conf.enable_stream(rs.stream.accel)
         conf.enable_stream(rs.stream.gyro)
         # config.enable_stream(rs.stream.pose,rs.format.motion_xyz32f,200)

@@ -7,8 +7,8 @@ import os
 # project imports
 from toolbox.globals import path_to, config, print
 
-stream_width = config.aiming.stream_width
-stream_height = config.aiming.stream_height
+stream_width = config.aiming.color_stream_width
+stream_height = config.aiming.color_stream_height
 framerate = config.aiming.stream_framerate
 color_video_location = path_to.record_video_output_color
 

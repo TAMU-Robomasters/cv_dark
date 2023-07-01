@@ -137,7 +137,7 @@ def get_optimal_bounding_box(boxes, confidences, screen_center):
         print(f"center_score: {center_score}")
         conf_score = conf**2 # Compute score using confidence
         print(f"conf_score: {conf_score}")
-        score = 0.5 * size_score + 0.25 * center_score + 0.25 * conf_score # Compute score using weighted average
+        score = 0.75 * size_score + 0.125 * center_score + 0.125 * conf_score # Compute score using weighted average
         print(f"score: {score}")
 
         # Make current box the best if its score is the best so far
