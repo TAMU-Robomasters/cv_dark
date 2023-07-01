@@ -147,11 +147,14 @@ class VideoStream:
             return wrapper()
     
     def get_depth_at_point(self, point):
-        print("color point:", point)
-        depth = self.depth_frame.get_distance(int(point[0]), int(point[1]))
+        # aim_start = perf_counter()
+        # print("color point:", point)
+        depth = self.depth_frame.get_distance(point[0], point[1])
         if depth < self.depth_min or depth > self.depth_max:
-            print(f"depth: {depth} is out of range")
+            # print(f"depth: {depth} is out of range")
             return None
+        # aim_end = perf_counter()
+        # print(f"Took: {(aim_end - aim_start)*1000} ms")
         return depth
 
     def get_xyz_at_color_point(self, point, depth=None):
