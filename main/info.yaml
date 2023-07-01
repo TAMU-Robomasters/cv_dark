@@ -69,8 +69,6 @@
                 minimum_confidence: 0.25 # should be a value between 0-1
                 # ^ minimum conf not applied when using tensor_rt
                 input_dimension: 416
-                hue_shift_amount: 75 # DONT CHANGE unless you really know what you're doing
-                                     # this is the amount that an image needs to be hue shifted to make blue armor panels look like they're red
             aiming:
                 confidence_box_height: 0.5 # 0.4 = 40% percent of image height
                 confidence_box_width: 0.4 # percent
@@ -116,6 +114,7 @@
                 save_depth: false
                 estimated_framerate: 40 # based on yolov8 and recent tests. Not the worst thing if this number is wrong (even very wrong)
                 save_rate: 25 # once every __ frames
+            
             communication:
                 timeout: 0.05
                 serial_baudrate: 115200

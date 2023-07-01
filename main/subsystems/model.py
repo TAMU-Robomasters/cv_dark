@@ -20,7 +20,6 @@ our_team_color        = config.our_team_color
 hardware_acceleration = config.model.hardware_acceleration
 input_dimension       = config.model.input_dimension
 which_model           = config.model.which_model
-hue_shift_amount      = config.model.hue_shift_amount
 
 # config check
 assert hardware_acceleration in ['tensor_rt', 'gpu', 'cpu',]
