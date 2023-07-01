@@ -1,7 +1,7 @@
 import serial
 import time
 # 
-# Xavier3
+# xavier
 # 
 
 from ctypes import *

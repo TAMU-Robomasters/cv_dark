@@ -3,7 +3,7 @@
 ### If you're an Experienced/Senior Dev
 
 - (Don't git clone)
-- Run this: `repo=https://github.com/TAMU-Robomasters/cv_main setup_or_copy=setup branch=master eval "$(curl -fsSL git.io/JE2Zm || wget -qO- git.io/JE2Zm)"`
+- Run this: `repo=https://github.com/TAMU-Robomasters/cv_dark setup_or_copy=setup branch=master eval "$(curl -fsSL git.io/JE2Zm || wget -qO- git.io/JE2Zm)"`
 - If you're on Windows, run it inside WSL (Ubuntu 20.04 preferably)
 - If you're a responsible human being and therefore don't want run a sketchy internet script, props to you 👍. Take a look at the "What is that `eval` command doing?" section at the bottom and you'll be able to run the commands yourself.
 
@@ -13,7 +13,7 @@
     - open up your terminal/console app
     - use `cd` to get to the folder where you want this project ([tutorial on how to use cd here](https://github.com/jeff-hykin/fornix/blob/b6fd3313beda4f80b7051211cb790a4f34da590a/documentation/images/cd_tutorial.gif))
     - (If you get errors on the next step -> keep reading)
-    - Type this inside your terminal/console <br>`repo=https://github.com/TAMU-Robomasters/cv_main setup_or_copy=setup eval "$(curl -fsSL git.io/JE2Zm || wget -qO- git.io/JE2Zm)"`<br>[press enter]
+    - Type this inside your terminal/console <br>`repo=https://github.com/TAMU-Robomasters/cv_dark setup_or_copy=setup eval "$(curl -fsSL git.io/JE2Zm || wget -qO- git.io/JE2Zm)"`<br>[press enter]
     - Possible errors:
         - On MacOS, if your hard drive is encrypted on BigSur, you might need to [follow these steps](https://stackoverflow.com/questions/67115985/error-installing-nix-on-macos-catalina-and-big-sur-on-filevault-encrypted-boot-v#comment120393385_67115986)
         - On Linux, if you're running a *really* barebones system that somehow doesn't have either `curl` or `wget`, install curl or wget and rerun the previous step
@@ -93,12 +93,12 @@ After you've finished working and close the terminal, you can always return to p
         * `export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}`.
         * `export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}`.
 * Before compiling OpenCV from source, uninstall pip's OpenCV using `pip3 uninstall opencv-contrib-python`.
-* Open the scipt located at `cv_main/settings/commands/.install_opencv`.
+* Open the scipt located at `cv_dark/settings/commands/.install_opencv`.
 * Modify the location of opencv installation, cuda arch bin version, and opencv_contrib_modules location
     * Location of OpenCV Installation - Personal Preference - This is to location where opencv and it's extra modules will be located.
     * Cuda Arch Bin version - Varies Per GPU - Set the arch bin version in the cmake command listed under `CUDA_ARCH_BIN`. See https://developer.nvidia.com/cuda-gpus and locate the version for your gpu. OpenCV will not compile if the version is incorrect.
     * OpenCV Extra Modules Path - Based on Location of OpenCV Installation - Set the extra modules path in the cmake command listed under `OPENCV_EXTRA_MODULES_PATH`. If you set the OpenCV install location to `~/Documents` then your path will look like `~/Documents/opencv_contrib/modules`.
-* Navigate inside cv_main and run the script using `./commands/setup/opencv`. If you face any errors, try running the commands sequentially and debug.
+* Navigate inside cv_dark and run the script using `./commands/setup/opencv`. If you face any errors, try running the commands sequentially and debug.
 * To test some code, change the `- GPU=` part of the `./main/configuration.ignore.yaml` to `REGULAR` and run test_main.
     * (if `./main/configuration.ignore.yaml` doesn't exist, just run python ./main/main.py and it'll generate one)
 

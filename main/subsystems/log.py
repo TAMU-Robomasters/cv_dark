@@ -12,6 +12,7 @@ from toolbox.pickle_tools import large_pickle_save
 # 
 display_live_frames       = config.log.display_live_frames
 save_frame_to_file        = config.log.save_frame_to_file
+save_depth                = config.log.save_depth
 save_rate                 = config.log.save_rate
 save_to_disk_after        = config.log.save_to_disk_after
 record_video_output_color = absolute_path_to.record_video_output_color
@@ -42,7 +43,8 @@ with open(absolute_path_to.permanent_storage, 'w') as outfile:
 # create incremented storage path
 video_count = permanent_storage["video_count"]
 video_color_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.ignore.mp4'
-video_depth_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.depth.ignore.pickle'
+if DEPTH_COMPATIBLE and save_depth:
+    video_depth_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.depth.ignore.pickle'
 
 # 
 # 
@@ -86,8 +88,9 @@ def when_finished_processing_frame():
         color_frames.append(runtime.color_image)
         color_frames = color_frames[-config.log.max_number_of_frames:] # hard limit the number of color_frames in ram
         
-        depth_frames.append(runtime.depth_image)
-        depth_frames = depth_frames[-config.log.max_number_of_frames:] # hard limit the number of color_frames in ram
+        if DEPTH_COMPATIBLE and save_depth:
+            depth_frames.append(runtime.depth_image)
+            depth_frames = depth_frames[-config.log.max_number_of_frames:] # hard limit the number of color_frames in ram
         
         # 
         # check for saving to disk
@@ -134,7 +137,7 @@ def save_frames_as_video(path):
         Video.create_from_frames(color_frames, save_to=path)
         print(f"\n\nvideo output has been saved to {path}")
         
-        if video_depth_output_path:
+        if DEPTH_COMPATIBLE and video_depth_output_path and save_depth:
             large_pickle_save(variable=depth_frames, file_path=video_depth_output_path)
     except Exception as error:
         pass
@@ -189,10 +192,10 @@ def generate_image(fps=0):
             image.add_point(x=center_point.x     , y=center_point.y     , color=rgb(130, 170, 255), radius=10)
             # image.add_point(x=prediction_point.x , y=prediction_point.y , color=rgb(195, 232, 141), radius=5)
     
-    disp_target_3d = [round(x, 3) for x in target_3d]
     x_location = 30
     y_location = 50
     if DEPTH_COMPATIBLE:
+        disp_target_3d = [round(x, 3) for x in target_3d] if target_3d else ["NAN, NAN, NAN"]
         image.add_text(text=f"target_3d: {    disp_target_3d         }", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"status: {           status.name            }", location=(x_location, y_location)); y_location += 50

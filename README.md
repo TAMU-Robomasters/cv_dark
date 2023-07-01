@@ -1,6 +1,6 @@
 ### How do I get this code to run?
 
-Set [documentation/setup.md](https://github.com/TAMU-Robomasters/cv_main/blob/master/documentation/setup.md)
+Set [documentation/setup.md](https://github.com/TAMU-Robomasters/cv_dark/blob/master/documentation/setup.md)
 
 ### What is this repo?
 
@@ -22,3 +22,10 @@ Its the home of all Tamu RoboMaster's cool code. (If you're looking for *boring*
     from toolbox.globals import path_to, config
     config.our_team_color
     ```
+
+# How to Setup New Xavier
+
+```sh
+sudo ./commands/reset_zerotier
+sudo ./commands/xavier/boot_control/setup_boot_script
+```

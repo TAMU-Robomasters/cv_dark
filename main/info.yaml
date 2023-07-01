@@ -52,7 +52,7 @@
             our_team_color: 'red' # 'red' or 'blue'
             filter_team_color: true
             mode: development
-            process_name: cv_main
+            process_name: cv_dark
             bot: sentry # sentry or standard
             hardware:
                 board: laptop
@@ -109,8 +109,9 @@
                 disable_print: false
                 save_frame_to_file: true
                 display_live_frames: false
+                save_depth: false
                 save_rate: 25 # once every __ frames
-                save_to_disk_after: 150 # 1200 frames is about 20 min at 1 frame per second
+                save_to_disk_after: 350 # 1200 frames is about 20 min at 1 frame per second
                 max_number_of_frames: 4000 # 5000 is consumes about 6GB of ram
             communication:
                 timeout: 0.05
@@ -214,7 +215,7 @@
                 stream_height: 480
                 stream_framerate: 60
                 min_depth: 0.2
-                max_depth: 8.0
+                max_depth: 10.0
         CAMERA=NONE:
             hardware:
                 camera: null
@@ -238,6 +239,12 @@
                 disable_all_logging: false
                 display_live_frames: false
                 save_frame_to_file: false
+
+        LOG:
+            log:
+                save_rate: 1 # every frame (1 frame per frame)
+                save_frame_to_file: true
+                save_depth: false
 
         BENCH:
             mode: benchmark

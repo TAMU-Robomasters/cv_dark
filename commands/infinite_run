@@ -2,5 +2,5 @@
 
 while true
 do
-	python3 "/home/xavier4/repos/cv_main/main/main.py"
+	python3 "/home/xavier/repos/cv_dark/main/main.py"
 done
