@@ -5,7 +5,7 @@ import os
 import time
 from super_map import LazyDict
 
-from math import dist
+from math import dist, sqrt
 
 # project imports
 from toolbox.globals import path_to, config, print, runtime
@@ -62,6 +62,8 @@ elif which_model == 'yolo_v8':
 else:
     raise Exception("Model specified under /'model.which_model/' is not supported")
 
+np.seterr(all='raise')
+
 # 
 # 
 # main function
@@ -117,25 +119,36 @@ def get_optimal_bounding_box(boxes, confidences, screen_center):
     # no boxes
     if not boxes:
         return None, 0
-    if len(boxes) == 1:
-        return boxes[0], confidences[0]
+    # if len(boxes) == 1:
+    #     return boxes[0], confidences[0]
 
     best_box = boxes[0]
     best_score = 0
     best_conf = 0
 
-    normalization_constant = dist((screen_center[0]*2,screen_center[1]*2),(screen_center[0],screen_center[1])) # Find constant used to scale distance part of score to 1
+    screen_center_normalizer = dist((screen_center[0]*2,screen_center[1]*2),(screen_center[0],screen_center[1])) # Find constant used to scale distance part of score to 1
+    size_normalizer = 0.7 # plate at closest distance is 0.7 of the screen
 
     # Sequentially iterate through all bounding boxes
     for conf, box in zip(confidences, boxes):
-        # print(box.center)
-        score = (1 - dist(screen_center, box.center) / normalization_constant) + (0.75 * conf) # Compute score using distance and confidence
+        size_score = ((box.width / (runtime.color_image.shape[1])) / size_normalizer) # Compute score using size of box, relative to total image size
+        print(f"size_score: {size_score}")
+        center_score = (1 - dist(screen_center,(box[0] + box[2]/2, box[1] + box[3]/2)) / screen_center_normalizer) # scaled to 1
+        print(f"center_score: {center_score}")
+        conf_score = conf**2 # Compute score using confidence
+        print(f"conf_score: {conf_score}")
+        score = 0.5 * size_score + 0.25 * center_score + 0.25 * conf_score # Compute score using weighted average
+        print(f"score: {score}")
+
         # Make current box the best if its score is the best so far
         if score > best_score:
             best_bounding_box = box
             best_conf = conf
             best_score = score
-    # print("Plate score: " + str(best_score))
+    # if best_score < 0.15:
+    #     return None, 0
+    # if size_score < 5:
+    #     return None, 0
     return best_box, best_conf
 
 if which_model == 'yolo_v5':

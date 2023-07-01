@@ -5,15 +5,16 @@ from super_map import LazyDict
 from toolbox.video_tools import Video
 from toolbox.globals import path_to, config, print, runtime
 
-from time import time
+from time import time, perf_counter
 
 import pyrealsense2 as rs
+import numpy as np
 
 videostream     = config.videostream
 aiming          = config.aiming
 record_interval = videostream.testing.record_interval
 
-MICRO_SECONDS_TO_MILISECONDS = 1000
+MICRO_SECONDS_TO_MILLISECONDS = 1000
 
 align = rs.align(rs.stream.color)
 
@@ -104,21 +105,30 @@ class VideoStream:
                     runtime.camera.acceleration = frame[2].as_motion_frame().get_motion_data()
                     runtime.camera.gyro         = frame[3].as_motion_frame().get_motion_data()
 
+                    align_start = perf_counter()
                     # Frame Alignment
-                    # aligned_frames = align.process(frame)
-                    # self.color_frame = aligned_frames.get_color_frame()
-                    # self.depth_frame = aligned_frames.get_depth_frame()
+                    aligned_frames = align.process(frame)
 
-                    self.color_frame = frame.get_color_frame()
-                    self.depth_frame = frame.get_depth_frame()
+                    self.color_frame = runtime.color_image = aligned_frames.get_color_frame()
+                    self.depth_frame = runtime.depth_image = aligned_frames.get_depth_frame()
+
+                    # if not self.depth_frame or not self.color_frame:
+                    #     continue
+
+                    # self.color_frame = frame.get_color_frame()
+                    # self.depth_frame = frame.get_depth_frame()
 
                     capture_time = frame.get_frame_metadata(rs.frame_metadata_value.sensor_timestamp)
                     frame_time = frame.get_frame_metadata(rs.frame_metadata_value.frame_timestamp)
-                    self.capture_time = (time()*1000) - ((frame_time - capture_time)/MICRO_SECONDS_TO_MILISECONDS)
+                    self.capture_time = (time()*1000) - ((frame_time - capture_time) / MICRO_SECONDS_TO_MILLISECONDS)
                     # print("frame_number:", frame_number, "capture_time:", self.capture_time)
-                    yield frame_number, array(self.color_frame.get_data()), array(self.depth_frame.get_data())
+                    align_end = perf_counter()
+                    align_elapsed = (align_end - align_start) * 1000
+                    # print("Took: " + str(align_elapsed) + " ms")
+                    yield frame_number, np.asanyarray(self.color_frame.get_data()), np.asanyarray(self.depth_frame.get_data())
                 except Exception as error: # failure to connect to realsense
                     import sys
+                    print(error)
                     print("VideoStream: error while getting frames:", error, sys.exc_info()[0])
                     print('(retrying)')
         
@@ -136,46 +146,41 @@ class VideoStream:
     
     def get_depth_at_point(self, point):
         print("color point:", point)
-        depth_point = rs.rs2_project_color_pixel_to_depth_pixel(
-            self.depth_frame.get_data(),
-            self.depth_scale,
-            self.depth_min,
-            self.depth_max,
-            self.depth_intrin,
-            self.color_intrin,
-            self.depth_to_color_extrin,
-            self.color_to_depth_extrin,
-            point
-        ) # color pixel)
-        # print("depth point:", depth_point)
-        if depth_point[0] < 0 or depth_point[1] < 0:
-            print("returned none")
-            return None
-        depth = self.depth_frame.get_distance(int(depth_point[0]), int(depth_point[1]))
+        depth = self.depth_frame.get_distance(int(point[0]), int(point[1]))
         if depth < self.depth_min or depth > self.depth_max:
             print(f"depth: {depth} is out of range")
             return None
         return depth
-    
+
     def get_xyz_at_color_point(self, point, depth=None):
         """
             Example:
                 x,y,z = video.get_xyz_at_color_point([1,2])
-                
-            Summary:
-                X is right/left          # FIXME: is positive X left or right?
-                Y is forward/backward    # FIXME: is positive Y forward or backwards?
-                Z is up/down             # FIXME: is positive Z up or down?
         """
-        if depth is None:
-            depth = self.get_depth_at_point(point)
-            if depth is None:
-                return None
-        point_3d = rs.rs2_deproject_pixel_to_point(self.depth_intrin, point, depth) 
-        point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
+        point_3d = rs.rs2_deproject_pixel_to_point(self.color_intrin, point, depth)
 
+        point_3d = self.retransform_3d_point_to_coordinate_system(point_3d)
+
+        point_3d = self.offset_3d_point_to_camera_center(point_3d)
+        return point_3d
+
+    def retransform_3d_point_to_coordinate_system(self, point_3d):
+        """
+        Summary:
+            X is positive right/negative left
+            Y is positive forward/negative backward
+            Z is positive up/negative down
+        """
+        point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
+        return point_3d
+
+    def offset_3d_point_to_camera_center(self, point_3d):
+        """
+        page 92, https://www.intelrealsense.com/wp-content/uploads/2023/03/Intel-RealSense-D400-Series-Datasheet-March-2023.pdf?_ga=2.223938584.2067846121.1687651427-893813184.1647464980
+        """
+        point_3d[0] -= 0.0325 # offset color camera X to center of glass
         point_3d[1] += -0.0042 # offset Y to front of glass
-        point_3d[0] += -0.0325 # offset X to center of glass
+        # point[0] += -0.0325 # offset depth camera X to center of glass
         return point_3d
 
     def __del__(self):

@@ -64,7 +64,7 @@ class Yolov8(object):
                     print("Trying again...")
                     continue
                 break
-            print("preinit")
+            print("[modeling]   Loading TensorRT Engine...")
             self.device = torch.device("cuda")
 
             self.engine = trtengine.init(model_filepath, self.device)
