@@ -85,7 +85,7 @@
                 model_fps: 30
                 
                 # Shooting Logic
-                min_range: 1 # units? meters?
+                min_range: 0.2 # units? meters?
                 max_range: 5
 
                 # power rune
