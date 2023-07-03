@@ -155,6 +155,7 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
     best_conf = 0
     best_depth = 0
     best_targ_3d = (0,0,0)
+    best_circle_bias_score = 0
 
     screen_center_normalizer = dist((screen_center[0]*2,screen_center[1]*2),(screen_center[0],screen_center[1])) # Find constant used to scale distance part of score to 1
     size_normalizer = 0.7 # plate at closest distance is 0.7 of the screen
@@ -167,6 +168,18 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
         print(f"center_score: {center_score}")
         conf_score = conf**2 # Compute score using confidence
         print(f"conf_score: {conf_score}")
+
+        # clamped to 0 to 1
+        # this is a 2d point - want to draw a circle
+        # radius dependent on the depth? tweak1
+        # exponential instead of linear? tweak2
+        distance = (dist(runtime.aiming.center_point, Position(box.center)) / 100)
+        radius = 100
+        if distance >= radius:
+            circle_bias_score = 0  # The point is at the edge or outside the circle
+        else:
+            circle_bias_score = 1 - (distance / radius)  # Calculate the score based on the normalized distance
+        print(f"circle_bias_score: {circle_bias_score}")
         
         # linear appraoch (based on max and min range in info.yaml min and max is 1m to 5m)
         # ex. when targetXYZ[1] is 3.5, 
@@ -176,9 +189,11 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
         # exponential approach 
         # (values closer to 1 will result in higher depth_score values)
         # ex. targetXYZ[1] is 3.5, the depth_score calculated using the exponential approach is approximately 0.2865
-        depth_score = max(0, min(1, exp((1 - targetXYZ[1]) / 2)))
+        depth_score = max(0, min(MIN_RANGE, exp((1 - targetXYZ[1]) / 2)))
         print(f"depth_score: {depth_score}")
-        score = 0.75 * size_score + 0.125 * center_score + 0.125 * depth_score # Compute score using weighted average
+        # Compute score using weighted average
+        # score = 0.625 * size_score + 0.125 * center_score + 0.125 * depth_score + 0.125 * circle_bias_score 
+        score = 0.125 * size_score + 0.125 * center_score + 0.125 * depth_score + 0.625 * circle_bias_score 
         score *= conf_score
         print(f"score: {score}")
 
@@ -188,6 +203,7 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
             best_conf = conf
             best_targ_3d = targetXYZ
             best_score = score
+            best_circle_bias_score = circle_bias_score
     # if best_score < 0.15:
     #     return None, 0
     # if size_score < 5:
