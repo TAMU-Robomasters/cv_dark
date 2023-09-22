@@ -61,7 +61,7 @@ def init_yolo_v5(model):
             normal_model = normal_model.to(torch.device("cuda"))
         else:
             from toolbox.dill_tools import large_pickle_save, large_pickle_load
-            from toolbox.file_system_tools import FS
+            import file_system_py as FS
             if not FS.is_file(absolute_path_to.yolo_v5.pickle):
                 print("[modeling]     saving a pickle file")
                 normal_model = torch.hub.load('ultralytics/yolov5', 'custom', path=path_to.yolo_v5.pytorch_model)

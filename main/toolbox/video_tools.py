@@ -1,6 +1,6 @@
 import cv2
 # local imports
-from toolbox.file_system_tools import FS
+import file_system_py as FS
 
 class Video(object):
     def __init__(self, path=None):

@@ -1,8 +1,8 @@
 import numpy
 import cv2
+import file_system_py as FS
 # project imports 
 from toolbox.globals import print
-from toolbox.file_system_tools import FS
 
 rgb = lambda red,blue,green: tuple((red, green, blue))
 rgb_to_bgr = lambda red,blue,green: tuple((blue, green, red)) # <- cause cv2 is dumb
