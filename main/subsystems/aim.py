@@ -9,7 +9,6 @@ from statistics import mean as average
 
 from toolbox.globals import path_to, config, print, runtime, time_synchronized
 from toolbox.geometry_tools import Position, BoundingBox
-from subsystems.aiming.predictor import Predictor
 from subsystems.video_stream import video_stream
 
 class TargetStatus(Enum):
