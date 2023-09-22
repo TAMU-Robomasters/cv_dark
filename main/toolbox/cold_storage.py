@@ -13,7 +13,7 @@ class ColdStorage(dict):
             thing["hi"].push(4)   # NOT FINE: 4 will not be saved to cold storage
             # must do
             thing["hi"] = [1,2,3,4] # will save
-    Note1:
+    Note2:
         Assumes it is the only thing writing to the file
         (both one instance of itself, e.g. no multithreading, and no random thing editing the JSON at runtime)
     """

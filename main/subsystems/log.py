@@ -4,7 +4,6 @@ from time import time as now
 from toolbox.globals import path_to, config, print, runtime, absolute_path_to
 from toolbox.video_tools import Video, VideoWriter
 from toolbox.image_tools import Image, rgb
-from toolbox.pickle_tools import large_pickle_save
 from toolbox.cold_storage import ColdStorage
 
 
