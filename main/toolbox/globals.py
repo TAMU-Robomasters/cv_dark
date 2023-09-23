@@ -1,3 +1,4 @@
+import cv2
 import torch
 import time
 from quik_config import find_and_load

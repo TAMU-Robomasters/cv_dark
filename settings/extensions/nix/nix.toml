@@ -72,7 +72,6 @@ load = [ "python38Packages", "numpy",]
 [[packages]]
 load = [ "python38Packages", "opencv4",]
 
-
 [[packages]]
 load = [ "cmake",]
 

@@ -36,11 +36,11 @@ let
         buildInputs = [];
         nativeBuildInputs = [];
         shellHook = ''
-            if [[ "$OSTYPE" == "linux-gnu" ]] 
-            then
-                true # add important (LD_LIBRARY_PATH, PATH, etc) nix-Linux code here
-                export EXTRA_CCFLAGS="$EXTRA_CCFLAGS:-I/usr/include"
-            fi
+            # if [[ "$OSTYPE" == "linux-gnu" ]] 
+            # then
+            #     true # add important (LD_LIBRARY_PATH, PATH, etc) nix-Linux code here
+            #     export EXTRA_CCFLAGS="$EXTRA_CCFLAGS:-I/usr/include"
+            # fi
         '';
         # for python with CUDA 
         # 1. install cuda drivers on the main machine then
