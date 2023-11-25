@@ -9,6 +9,7 @@ tensorrtx/*
 *.nosync*
 **/*.dont-sync
 **/*.dont-sync.*
+subrepos/opencv/**/*
 
 
 # 
