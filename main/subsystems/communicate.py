@@ -1,4 +1,4 @@
-from ctypes import *
+from ctypes import c_uint8, c_float, c_bool
 import serial
 from time import time
 
@@ -41,7 +41,7 @@ def setup_serial_port():
 port = setup_serial_port()
 
 # C++ struct
-class Message(Structure):
+class MessageToEmbedded(Structure):
     _pack_ = 1
     _fields_ = [
         ("magic_number"    , c_uint8   ),
@@ -51,7 +51,14 @@ class Message(Structure):
         ("capture_delay"   , c_uint8   ),
         ("status"          , c_uint8   ),
     ]
-message = Message(ord('a'), 0.0, 0.0, 0.0, 0, 0)
+class MessageFromEmbedded(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ("magic_number"    , c_uint8   ),
+        ("shoot_at_robot"  , c_bool    ),
+    ]
+message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
+message_from_embedded = MessageFromEmbedded(ord('a'), True)
 
 # 
 # main
@@ -63,17 +70,17 @@ def when_aiming_refreshes():
 
     # Sending XYZ position (meters), time since frame capture, and status of target relative to front of camera plane
     if runtime.aiming.target_3d is None:
-        message.X = message.Y = message.Z = 0.0
+        message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = 0.0
     else:
-        message.X = float(runtime.aiming.target_3d[0])
-        message.Y = float(runtime.aiming.target_3d[1])
-        message.Z = float(runtime.aiming.target_3d[2])
-    message.capture_delay = capture_delay
-    message.status = runtime.aiming.target_status.value
-    print(f'''msg({f"X:{message.X:.4f}".rjust(7)}, {f"Y:{message.Y:.4f}".rjust(7)}, {f"Z:{message.Z:.4f}".rjust(7)}, {f"delay:{message.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")
+        message_to_embedded.X = float(runtime.aiming.target_3d[0])
+        message_to_embedded.Y = float(runtime.aiming.target_3d[1])
+        message_to_embedded.Z = float(runtime.aiming.target_3d[2])
+    message_to_embedded.capture_delay = capture_delay
+    message_to_embedded.status = runtime.aiming.target_status.value
+    print(f'''msg({f"X:{message_to_embedded.X:.4f}".rjust(7)}, {f"Y:{message_to_embedded.Y:.4f}".rjust(7)}, {f"Z:{message_to_embedded.Z:.4f}".rjust(7)}, {f"delay:{message_to_embedded.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")
     
     try:
-        port.write(bytes(message))
+        port.write(bytes(message_to_embedded))
     except Exception as error:
         print(f"\n[Communication]: error when writing over UART: {error}")
         port = setup_serial_port() # attempt re-setup
