@@ -5,6 +5,7 @@ import subsystems.video_stream as video_stream
 import subsystems.model        as model
 import subsystems.aim          as aim
 import subsystems.communicate  as communicate
+import subsystems.power_rune   as power_rune 
 import subsystems.log          as log
 import pyston_lite
 

@@ -125,6 +125,13 @@ class Image(object):
         @thickness: int of how many pixels
         """
         color = rgb_to_bgr(*color)
+        if str(type(bounding_box)) == "<class 'toolbox.geometry_tools.BoundingBox'>":
+            bounding_box = [
+                bounding_box.x_top_left,
+                bounding_box.y_top_left,
+                bounding_box.width,
+                bounding_box.height,
+            ]
         
         # Starting cordinate
         start = (int (bounding_box[0]), int(bounding_box[1]))
