@@ -29,3 +29,33 @@ Its the home of all Tamu RoboMaster's cool code. (If you're looking for *boring*
 sudo ./commands/reset_zerotier
 sudo ./commands/xavier/boot_control/setup_boot_script
 ```
+
+
+# Runtime Variable
+
+```py
+runtime.aiming
+runtime.aiming.center_point
+runtime.aiming.target_3d
+runtime.aiming.target_status
+
+runtime.modeling
+runtime.modeling.best_bounding_box
+runtime.modeling.bounding_boxes
+runtime.modeling.confidences
+runtime.modeling.current_confidence
+runtime.modeling.enemy_boxes
+runtime.modeling.found_robot
+
+runtime.camera
+runtime.camera.frame
+runtime.camera.acceleration
+runtime.camera.gyro
+
+runtime.color_image
+runtime.depth_image
+runtime.frame_number
+runtime.prev_loop_time
+runtime.screen_center
+runtime.total_fps
+```
