@@ -1,4 +1,4 @@
-from ctypes import c_uint8, c_float, c_bool
+from ctypes import Structure, c_uint8, c_float, c_bool
 import serial
 from time import time
 
