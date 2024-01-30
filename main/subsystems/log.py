@@ -94,7 +94,7 @@ def when_finished_processing_frame():
 
 def when_iteration_stops():
     # NOTE: this function might get run a couple times at exit (main.py calls it)
-    avg_fps = runtime.total_fps / runtime.frame_number
+    avg_fps = runtime.total_fps / runtime.get("frame_number", 1)
     print(f"\naverage FPS: {avg_fps:.2f}")
     if save_frame_to_file:
         color_video_writer.save()

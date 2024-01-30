@@ -98,7 +98,7 @@
                 
             videostream:
                 simulation:
-                    grab_method: 'threaded_frame' # 'next_frame', 'latest_frame', 'threaded_frame'
+                    grab_method: 'next_frame' # 'next_frame', 'latest_frame', 'threaded_frame'
                     assumed_framerate: 30 # frames per second
                     input_file: *main_test_video
                     threaded_update_rate: 0.001
