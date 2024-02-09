@@ -68,6 +68,7 @@ oauthlib==3.1.0
 olefile==0.46
 onboard==1.4.1
 opencv-python==4.7.0.68
+opencv-contrib-python==4.8.1.78
 packaging==23.0
 pandas==1.5.3
 paramiko==2.6.0
