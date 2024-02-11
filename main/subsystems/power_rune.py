@@ -20,18 +20,27 @@ def find_aiming_point():
         # TODO
     
     if debug:
+        import copy
+        
         image = Image(runtime.color_image)
-        top_left_corner_x = 0
-        top_left_corner_y = 0
-        box_width = 50
-        box_height = 50
-        image.add_bounding_box([
-            top_left_corner_x,
-            top_left_corner_y,
-            box_width,
-            box_height,
-        ], color=rgb(255, 255, 255))
-        image.show_and_pause()
+            # top_left_corner_x = 0
+            # top_left_corner_y = 0
+            # box_width = 50
+            # box_height = 50
+            # image.add_bounding_box([
+            #     top_left_corner_x,
+            #     top_left_corner_y,
+            #     box_width,
+            #     box_height,
+            # ], color=rgb(255, 255, 255))
+        temp_image = copy.deepcopy(image)
+        image.grayscale()
+        image.binarize()
+        temp_image.draw_contours(image)
+        
+        # image.extracting_red()
+        temp_image.show_and_pause()
+        
 
 # 
 # test the function above
