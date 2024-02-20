@@ -9,7 +9,7 @@ import { run, Stdout, Stderr } from "https://deno.land/x/quickr@0.6.63/main/run.
     // system_tools having a variable named "cc" with a lib folder
     // patchelf executable
     // VIRTUAL_ENV existing
-
+Console.env.LD_LIBRARY_PATH = ""
 if (Console.env.VIRTUAL_ENV) {
     // const ccLibsFolder = JSON.parse(Deno.env.get("VIRKSHOP_NIX_SHELL_DATA")).libraryPaths['cc']
     const ccLibsFolder = JSON.parse(FileSystem.sync.read(Deno.env.get("__FORNIX_NIX_PATH_EXPORT_FILE"))).libPathFor['cc']
