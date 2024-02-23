@@ -148,6 +148,46 @@ class Image(object):
         line_type = 2
         self.img = cv2.putText(self.img, text, location, font, size, color, line_type)
         return self
+    
+    def grayscale(self):
+        im_gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+        self.img = im_gray
+        # self.img = cv2.GaussianBlur(self.img, (7, 7), 0)
+    
+    def binarize(self):
+        maxval = 255
+        th = 160
+        ret, thresh = cv2.threshold(self.img, th, maxval, cv2.THRESH_BINARY)
+        self.img = thresh
+    
+    def draw_contours(self, image):
+        contours, hierarchy = cv2.findContours(image.img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(self.img, contours, -1, (0,255,0), 3)
+
+    def extracting_red(self):
+            # import numpy as np
+            # img = self.img
+            # ret, mask = cv2.threshold(img[:, :,2], 230, 255, cv2.THRESH_BINARY)
+            # mask3 = np.zeros_like(img)
+            # mask3[:, :, 0] = mask
+            # mask3[:, :, 1] = mask
+            # mask3[:, :, 2] = mask
+            
+            # self.img = cv2.bitwise_and(img, mask3)
+# 237, 223, 161
+
+# 231, 87, 70
+        lower = (220,87,60)
+        upper = (250,240,170)
+        thresh = cv2.inRange(self.img, lower, upper)
+        
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+        mask = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        mask = cv2.merge([mask,mask,mask])
+
+        gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
 # import Image
 # import numpy as np
