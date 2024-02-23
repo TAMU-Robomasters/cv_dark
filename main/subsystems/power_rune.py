@@ -7,18 +7,25 @@ from toolbox.image_tools import Image, rgb
 from toolbox.geometry_tools import BoundingBox
 
 
+def color_filter(image):
+    for r in range(len(image)):
+        for c in range(len(r)):
+            image[r][c] += 1
+#     tada
+
+
 def find_aiming_point():
     runtime.color_image
-    
+
     # Contours
         # TODO
-    
+
     # SubContours
         # TODO
-    
+
     # Bounding Box Rect
         # TODO
-    
+
     if debug:
         image = Image(runtime.color_image)
         top_left_corner_x = 0
@@ -33,7 +40,7 @@ def find_aiming_point():
         ], color=rgb(255, 255, 255))
         image.show_and_pause()
 
-# 
+#
 # test the function above
 # 
 print("imported")
