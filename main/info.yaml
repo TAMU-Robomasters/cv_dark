@@ -38,7 +38,8 @@
             settings: ./subsystems/modeling/model/yolov8/yolov8.yaml
             # pytorch_model: ./subsystems/modeling/model/yolov8/011723_v8n.pt
             pytorch_model: ./subsystems/modeling/model/yolov8/011823_v8m.pt
-            tensor_rt_engine: ./subsystems/modeling/model/yolov8/011823_v8m_min.engine
+            # tensor_rt_engine: ./subsystems/modeling/model/yolov8/011823_v8m_min.engine
+            tensor_rt_engine: ./subsystems/modeling/model/yolov8/032124_b128-s.engine
             # pytorch_model: ./subsystems/modeling/model/yolov8//012523_plt_v8n.pt
             # tensor_rt_plugin: ./subsystems/modeling/plugins/yolo_v7_plugins/libmyplugins.so
     

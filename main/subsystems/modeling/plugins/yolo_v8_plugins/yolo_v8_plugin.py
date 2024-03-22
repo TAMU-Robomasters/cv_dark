@@ -5,8 +5,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from ultralytics.yolo.engine.predictor import BasePredictor
-from ultralytics.yolo.utils.ops import non_max_suppression
+from ultralytics.engine.predictor import BasePredictor
+from ultralytics.utils.ops import non_max_suppression
 
 from toolbox.globals import print, print_synchronized, time_synchronized
 
@@ -64,9 +64,9 @@ class Yolov8(object):
                     print("Trying again...")
                     continue
                 break
-            print("preinit")
             self.device = torch.device("cuda")
 
+            print("[modeling]   Loading TensorRT engine from disk...")
             self.engine = trtengine.init(model_filepath, self.device)
 
             self.predict = lambda image_tens: trtengine.infer(image_tens, self.engine)
