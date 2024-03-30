@@ -8,7 +8,7 @@ import subsystems.log          as log
 import pyston_lite
 
 pyston_lite.enable()
-synchronized_debug = False
+synchronized_debug = True
 
 # Run detection infinitely
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
@@ -26,7 +26,6 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
     
     if synchronized_debug: t5 = time_synchronized()
     if synchronized_debug: print(f'\nframe {runtime.frame_number} took {t5-t1:.3f} seconds. model: {t2-t1:.3f}, aim: {t3-t2:.3f}, communicate: {t4-t3:.3f}, log: {t5-t4:.3f}')
-    if synchronized_debug: print(f'average fps: {average_fps:.2f}')
 
 if synchronized_debug: print(runtime.frame_number)
 log.when_iteration_stops()

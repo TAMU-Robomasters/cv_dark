@@ -13,7 +13,7 @@ from toolbox.geometry_tools import BoundingBox, Position
 # config
 #
 hardware_acceleration = config.model.hardware_acceleration
-input_dimension = config.model.input_dimension
+model_dimension = config.model.input_dimension
 which_model = config.model.which_model
 
 #
@@ -40,7 +40,8 @@ def init_yolo_v8(model):
 
     # create Yolov8 object
     model.yolov8 = Yolov8(model_filepath=checked_path,
-                        input_dimension=config.model.input_dimension,
+                        model_dimension=config.model.input_dimension,
+                        rgb_input_dimension=(config.aiming.rgb_stream_height, config.aiming.rgb_stream_width),
                         acceleration=config.model.hardware_acceleration)
 
     # export data
@@ -50,7 +51,7 @@ def init_yolo_v8(model):
 def yolo_v8_beta_bounding_boxes(model, frame, minimum_confidence):
     # t0 = time_synchronized()
 
-    image_tensor, image_pre, image_pre_h, image_pre_w = model.yolov8.preprocess_image(frame)
+    image_tensor = model.yolov8.preprocess_image(frame)
 
     # t1 = time_synchronized()
 
@@ -58,7 +59,7 @@ def yolo_v8_beta_bounding_boxes(model, frame, minimum_confidence):
 
     # t2 = time_synchronized()
 
-    raw_boxes, confidences, class_ids = model.yolov8.postprocess_preds(yolo_tens, image_pre_h, image_pre_w, minimum_confidence, detect_class=False)
+    raw_boxes, confidences, class_ids = model.yolov8.postprocess_preds(yolo_tens, minimum_confidence, detect_class=False)
 
     # t3 = time_synchronized()
 

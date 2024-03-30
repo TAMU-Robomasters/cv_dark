@@ -11,6 +11,7 @@ import pyrealsense2 as rs
 
 videostream     = config.videostream
 aiming          = config.aiming
+hardware        = config.hardware
 record_interval = videostream.testing.record_interval
 
 MICRO_SECONDS_TO_MILISECONDS = 1000
@@ -24,29 +25,16 @@ runtime.camera = LazyDict(
     intrins=None
 )
 
-DS5_product_ids = ["0AD1", "0AD2", "0AD3", "0AD4", "0AD5", "0AF6", "0AFE", "0AFF", "0B00", "0B01", "0B03", "0B07", "0B3A", "0B5C"]
-
-def find_device_that_supports_advanced_mode():
-    # from: https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/python-rs400-advanced-mode-example.py
-    ctx = rs.context()
-    ds5_dev = rs.device()
-    devices = ctx.query_devices()
-    for dev in devices:
-        if dev.supports(rs.camera_info.product_id) and str(dev.get_info(rs.camera_info.product_id)) in DS5_product_ids:
-            if dev.supports(rs.camera_info.name):
-                print("Found device that supports advanced mode:", dev.get_info(rs.camera_info.name))
-            return dev
-        dev.hardware_reset()
-    raise Exception("No D400 product line device that supports advanced mode was found")
-
 class VideoStream:
     def __init__(self):
         
         self.color_frame = None
         self.depth_frame = None
 
-        stream_width  = aiming.stream_width
-        stream_height = aiming.stream_height
+        rgb_stream_width  = aiming.rgb_stream_width
+        rgb_stream_height = aiming.rgb_stream_height
+        depth_stream_width  = aiming.depth_stream_width
+        depth_stream_height = aiming.depth_stream_height
         framerate     = aiming.stream_framerate
 
         self.depth_min = aiming.min_depth
@@ -57,12 +45,12 @@ class VideoStream:
             self.video_output = self.begin_video_recording()
 
         self.pipeline = rs.pipeline() # declares and initializes the pipeline variable
-        if config.realsense_settings:
-            device = find_device_that_supports_advanced_mode() # self.pipeline.get_active_profile().get_device()
-            rs.rs400_advanced_mode(device).load_json(json.dumps(config.realsense_settings))
+
+        
         conf = rs.config()
-        conf.enable_stream(rs.stream.depth, stream_width, stream_height, rs.format.z16, framerate)  # this starts the depth stream and sets the size and format
-        conf.enable_stream(rs.stream.color, stream_width, stream_height, rs.format.bgr8, framerate) # this starts the color stream and set the size and format
+        conf.enable_stream(rs.stream.depth, depth_stream_width, depth_stream_height, rs.format.z16, framerate)  # this starts the depth stream and sets the size and format
+        conf.enable_stream(rs.stream.color, rgb_stream_width, rgb_stream_height, rs.format.bgr8, framerate) # this starts the color stream and set the size and format
+
         conf.enable_stream(rs.stream.accel)
         conf.enable_stream(rs.stream.gyro)
         # config.enable_stream(rs.stream.pose,rs.format.motion_xyz32f,200)
@@ -70,6 +58,13 @@ class VideoStream:
         while True:
             try:
                 self.cfg = self.pipeline.start(conf)
+
+                rgb_sensor = self.pipeline.get_active_profile().get_device().query_sensors()[1]
+                rgb_sensor.set_option(rs.option.exposure, hardware.rgb_exposure)
+                # rgb_sensor.set_option(rs.option.white_balance, hardware.rgb_white_balance)
+                # rgb_sensor.set_option(rs.option.enable_auto_exposure, True)
+                rgb_sensor.set_option(rs.option.enable_auto_white_balance, True)
+
                 self.depth_scale = self.cfg.get_device().first_depth_sensor().get_depth_scale()
                 self.color_intrin = self.cfg.get_stream(rs.stream.color).as_video_stream_profile().get_intrinsics()
                 self.depth_intrin = self.cfg.get_stream(rs.stream.depth).as_video_stream_profile().get_intrinsics()
@@ -78,7 +73,8 @@ class VideoStream:
 
                 sensors = self.pipeline.get_active_profile().get_device().query_sensors()
                 for sensor in sensors:
-                    sensor.set_option(rs.option.global_time_enabled, False)                # print("depth_scale:", self.depth_scale)
+                    sensor.set_option(rs.option.global_time_enabled, False)
+                # print("depth_scale:", self.depth_scale)
                 # print("color_intrin:", self.color_intrin)
                 # print("depth_intrin:", self.depth_intrin)
                 # print("color fps: ", self.cfg.get_stream(rs.stream.color).fps)
@@ -135,7 +131,7 @@ class VideoStream:
             return wrapper()
     
     def get_depth_at_point(self, point):
-        print("color point:", point)
+        # print("color point:", point)
         depth_point = rs.rs2_project_color_pixel_to_depth_pixel(
             self.depth_frame.get_data(),
             self.depth_scale,
@@ -149,7 +145,7 @@ class VideoStream:
         ) # color pixel)
         # print("depth point:", depth_point)
         if depth_point[0] < 0 or depth_point[1] < 0:
-            print("returned none")
+            # print("returned none")
             return None
         depth = self.depth_frame.get_distance(int(depth_point[0]), int(depth_point[1]))
         if depth < self.depth_min or depth > self.depth_max:
@@ -201,7 +197,7 @@ class VideoStream:
 
         # Start up video output
         gst_out = "appsrc ! video/x-raw, format=BGR ! queue ! videoconvert ! video/x-raw,format=BGRx ! nvvidconv ! nvv4l2h264enc ! h264parse ! matroskamux ! filesink location="+file_path
-        video_output = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER, 0, float(framerate), (int(stream_width), int(stream_height)))
+        video_output = cv2.VideoWriter(gst_out, cv2.CAP_GSTREAMER, 0, float(framerate), (int(rgb_stream_width), int(rgb_stream_height)))
         if not video_output.isOpened():
             print("Failed to open output")
 

@@ -91,7 +91,7 @@ def get_dist_to_bbox(bbox):
     depth_sample = depth_sample[depth_sample != None]
     depth_sample = depth_sample[depth_sample != 0]
     depth_sample = reject_depth_outliers(depth_sample)
-    print(f"depth_sample: {depth_sample}")
+    # print(f"depth_sample: {depth_sample}")
     if len(depth_sample) == 0:
         return None
     # if np.mean(depth_sample) > 5 or np.mean(depth_sample) < 0:

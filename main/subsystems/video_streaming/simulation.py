@@ -12,6 +12,8 @@ simulation = config.videostream.simulation
 class VideoStream:
     def __init__(self):
         self.video_object = Video(path=simulation.input_file)
+
+        self.capture_time = 0 # capture time in simulation is assumed to be 0ms
         
         if simulation.grab_method == 'next_frame':
             pass # no special setup but demo the case for consistency and the error message

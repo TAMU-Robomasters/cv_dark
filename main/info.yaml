@@ -36,12 +36,10 @@
             path_to_folder: "./../yolov7"
         yolo_v8:
             settings: ./subsystems/modeling/model/yolov8/yolov8.yaml
-            # pytorch_model: ./subsystems/modeling/model/yolov8/011723_v8n.pt
-            pytorch_model: ./subsystems/modeling/model/yolov8/011823_v8m.pt
-            # tensor_rt_engine: ./subsystems/modeling/model/yolov8/011823_v8m_min.engine
-            tensor_rt_engine: ./subsystems/modeling/model/yolov8/032124_b128-s.engine
-            # pytorch_model: ./subsystems/modeling/model/yolov8//012523_plt_v8n.pt
-            # tensor_rt_plugin: ./subsystems/modeling/plugins/yolo_v7_plugins/libmyplugins.so
+            # pytorch_model: ./subsystems/modeling/model/yolov8/011823_v8m.pt
+            pytorch_model: ./subsystems/modeling/model/yolov8/032124_b128-m.pt
+            
+            tensor_rt_engine: ./subsystems/modeling/model/yolov8/032124_b128-m_nms.engine
     
     # this file will be generated automatically
     (local_data): ./local_data.ignore.yaml
@@ -76,8 +74,8 @@
                 confidence_box_width: 0.4 # percent
                 
                 # Default
-                stream_width: 848
-                stream_height: 480
+                rgb_stream_width: 848
+                rgb_stream_height: 480
                 stream_framerate: 60
                 min_depth: 0.2
                 max_depth: 5.0
@@ -211,16 +209,23 @@
                 camera_has_pose: false
                 camera_has_acceleration: true
                 camera_has_gyro: true
+                rgb_exposure: 40.0
+                rgb_white_balance: 3000
             aiming:
-                stream_width: 848
-                stream_height: 480
+                depth_stream_width: 848
+                depth_stream_height: 480
+                rgb_stream_width: 960
+                rgb_stream_height: 540
                 stream_framerate: 60
                 min_depth: 0.2
                 max_depth: 10.0
         CAMERA=NONE:
             hardware:
                 camera: null
-        
+            aiming:
+                # Needs to be changed to whatever your input video dimensions are
+                rgb_stream_width: 1920
+                rgb_stream_height: 1080
         
         GUI:
             log:
