@@ -6,8 +6,10 @@ import numpy as np
 # IMAGE_PATH = r""
 vid = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
+
 def hsv_to_opencvhsv(h, s, v):
     return np.array([h // 2, int((s / 100) * 255), int((v / 100) * 255)])
+
 
 def redextract(fr):
     # image = cv2.imread(frame)
