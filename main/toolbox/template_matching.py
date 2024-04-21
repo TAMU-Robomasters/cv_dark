@@ -17,7 +17,7 @@ methods = ['cv.TM_CCOEFF', 'cv.TM_CCOEFF_NORMED', 'cv.TM_CCORR',
 res = cv.matchTemplate(img2,template,cv.TM_CCOEFF_NORMED)
 threshold = 0.8
 loc = np.where( res >= threshold)
-for pt in zip(*loc[::-1])
+for pt in zip(*loc[::-1]):
     cv.rectangle(img_rgb, pt, (pt[0] + w, pt[1] + h), (255,0,255), 2)
  
 # for meth in methods:
