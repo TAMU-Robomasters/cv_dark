@@ -10,9 +10,6 @@ class KalmanFilterForHumans:
         measurement_noise,
         initial_state,
     ):
-        print(
-            f"""state_transition_matrix.tolist() = {state_transition_matrix.tolist()}"""
-        )
         self.state_transition_matrix = state_transition_matrix
         self.measurement_matrix      = measurement_matrix
         self.process_noise           = process_noise
