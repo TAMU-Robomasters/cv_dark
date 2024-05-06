@@ -1,6 +1,9 @@
 import atexit
-from toolbox.globals import config, print, runtime, time_synchronized
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from toolbox.globals import config, print, runtime, time_synchronized
 import subsystems.video_stream as video_stream
 import subsystems.model        as model
 import subsystems.aim          as aim
