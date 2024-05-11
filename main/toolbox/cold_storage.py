@@ -24,6 +24,11 @@ class ColdStorage(dict):
             with open(self.path,'r') as file:
                 self.prev_string_content = file.read()
         except:
+            import os
+            # if directory doesnt exist, create it
+            directory = os.path.dirname(self.path)
+            if directory == '': directory = '.'
+            os.makedirs(directory, exist_ok=True)
             # if file doesnt exist, create it
             with open(self.path, 'w') as the_file:
                 the_file.write('{}')
