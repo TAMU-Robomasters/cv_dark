@@ -1,6 +1,13 @@
 from filterpy.kalman import KalmanFilter
 import numpy as np
 
+# NOTE: this model is for 3D position estimation with dynamic velocity
+#       Apparently, after talking with some researchers, the best/standard way
+#       is to actually assume a constant velocity, and then assume everything else is noise
+#       e.g. assume a lot of noise
+#       not sure if this will work well for things that are rotating in circle 
+#       but thats what is used commonly for other stuff
+
 class KalmanFilterForHumans:
     def __init__(
         self,
@@ -77,15 +84,23 @@ kalman_filter = KalmanFilterForHumans(
     ),
 )
 
+
+
+# 
+# 
+# example/test code
+# 
+# 
 if __name__ == "__main__":
     # Simulate noisy measurements
     true_position = np.zeros(3)
     true_velocity = np.zeros(3)
     measurements = []
     filtered_positions = [
-        [0, 0, 0], # fill in an inital value since the rest are predictions
+        [0, 0, 0], # this is an inital value since the rest are predictions
     ]
-    for _ in range(50):
+    number_of_simulated_timesteps = 50
+    for _ in range(number_of_simulated_timesteps):
         # lets say the object is changing velocity randomly
         true_velocity += np.random.normal(0, 0.1, size=3)
         # position after velocity change (duration of time_step)
