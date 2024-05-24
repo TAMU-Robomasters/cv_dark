@@ -19,7 +19,7 @@ class Yolov8(object):
         # config check
         assert acceleration in ['tensor_rt', 'gpu', 'cpu', None ]
         self.acceleration = acceleration
-        if acceleration == 'gpu' and torch.cuda.is_available():
+        if acceleration in [ 'tensor_rt', 'gpu' ] and torch.cuda.is_available():
             print("[modeling]   gpu_acceleration: ENABLED\n")
             # loaded_model = loaded_model.to(torch.device("cuda"))
             self.device = torch.device("cuda")
