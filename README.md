@@ -26,7 +26,7 @@ Its the home of all Tamu RoboMaster's cool code. (If you're looking for *boring*
 # At the competition
 
 1. After ssh-ing into the Xavier, run `./commands/kill_booted_process` to stop the thing from running
-2. To change the team color, edit the `commands/xavier/boot_control/setup_boot_script` change WE_RED to WE_BLUE or vice versa
+2. To change the team color, edit the `commands/xavier/boot_control/boot_command.ignore` change WE_RED to WE_BLUE or vice versa
 
 # How to Setup New Xavier 
 
