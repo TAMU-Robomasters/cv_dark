@@ -5,8 +5,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from ultralytics.yolo.engine.predictor import BasePredictor
-from ultralytics.yolo.utils.ops import non_max_suppression
+from ultralytics.engine.predictor import BasePredictor
+from ultralytics.utils.ops import non_max_suppression
 
 from toolbox.globals import print, print_synchronized, time_synchronized
 
