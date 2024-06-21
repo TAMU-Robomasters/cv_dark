@@ -1,5 +1,15 @@
 import atexit
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from toolbox.globals import config, print, runtime, time_synchronized
+import subsystems.video_stream as video_stream
+import subsystems.model        as model
+import subsystems.aim          as aim
+import subsystems.communicate  as communicate
+import subsystems.power_rune   as power_rune 
+import subsystems.log          as log
 import pyston_lite
 
 import subsystems.aim as aim

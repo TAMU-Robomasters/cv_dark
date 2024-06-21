@@ -1,4 +1,5 @@
 import json
+import os
 
 class ColdStorage(dict):
     """
@@ -24,11 +25,24 @@ class ColdStorage(dict):
             with open(self.path,'r') as file:
                 self.prev_string_content = file.read()
         except:
+            # if directory doesnt exist, create it
+            directory = os.path.dirname(self.path)
+            if directory == '': directory = '.'
+            os.makedirs(directory, exist_ok=True)
             # if file doesnt exist, create it
             with open(self.path, 'w') as the_file:
                 the_file.write('{}')
         # read json
-        self._dict = json.loads(self.prev_string_content)
+        try:
+            self._dict = json.loads(self.prev_string_content)
+        except Exception as error:
+            print(f'''\n\nWarning json file is corrupted, resetting to empty dict\n\n''')
+            with open(self.path+".corrupted", 'w') as the_file:
+                the_file.write(str(self.prev_string_content))
+            with open(self.path, 'w') as the_file:
+                the_file.write('{}')
+            self.prev_string_content = '{}'
+            self._dict = {}
     
     def save_if_needed(self):
         output_as_string = json.dumps(self._dict)

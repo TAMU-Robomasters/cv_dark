@@ -87,7 +87,7 @@ message_from_embedded_aruco = MessageFromEmbeddedAruco(ord('b'))
 # 
 def when_aiming_refreshes():
     global port
-    capture_time =  video_stream.capture_time
+    capture_time = getattr( video_stream,'capture_time',0)
     capture_delay = min(int(time()*1000 - capture_time), 255) # max 255 ms delay
 
     # Sending XYZ position (meters), time since frame capture, and status of target relative to front of camera plane

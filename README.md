@@ -23,13 +23,25 @@ Its the home of all Tamu RoboMaster's cool code. (If you're looking for *boring*
     config.our_team_color
     ```
 
-# How to Setup New Xavier
+# At the competition
+
+1. After ssh-ing into the Xavier, run `./commands/kill_booted_process` to stop the thing from running
+2. To change the team color, edit the `commands/xavier/boot_control/boot_command.ignore` change WE_RED to WE_BLUE or vice versa
+
+# How to Setup New Xavier 
+
+Clone the sd card
+- There should be an img file in the google drive
+- There are command for copying the img file to the sd card in this repo (`commands/tools/export_to_sd_card`)
+    - its interactive, so just run the command and follow the instructions
+
+After putting the SD card into the xavier run:
 
 ```sh
+cd ~/repos/cv_dark
 sudo ./commands/reset_zerotier
 sudo ./commands/xavier/boot_control/setup_boot_script
 ```
-
 
 # Runtime Variable
 
