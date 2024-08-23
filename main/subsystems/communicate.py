@@ -35,13 +35,13 @@ def setup_serial_port():
             subprocess.run([ "bash", "-c", f"sudo -S chmod 777 '{serial_port}' <<<  \"$(cat \"$HOME/.pass\")\" ",])
             return setup_serial_port() # recursion until it works
 
-# 
+#
 # initialize
 # 
 port = setup_serial_port()
 
 # C++ struct
-class MessageToEmbedded(Structure):
+class MessageToEmbeddedAiming(Structure):
     _pack_ = 1
     _fields_ = [
         ("magic_number"    , c_uint8   ),
@@ -51,16 +51,38 @@ class MessageToEmbedded(Structure):
         ("capture_delay"   , c_uint8   ),
         ("status"          , c_uint8   ),
     ]
-class MessageFromEmbedded(Structure):
+class MessageFromEmbeddedAiming(Structure):
     _pack_ = 1
     _fields_ = [
         ("magic_number"    , c_uint8   ),
         ("shoot_at_robot"  , c_bool    ),
     ]
-message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
-message_from_embedded = MessageFromEmbedded(ord('a'), True)
+message_to_embedded_aiming = MessageToEmbeddedAiming(ord('a'), 0.0, 0.0, 0.0, 0, 0)
+message_from_embedded_aiming = MessageFromEmbeddedAiming(ord('a'), True)
 
-# 
+
+# C++ struct
+class MessageToEmbeddedAruco(Structure):  # TODO: validate if this is correct
+    _pack_ = 1
+    _fields_ = [
+        ("magic_number"    , c_uint8   ),
+        ("X"               , c_float   ),
+        ("Y"               , c_float   ),
+        ("color"           , c_uint8   ),
+        ("letter"          , c_uint8   ),
+    ]
+
+class MessageFromEmbeddedAruco(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ("magic_number"    , c_uint8   ),  # TODO: validate if this is correct. I believe magic number is to confirm the message was received?
+    ]
+
+message_to_embedded_aruco = MessageToEmbeddedAruco(ord('b'), 0.0, 0.0, 0, 0)
+message_from_embedded_aruco = MessageFromEmbeddedAruco(ord('b'))
+# TODO: Shouldn't this magic number be validated somewhere? It doesn't look like that's happening for MessageFromEmbeddedAiming either
+
+#
 # main
 # 
 def when_aiming_refreshes():
@@ -70,27 +92,49 @@ def when_aiming_refreshes():
 
     # Sending XYZ position (meters), time since frame capture, and status of target relative to front of camera plane
     if runtime.aiming.target_3d is None:
-        message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = 0.0
+        message_to_embedded_aiming.X = message_to_embedded_aiming.Y = message_to_embedded_aiming.Z = 0.0
     else:
-        message_to_embedded.X = float(runtime.aiming.target_3d[0])
-        message_to_embedded.Y = float(runtime.aiming.target_3d[1])
-        message_to_embedded.Z = float(runtime.aiming.target_3d[2])
-    message_to_embedded.capture_delay = capture_delay
-    message_to_embedded.status = runtime.aiming.target_status.value
-    print(f'''msg({f"X:{message_to_embedded.X:.4f}".rjust(7)}, {f"Y:{message_to_embedded.Y:.4f}".rjust(7)}, {f"Z:{message_to_embedded.Z:.4f}".rjust(7)}, {f"delay:{message_to_embedded.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")
-    
+        message_to_embedded_aiming.X = float(runtime.aiming.target_3d[0])
+        message_to_embedded_aiming.Y = float(runtime.aiming.target_3d[1])
+        message_to_embedded_aiming.Z = float(runtime.aiming.target_3d[2])
+    message_to_embedded_aiming.capture_delay = capture_delay
+    message_to_embedded_aiming.status = runtime.aiming.target_status.value
+    print(f'''msg({f"X:{message_to_embedded_aiming.X:.4f}".rjust(7)}, {f"Y:{message_to_embedded_aiming.Y:.4f}".rjust(7)}, {f"Z:{message_to_embedded_aiming.Z:.4f}".rjust(7)}, {f"delay:{message_to_embedded_aiming.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")
+
     try:
-        port.write(bytes(message_to_embedded))
+        port.write(bytes(message_to_embedded_aiming))
     except Exception as error:
         print(f"\n[Communication]: error when writing over UART: {error}")
         port = setup_serial_port() # attempt re-setup
+
+aruco_color_to_int = {"N/A": -1, "Red": 0, "Blue": 1}
+
+def when_aruco_refreshes():
+    global port
+
+    for i in range(len(runtime.aruco_detection.rel_y)):
+        # This loop okay to do?
+        message_to_embedded_aruco.X = float(runtime.aruco_detection.rel_x[i])
+        message_to_embedded_aruco.Y = float(runtime.aruco_detection.rel_y[i])
+        message_to_embedded_aruco.color = aruco_color_to_int[runtime.aruco_detection.color[i]]
+        message_to_embedded_aruco.letter = ord(runtime.aruco_detection.letter[i])  # IMPORTANT: THESE LETTERS ARE UPPERCASE
+        print(f'''msg({f"X:{message_to_embedded_aruco.X:.4f}".rjust(7)}, {f"Y:{message_to_embedded_aruco.Y:.4f}".rjust(7)}, {f"color:{message_to_embedded_aruco.color}".rjust(7)}, {f"letter:{message_to_embedded_aruco.letter}".rjust(7)})''', end=", ")
+
+        try:
+            port.write(bytes(message_to_embedded_aruco))
+        except Exception as error:
+            print(f"\n[Communication]: error when writing over UART: {error}")
+            port = setup_serial_port() # attempt re-setup
 
 # overwrite function if port is None
 if port is None:
     def when_aiming_refreshes():
         pass # do nothing intentionally
 
-# 
+    def when_aruco_refreshes():
+        pass # do nothing intentionally
+
+#
 # helpers
 # 
 def read_input():
