@@ -1,4 +1,5 @@
-# Setup The Project Environment
+# Setup The Project Environment for Local Machine
+- Keep in mind that this setup does not translate to setting up a physical Jetson device correctly. Do not run `commands/start` if you are setting up a new Jetson
 
 ### If you're an Experienced/Senior Dev
 
