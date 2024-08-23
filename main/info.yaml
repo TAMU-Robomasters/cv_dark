@@ -86,7 +86,7 @@
                 model_fps: 30
                 
                 # Shooting Logic
-                min_range: 1 # units? meters?
+                min_range: 0.2 # units? meters?
                 max_range: 5
 
                 # power rune
@@ -99,7 +99,7 @@
                 
             videostream:
                 simulation:
-                    grab_method: 'latest_frame' # 'next_frame', 'latest_frame', 'threaded_frame'
+                    grab_method: 'next_frame' # 'next_frame', 'latest_frame', 'threaded_frame'
                     assumed_framerate: 30 # frames per second
                     input_file: *main_test_video
                     threaded_update_rate: 0.001
