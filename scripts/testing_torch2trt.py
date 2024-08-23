@@ -1,4 +1,4 @@
-from toolbox.globals import path_to, absolute_path_to, config, print
+from main.toolbox.globals import path_to, absolute_path_to, config, print
 import numpy # Dont delete - uses our numpy version isntead of torch's
 import torch
 

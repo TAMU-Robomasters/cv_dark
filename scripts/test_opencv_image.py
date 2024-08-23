@@ -1,6 +1,6 @@
 import cv2
 # project imports
-from toolbox.globals import path_to, config, print
+from main.toolbox.globals import path_to, config, print
 
 # read image 
 print("about to read an image")

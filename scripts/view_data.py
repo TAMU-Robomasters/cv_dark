@@ -3,7 +3,7 @@ import sys
 import cv2
 
 # project imports
-from toolbox.globals import path_to, config, print
+from main.toolbox.globals import path_to, config, print
 
 npy_frames_location = path_to.npy_frames
 stream_width = config.aiming.color_stream_width

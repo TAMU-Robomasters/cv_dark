@@ -1,3 +1,6 @@
+#####
+# This script is extremely outdated. Do not use unless you are wanting to refactor and figure out what it was originally calling
+#####
 import time
 import pyrealsense2 as rs
 import numpy as np
@@ -5,12 +8,12 @@ import sys
 import cv2
 import os
 # project imports
-from toolbox.video_tools import Video
-from toolbox.image_tools import Image
-from toolbox.globals import path_to, config, print
-import subsystems.modeling.modeling_main as modeling
-import subsystems.tracking.tracking_main as tracking
-import subsystems.videostream._tests.get_next_video_frame as next_video_frame
+from main.toolbox.video_tools import Video
+from main.toolbox.image_tools import Image
+from main.toolbox.globals import path_to, config, print
+import main.subsystems.modeling.modeling_main as modeling
+import main.subsystems.tracking.tracking_main as tracking
+import main.subsystems.videostream._tests.get_next_video_frame as next_video_frame
 
 os.system("mkdir -p ./source/scripts")
 
