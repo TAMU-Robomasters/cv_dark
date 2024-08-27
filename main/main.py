@@ -31,11 +31,11 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
     log.when_finished_processing_frame()
     
     if synchronized_debug: t5 = time_synchronized()
-    if synchronized_debug: print(f'\nframe {runtime.frame_number} took {1000*(t5-t1):.3f}ms. 
-                                 model: {1000*(t2-t1):.3f}ms, 
-                                 aim: {1000*(t3-t2):.3f}ms, 
-                                 communicate: {1000*(t4-t3):.3f}ms, 
-                                 log: {1000*(t5-t4):.3f}ms')
+    if synchronized_debug: print(f'\nframe {runtime.frame_number} took {1000*(t5-t1):.3f}ms' 
+                                'model: {1000*(t2-t1):.3f}ms,' 
+                                 'aim: {1000*(t3-t2):.3f}ms,'
+                                 'communicate: {1000*(t4-t3):.3f}ms,' 
+                                 'log: {1000*(t5-t4):.3f}ms')
     
     if synchronized_debug: print(f'average fps: {average_fps:.2f}')
 
