@@ -1,10 +1,5 @@
 # NOTE: names in parentheses are special, all other names are not!
-(project):
-    ToDo:
-        - fix zed camera calibration
-        - tensor_rt with zed
-        - have better team detection (manually compute color) so we can lower the minimum_confidence for further recognition
-    
+(project):    
     # a central place for filepaths
     (path_to):
         main_folder:  ./
@@ -12,7 +7,7 @@
         main_test_video: &main_test_video ../data/test.avi
         video_output:              ../result.do_not_sync.mp4
         permanent_storage:         ./subsystems/log/permanent_storage.json
-        record_video_output_color: ./subsystems/log/videos/competition_2022_
+        record_video_output_color: ./subsystems/log/videos/fall24testing
         kalman_video:              ./kalman_video.do_not_sync.mp4
         npy_frames:                ./scripts/data1 # replace with whichever frame set you want to use in the source/scripts/data<num> directory
         # model
@@ -114,7 +109,7 @@
                 display_live_frames: false
                 save_depth: false
                 estimated_framerate: 40 # based on yolov8 and recent tests. Not the worst thing if this number is wrong (even very wrong)
-                save_rate: 25 # once every __ frames
+                save_rate: 20 # once every __ frames
             
             communication:
                 timeout: 0.05
@@ -172,13 +167,7 @@
             model:
                 which_model: yolo_v8
         
-        
-        BOARD=TX2:
-            model:
-                hardware_acceleration: "tensor_rt"
-            communication:
-                # serial_port: "/dev/ttyACM0" # USB serial
-                serial_port: "/dev/ttyTHS2" # UART serial
+
         BOARD=XAVIER:
             hardware:
                 camera: realsense
@@ -224,8 +213,7 @@
         CAMERA=NONE:
             hardware:
                 camera: null
-        
-        
+
         GUI:
             log:
                 display_live_frames: true
@@ -247,16 +235,15 @@
 
         LOG:
             log:
-                # disable_all_logging: false
-                # display_live_frames: false
-                # save_frame_to_file: false
+                disable_all_logging: false
+                display_live_frames: false
                 save_rate: 1 # every frame (1 frame per frame)
                 save_frame_to_file: true
                 save_depth: false
 
         BENCH:
             mode: benchmark
-            stop_after: 479 # frames
+            stop_after: 1000 # frames
         
         WE_RED:
             our_team_color: 'red'
