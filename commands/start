@@ -242,7 +242,7 @@ then
         echo '|                                                                                |'
         echo '----------------------------------------------------------------------------------'
         echo
-        echo "Continue?"; read _
+        echo "Continue?"; read -p "(Press enter)" _
         pwd_before="$PWD"
         # this means we need to unmount and remount with metadata enabled
         cd && sudo umount /mnt/c && sudo mount -t drvfs C: /mnt/c -o metadata
