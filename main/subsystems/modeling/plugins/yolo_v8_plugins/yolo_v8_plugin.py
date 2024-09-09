@@ -34,15 +34,20 @@ class Yolov8(object):
             if self.acceleration == 'gpu' and torch.cuda.is_available():
                 print("[modeling]   gpu_acceleration: ENABLED\n")
                 self.device = torch.device("cuda")
-            else:
-                print("[modeling]   Running on CPU\n")
-                self.device = torch.device("cpu")
-            # load model locally
-            overrides = {'model': model_filepath,
-                        'device': "0" if self.device.type == "cuda" else "cpu",
+                overrides = {'model': model_filepath,
+                        'device': "0",
                         'half': True,
                         'imgsz': f'{self.input_w},{self.input_h}'
                         }
+            else:
+                print("[modeling]   Running on CPU\n")
+                self.device = torch.device("cpu")
+                overrides = {'model': model_filepath,
+                            'device': "cpu",
+                            'imgsz': f'{self.input_w},{self.input_h}'
+                            }
+            # load model locally
+            
             self.predictor = BasePredictor(overrides=overrides)
 
             self.predictor.setup_model(model=None)
