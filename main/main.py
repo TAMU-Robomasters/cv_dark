@@ -15,7 +15,7 @@ import datetime
 import collections
 
 # relative imports
-from toolbox.globals import PATHS, config, print
+from toolbox.globals import path_to, config, print
 from subsystems.embedded_communication.embedded_main import embedded_communication
 import subsystems.modeling.modeling_main as modeling
 import subsystems.tracking.tracking_main as tracking
@@ -60,13 +60,25 @@ def setup(
         # Run detection infinitely
         for frame_number, (color_image, depth_image) in enumerate(video_stream.frames()):
             # Grab frame and record initial time
-            print.collect_prints = True
             initial_time = time.time()
-            
+        
+
             # modeling
             boxes, confidences, class_ids, color_image = model.get_bounding_boxes(color_image, config.model.threshold, filter_team_color)
             screen_center = (color_image.shape[1] / 2, color_image.shape[0] / 2)
             best_bounding_box, cf = model.get_optimal_bounding_box(boxes, confidences, screen_center, aiming_methods.distance)
+
+            if best_bounding_box:
+                # print(type(color_image))
+                # color_image = np.array(color_image)
+                # print(type(color_image))
+                print(color_image.shape)
+
+                cv2.rectangle(color_image, (best_bounding_box[0], best_bounding_box[1]), (best_bounding_box[0] + best_bounding_box[2], best_bounding_box[1] + best_bounding_box[3]), (0,255,0), 2)
+            
+            aiming_methods.visualize_color_frame(color_image)
+
+            
             # aiming
             horizontal_angle, vertical_angle, should_shoot, (x_std, y_std, depth_amount, pixel_diff) = aiming.aim(best_bounding_box, cf, boxes, screen_center, depth_image)
             # communication
@@ -102,7 +114,6 @@ def setup(
 
             counter+=1
             screen_center = (color_image.shape[1] / 2, color_image.shape[0] / 2) # Finds the coordinate for the screen_center of the screen
-            
             # Run model, find best bbox, and re-initialize tracker/kalman filters every model.frequency frames or whenever the tracker fails
             if counter % config.model.frequency == 0 or (best_bounding_box is None):
                 counter=1
@@ -139,15 +150,17 @@ if __name__ == '__main__':
     # Relative imports here since pyrealsense requires camera to be plugged in or code will crash
     if config.hardware.camera == 'zed':
         from subsystems.videostream.zed import VideoStream
-    else:
+    elif config.hardware.camera == 'realsense':
         from subsystems.videostream.realsense import VideoStream
+    else:
+        from subsystems.videostream.simulation import VideoStream
     
     video_stream = VideoStream()
     simple_synchronous, synchronous_with_tracker = setup(
         video_stream=video_stream,
         modeling=modeling,
         tracker=tracking,
-        live_camera=True,
+        live_camera=config.hardware.camera!=None,
         kalman_filters=False,
         with_gui=False,
         filter_team_color=True,

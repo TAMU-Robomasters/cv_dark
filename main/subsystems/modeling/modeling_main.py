@@ -3,23 +3,20 @@ import numpy as np
 import cv2
 import os
 import time
-import argparse
+
 
 # relative imports
-from toolbox.globals import PATHS, config, print
+from toolbox.globals import path_to, absolute_path_to, config, print
 from subsystems.modeling.static_info import MODEL_LABELS, MODEL_COLORS, COLOR_GREEN, COLOR_YELLOW
 
 # import config from the info.yaml file
-# should_use_tensor_rt = config.model.hardware_acceleration == 'tensor_rt'
-# should_use_gpu       = config.model.hardware_acceleration == 'gpu'
-should_use_tensor_rt = False
-should_use_gpu       = True
-
+should_use_tensor_rt = config.model.hardware_acceleration == 'tensor_rt'
+should_use_gpu       = config.model.hardware_acceleration == 'gpu'
 
 # enable certain imports if tensorRT is enabled to prevent crashes in case it is not enabled
 if should_use_tensor_rt:
     import pycuda.autoinit  # This is needed for initializing CUDA driver
-    from modeling.yolo_with_plugins import TrtYOLO
+    from subsystems.modeling.yolo_with_plugins import TrtYOLO
 
 class ModelingClass:
     def __init__(self):
@@ -30,7 +27,7 @@ class ModelingClass:
             print("RUNNING WITH TENSORRT")
             self.trtYolo = TrtYOLO((self.input_dimension, self.input_dimension), 3, False)
         else:
-            self.net = cv2.dnn.readNetFromDarknet(PATHS.model_config, PATHS.model_weights)  # init the model
+            self.net = cv2.dnn.readNetFromDarknet(absolute_path_to.model_config, absolute_path_to.model_weights)  # init the model
             if should_use_gpu:
                 print("RUNNING WITH GPU ACCELERATION")
                 self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)

@@ -10,12 +10,12 @@ import numpy as np
 import cv2
 import tensorrt as trt
 import pycuda.driver as cuda
-from toolbox.globals import PATHS, config, print
+from toolbox.globals import path_to, config, print
 
 try:
-    ctypes.cdll.LoadLibrary('./source/modeling/plugins/libyolo_layer.so')
+    ctypes.cdll.LoadLibrary(path_to.tensorrt_so_file)
 except OSError as e:
-    raise SystemExit('ERROR: failed to load ./plugins/libyolo_layer.so.  '
+    raise SystemExit(f'ERROR: failed to load {path_to.tensorrt_so_file}  '
                      'Did you forget to do a "make" in the "./plugins/" '
                      'subdirectory?') from e
 
@@ -263,7 +263,7 @@ class TrtYOLO(object):
     """TrtYOLO class encapsulates things needed to run TRT YOLO."""
 
     def _load_engine(self):
-        TRTbin = PATHS.model_trt
+        TRTbin = path_to.model_trt
         with open(TRTbin, 'rb') as f, trt.Runtime(self.trt_logger) as runtime:
             return runtime.deserialize_cuda_engine(f.read())
 

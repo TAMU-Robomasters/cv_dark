@@ -1,16 +1,16 @@
-import pyrealsense2.pyrealsense2 as rs
+import pyrealsense2 as rs
 import numpy as np
 import cv2
 import datetime
 import os
 
 # relative imports
-from toolbox.globals import PATHS, config, print
+from toolbox.globals import path_to, config, print
 
 stream_width = config.aiming.stream_width
 stream_height = config.aiming.stream_height
 framerate = config.aiming.stream_framerate
-color_video_location = PATHS.record_video_output_color
+color_video_location = path_to.record_video_output_color
 
 pipeline = rs.pipeline()                                            
 config = rs.config()                                                

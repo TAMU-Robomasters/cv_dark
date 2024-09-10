@@ -55,7 +55,7 @@ from __future__ import print_function
 import os
 import sys
 import hashlib
-import argparse
+
 from collections import OrderedDict
 
 import numpy as np
@@ -63,7 +63,7 @@ import onnx
 from onnx import helper, TensorProto
 
 from plugins import verify_classes, get_input_wh
-
+import argparse
 
 class DarkNetParser(object):
     """Definition of a parser for DarkNet-based YOLO model."""

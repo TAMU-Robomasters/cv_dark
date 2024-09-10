@@ -1,8 +1,10 @@
 import time
+import numpy as np
+import pyrealsense2 as rs
 # relative imports
 from toolbox.video_tools import Video
-from toolbox.globals import PATHS, config, print
-import pyrealsense2.pyrealsense2 as rs
+from toolbox.globals import path_to, config, print
+import pyrealsense2 as rs
 import numpy as np
 
 videostream = config.videostream
@@ -35,8 +37,8 @@ class VideoStream:
                 frame = self.pipeline.wait_for_frames()
                 frame_number += 1
                 # create the frames
-                color_frame = np.asanyarray(frame.get_color_frame().get_data()) 
-                depth_frame = np.asanyarray(frame.get_depth_frame() .get_data()) 
+                color_frame = np.array(frame.get_color_frame().get_data()) 
+                depth_frame = np.array(frame.get_depth_frame() .get_data()) 
                 
                 # Add frame to video recording based on recording frequency
                 if self.video_output and (frame_number % videostream.testing.record_interval == 0):
@@ -61,7 +63,7 @@ class VideoStream:
         Output: Video object to add frames too.
         """
 
-        color_video_location = PATHS.record_video_output_color
+        color_video_location = path_to.record_video_output_color
         
         # Setup video output path based on date and counter
         c = 1
