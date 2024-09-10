@@ -236,17 +236,29 @@ then
         echo '|                                                                                |'
         echo '      cd ; sudo umount /mnt/c && sudo mount -t drvfs C: /mnt/c -o metadata; cd - '
         echo '|                                                                                |'
+        echo '|  You may also choose to not remount below.                                     |'
+        echo '|                                                                                |'
         echo '|  Then re-run this script                                                       |'
         echo '|  You can read more about this problem here if you like:                        |'
         echo '|  https://devblogs.microsoft.com/commandline/chmod-chown-wsl-improvements/      |'
         echo '|                                                                                |'
         echo '----------------------------------------------------------------------------------'
         echo
-        echo "Continue?"; read -p "(Press enter)" _
-        pwd_before="$PWD"
-        # this means we need to unmount and remount with metadata enabled
-        cd && sudo umount /mnt/c && sudo mount -t drvfs C: /mnt/c -o metadata
-        cd "$pwd_before"
+        echo "Remount C:? (y/n, default yes)";
+        question="[y/n]: ";answer=''
+        read -p ">" response
+        case "$response" in
+            [Nn]* ) answer='no';;
+            * ) answer='yes';;
+        esac
+
+        # If answer was yes
+        if [ "$answer" = 'yes' ]; then
+            pwd_before="$PWD"
+            # this means we need to unmount and remount with metadata enabled
+            cd && sudo umount /mnt/c && sudo mount -t drvfs C: /mnt/c -o metadata
+            cd "$pwd_before"
+        fi
     fi
 fi
 
