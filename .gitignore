@@ -17,8 +17,9 @@ subrepos/opencv/**/*
 #
 opencv/
 opencv_contrib/
-opencv_contrib.zip
+opencv_contrib*
 opencv.zip
+opencv-4.5.0
 
 # 
 # standard
