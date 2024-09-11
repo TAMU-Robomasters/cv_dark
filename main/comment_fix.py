@@ -1,11 +1,16 @@
-# this is a comment
+
+
+#region imports
 from tempfile import mkstemp
 from shutil import move, copymode
 from os import fdopen, remove
 import re
+#endregion imports
+
 # With help from https://stackoverflow.com/a/17141572/25598210
 # and https://stackoverflow.com/a/39110/25598210
 
+#region functions
 def replace_caps(inpt):
     inpt = inpt.group(0)[:-1] + inpt.group(0)[-1].upper()
     return inpt
@@ -25,7 +30,6 @@ def count_file_lines(file_path, size=1024*3) -> int:
 
     with open(file_path, "r",encoding="utf-8",errors='ignore') as f:
         return (sum(bl.count("\n") for bl in blocks(f,size)))
-
 
 
 def fix_comments_in_file(the_path, debug=0):
@@ -62,6 +66,7 @@ def fix_comments_in_file(the_path, debug=0):
     # Move new file
     move(abs_path, the_path)
 
+#endregion functions
 
 
 #the_path = input("The path: \n>")
