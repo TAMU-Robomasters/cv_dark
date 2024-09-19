@@ -19,16 +19,16 @@ atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_itera
 # Run detection infinitely
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
     if synchronized_debug: t1 = time_synchronized()
-    model.when_frame_arrives()
+    model.when_frame_arrives() # Get the bounding boxes
     
     if synchronized_debug: t2 = time_synchronized()
-    aim.when_bounding_boxes_refresh()
+    aim.when_bounding_boxes_refresh() # Prioritize the best bounding box to shoot at
     
     if synchronized_debug: t3 = time_synchronized()
-    communicate.when_aiming_refreshes()
+    communicate.when_aiming_refreshes() # Send XYZ pos of the arm panel to embedded
     
     if synchronized_debug: t4 = time_synchronized()
-    log.when_finished_processing_frame()
+    log.when_finished_processing_frame() # Save the frame
     
     if synchronized_debug: t5 = time_synchronized()
     if synchronized_debug: print(f'\nframe {runtime.frame_number} took {1000*(t5-t1):.3f}ms' 
