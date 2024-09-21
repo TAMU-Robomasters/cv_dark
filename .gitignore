@@ -20,6 +20,7 @@ opencv_contrib/
 opencv_contrib*
 opencv.zip
 opencv-4.5.0
+drew_detection/drewvenv/
 
 # 
 # standard
