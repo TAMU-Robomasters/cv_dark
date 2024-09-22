@@ -47,6 +47,24 @@ def filter_yellow(frame, save_output=False):
     
     return result
 
+def clean_image(frame,save_output=False):
+
+    kernel = np.ones((5,5),np.uint8)
+    frame = cv.morphologyEx(frame, cv.MORPH_OPEN, kernel)
+    if save_output:
+        cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/morph_open.png", frame)
+    
+    frame = cv.morphologyEx(frame, cv.MORPH_CLOSE, kernel)
+    if save_output:
+        cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/morph_close.png", frame)
+
+    # Sharpening
+    #kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+    #frame = cv.filter2D(frame, -1, kernel)
+    #if save_output:
+    #    cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/sharpen.png", frame)
+
+    return frame
 
 #endregion Functions
 
@@ -58,11 +76,11 @@ img = cv.imread(cv.samples.findFile("/home/drewwingfield/TAMURobomasters/cv_dark
 if img is None:
     sys.exit("Could not read the image.")
 
-filter_yellow(img,save_output=True)
+img = filter_yellow(img,save_output=True)
 
+img = clean_image(img,save_output=True)
 
-
-
+cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/output.png", img)
 
 # When everything done, release the capture
 print("program complete!")
