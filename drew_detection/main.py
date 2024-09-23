@@ -68,8 +68,9 @@ def filter_yellow(frame, save_output=False, save_raw=False):
                 frame)
         cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/mask.png", 
             mask)
-    
-    return result
+
+    return result, mask
+
 
 def clean_image(frame,save_output=False):
 
@@ -96,6 +97,20 @@ def clean_image(frame,save_output=False):
 
     return frame
 
+
+def find_contours(frame, is_grayscale=False, save_output=False):
+    if not is_grayscale:
+        frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+
+    #ret, thresh = cv.threshold(frame, 127, 255, 0)
+    #im2, contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    contours = cv.findContours(frame, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)[0]
+    return contours
+
+
+
+def draw_contours(frame, contours: list, save_output=False):
+    cv.drawContours(frame, contours, -1, (0, 255, 0), 2) 
 
 def do_video(save_output=False,save_raw=False):
     print("Now doing video...")
@@ -125,7 +140,7 @@ def do_video(save_output=False,save_raw=False):
             pos_frame = cap.get(1)
             print(f"Frame {pos_frame} ")
             
-            new_frame = clean_image(filter_yellow(frame, save_output=save_output, save_raw=save_raw))
+            new_frame, mask = clean_image(filter_yellow(frame, save_output=save_output, save_raw=save_raw))
             writer.write(new_frame)
 
         else:
@@ -142,7 +157,6 @@ def do_image():
         sys.exit("Could not read the image.")
 
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-    #img = img[...,::-1]
 
     #debug: test stripes
     #img[0:20][0:30]   = (255, 0, 0)
@@ -150,22 +164,19 @@ def do_image():
     #img[40:60][0:30] = (0, 0, 255)
 
     img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
-    #img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
 
-    #img = Image.frombytes('RGB', img.size, img.rgb)
-    #img = cv.cvtColor(np.array(img), cv.COLOR_BGR2RGB)
-
-    #print("\n"*3+"IMG in BGR"+str(img))
-
-    #cv.circle(img=img,center=(200,200),radius=100,color=(255,0,0),thickness=10)
-    #cv.circle(img=img,center=(300,300),radius=100,color=(0,255,0),thickness=10)
-    #cv.circle(img=img,center=(500,500),radius=100,color=(0,0,255),thickness=10)
-
-    #img = img[...,::-1]
-
-    img = filter_yellow(img,save_output=True, save_raw=False)
+    img, mask = filter_yellow(img,save_output=True, save_raw=False)
 
     img = clean_image(img,save_output=True)
+
+
+    contours = find_contours(img, is_grayscale=False)
+    print(f"Found {len(contours)} contours.")
+
+    draw_contours(img, contours)
+
+    cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/contours.png", mask)
+    
 
     cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/output.png", img)
 
@@ -173,9 +184,7 @@ def do_image():
 
 #region Procedural
 
-#imgray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
-#ret, thresh = cv.threshold(imgray, 127, 255, 0)
-#im2, contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
 
 #do_video(False,False)
 do_image()
