@@ -20,14 +20,10 @@ from PIL import Image
 
 #region Functions
 def filter_yellow(frame, save_output=False, save_raw=False):
-    """ TAKES IN BGR"""
-    #covert to hsv
+    """ TAKES IN BGR """
+    # Convert to hsv
     frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
-    #print("\n"*3+"IMG in RGB"+str(frame))
-
     frame = cv.cvtColor(frame, cv.COLOR_RGB2HSV)
-    #print("\n"*3+"IMG in HSV"+str(frame))
-    
 
     # Threshold of yellow in HSV space 
     yellow_lower = np.array([16, 60, 30]) # 50 120 85
@@ -36,19 +32,13 @@ def filter_yellow(frame, save_output=False, save_raw=False):
     # preparing the mask to overlay 
     mask = cv.inRange(frame, yellow_lower, yellow_upper) 
 
+    # Mask the frame
     result = cv.bitwise_and(frame, frame, mask = mask) 
     
     # convert back to BGR
     result = cv.cvtColor(result, cv.COLOR_HSV2BGR)
-    #print("\n"*4+"FILTER_YELLOW FRAME:")
-    #print(frame)
-    
-    #for i, row in enumerate(frame):
-    #    for j, col in enumerate(frame):
-    #        print("aaaaa"+str(frame[row,col,:]))
-    #        exit()
-    #        frame[row,col,:] = frame[i,j,:]
 
+    # Save output if respective arguments are true
     if save_output:
         cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/yellow.png", 
             result)
@@ -59,36 +49,40 @@ def filter_yellow(frame, save_output=False, save_raw=False):
         cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/mask.png", 
             mask)
 
+    # Return the result and the mask
     return result, mask
 
 
 def clean_image(frame,save_output=False):
-
-    #covert to hsv
+    """ Returns a cleaned version of a given image in BGR. """
+    # Convert to hsv
     frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
     frame = cv.cvtColor(frame, cv.COLOR_RGB2HSV)
 
+    # Use Morph Open to decrease noise
     kernel = np.ones((5,5),np.uint8)
     frame = cv.morphologyEx(frame, cv.MORPH_OPEN, kernel)
     if save_output:
         cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/morph_open.png", frame)
     
+    # Use Morph Close to decrease noise
     frame = cv.morphologyEx(frame, cv.MORPH_CLOSE, kernel)
     if save_output:
         cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/morph_close.png", frame)
 
-    # Sharpening
+    # Sharpening (isn't tuned very well so I'm disabling it for now)
     #kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
     #frame = cv.filter2D(frame, -1, kernel)
     #if save_output:
     #    cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/sharpen.png", frame)
+    
     # convert back to BGR
     frame = cv.cvtColor(frame, cv.COLOR_HSV2BGR)
 
     return frame
 
 
-def find_contours_list(frame, is_grayscale=False, save_output=False):
+def find_contours_list(frame, is_grayscale=False, save_output=False): #TODO: remove this - it's a oneliner
     if not is_grayscale:
         frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
@@ -97,7 +91,7 @@ def find_contours_list(frame, is_grayscale=False, save_output=False):
     return cv.findContours(frame, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
 
 
-def draw_contours(frame, contours: list, color=(0,255,0)):
+def draw_contours(frame, contours: list, color=(0,255,0)): #TODO: remove this - it's a oneliner
     cv.drawContours(frame, contours, -1, color, 2) 
 
 
@@ -107,19 +101,16 @@ def filter_contours(contours:list, hierarchy, debug_text=False):
     for i in range(len(contours)):
         x, y, w, h = cv.boundingRect(contours[i])
         #aspect_ratio = float(w) / h
-
         #area = cv.contourArea(cnt)
         #x, y, w, h = cv.boundingRect(cnt)
         #rect_area = w * h
         #extent = float(area) / rect_area
-
         #hull = cv.convexHull(cnt)
         #hull_area = cv.contourArea(hull)
         #solidity = float(area) / hull_area
-
         #equi_diameter = np.sqrt(4 * area / np.pi)
 
-        # if conditions not met
+        # If conditions not met
         #TODO: Fix all of this
         if not (w>8 and h>8):
             print(hierarchy[0])
