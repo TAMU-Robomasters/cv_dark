@@ -98,63 +98,106 @@ def clean_image(frame,save_output=False):
     return frame
 
 
-def find_contours(frame, is_grayscale=False, save_output=False):
+def find_contours_list(frame, is_grayscale=False, save_output=False):
     if not is_grayscale:
         frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
     #ret, thresh = cv.threshold(frame, 127, 255, 0)
     #im2, contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-    contours = cv.findContours(frame, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)[0]
-    return contours
+    return cv.findContours(frame, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
 
 
 def draw_contours(frame, contours: list, color=(0,255,0)):
     cv.drawContours(frame, contours, -1, color, 2) 
 
 
-def filter_contours(contours:list):
+def filter_contours(contours:list, hierarchy, debug_text=False):
     # The below code was modified from https://stackoverflow.com/a/63934162/25598210
-    contours_new = []
-    contours_excluded = []
+    contours = list(contours)
+    for i in range(len(contours)):
+        x, y, w, h = cv.boundingRect(contours[i])
+        #aspect_ratio = float(w) / h
 
-    for cnt in contours:
-        x, y, w, h = cv.boundingRect(cnt)
-        aspect_ratio = float(w) / h
+        #area = cv.contourArea(cnt)
+        #x, y, w, h = cv.boundingRect(cnt)
+        #rect_area = w * h
+        #extent = float(area) / rect_area
 
-        area = cv.contourArea(cnt)
-        x, y, w, h = cv.boundingRect(cnt)
-        rect_area = w * h
-        extent = float(area) / rect_area
+        #hull = cv.convexHull(cnt)
+        #hull_area = cv.contourArea(hull)
+        #solidity = float(area) / hull_area
 
-        hull = cv.convexHull(cnt)
-        hull_area = cv.contourArea(hull)
-        solidity = float(area) / hull_area
+        #equi_diameter = np.sqrt(4 * area / np.pi)
 
-        equi_diameter = np.sqrt(4 * area / np.pi)
-
-        if w>10 and h>10 and 0.33<aspect_ratio and aspect_ratio<3:
-            contours_new.append(cnt)
-            #print(f" Width = {w}  Height = {h} area = {area}  aspect ration = {round(aspect_ratio,3)}  extent  = {extent}  solidity = {round(solidity,4)}   equi_diameter = {round(equi_diameter,3)} ")  #orientation = {Orientation}")
-        
-        else:
-            contours_excluded.append(cnt)
-
+        # if conditions not met
+        #TODO: Fix all of this
+        if not (w>8 and h>8):
+            print(hierarchy[0])
+            print(f"Removing from index {i}")
+            contours = contours
+            print(hierarchy[0][np.where(hierarchy[0][0] != i)])
+            hierarchy[0] = np.delete(hierarchy[0], (0,i), axis=0)
+            exit()
+            
         #(x, y), (MA, ma), Orientation = cv.fitEllipse(cnt)
 
 
-    return contours_new, contours_excluded
+    return tuple(contours), hierarchy
 
 
-def find_and_draw_contours(frame, save_output=False):
-    contours = find_contours(frame, is_grayscale=False)
-    #print(f"Found {len(contours)} contours.")
-    contours, contours_excluded = filter_contours(contours)
+def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False):
 
-    draw_contours(frame, contours)
-    draw_contours(frame, contours_excluded,color=(255,0,255))
+    frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    contours_tree, hierarchy_tree = cv.findContours(frame, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    
+    # filter_contours isn't working right now - fix it later
+    #contours_tree, hierarchy_tree = filter_contours(contours_tree,hierarchy_tree)
+    frame = cv.cvtColor(frame, cv.COLOR_GRAY2BGR)
 
+    #print "contours:",len(contours)
+    #print "largest contour has ",len(contours[0]),"points"
+
+    # a lot of this I got from https://stackoverflow.com/a/74620309/25598210
+    draw_contours(frame_to_write_ontop_of,contours_tree,color=(0,150,0))
+
+    parent_instances = {}
+    highest_instance = (0,0)
+
+    for i in range(len(hierarchy_tree[0])-1):
+        #[next, previous, first child, parent]
+        #print(f"Contour {i} - {hierarchy_tree[0,i]}")
+
+        if hierarchy_tree[0,i][3] != -1:
+            #print(f"Has parent of {hierarchy_tree[0,i][3]}")
+            if not (hierarchy_tree[0,i][3] in parent_instances.keys()):
+                parent_instances[hierarchy_tree[0,i][3]]=1
+            else:
+                parent_instances[hierarchy_tree[0,i][3]]+=1
+            
+            if parent_instances[hierarchy_tree[0,i][3]]>highest_instance[1]:
+                highest_instance = (hierarchy_tree[0,i][3], parent_instances[hierarchy_tree[0,i][3]])
+    
+    #print(f"Highest instance of {highest_instance}")
+
+
+    for i in range(len(hierarchy_tree[0])-1):
+        if hierarchy_tree[0,i][3]==highest_instance[0]:
+            #print(f"Contour {i} - {hierarchy_tree[0,i]}")
+            #print(f"{hierarchy_tree[0,i][0]} Has parent of {hierarchy_tree[0,i][3]}")
+            draw_contours(frame_to_write_ontop_of, [contours_tree[hierarchy_tree[0,i][0]]],color=(255,0,255))
+    
+    draw_contours(frame_to_write_ontop_of, [contours_tree[highest_instance[0]]],color=(255,249,130))
+    
+    cv.rectangle(frame_to_write_ontop_of, cv.boundingRect(contours_tree[highest_instance[0]]), (0, 0, 255), 4)
+
+
+    #draw_contours(frame_original, contours_tree,color=(255,0,255))
+    
     if save_output:
-        cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/contours.png", frame)
+        print(f" Found {len(contours_tree)} contours.")
+        print("largest contour has ",len(contours_tree[highest_instance[0]]),"points")
+
+        cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/contours.png", frame_to_write_ontop_of)
 
 
 
@@ -177,6 +220,15 @@ def do_video(save_output=False,save_raw=False):
         frameSize=(width, height)
     )
 
+    fourcc_ontop = cv.VideoWriter_fourcc(*'mp4v')
+    writer_ontop = cv.VideoWriter(
+        "/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/output_ontop.mp4",
+        fourcc=fourcc_ontop,
+        apiPreference=0,
+        fps=fps, 
+        frameSize=(width, height)
+    )
+
     pos_frame = cap.get(1) #cv.CV_CAP_PROP_POS_FRAMES
 
     while True:
@@ -189,8 +241,10 @@ def do_video(save_output=False,save_raw=False):
             
             new_frame = clean_image(filter_yellow(frame, save_output=save_output, save_raw=save_raw)[0])
             
-            find_and_draw_contours(new_frame, save_output=False)
+            find_and_draw_contours(new_frame, frame, save_output=False)
             
+            writer_ontop.write(frame)
+
             writer.write(new_frame)
 
         else:
@@ -199,6 +253,7 @@ def do_video(save_output=False,save_raw=False):
 
     cap.release()
     writer.release()
+    writer_ontop.release()
 
 
 def do_image():
@@ -219,7 +274,7 @@ def do_image():
 
     img = clean_image(img,save_output=True)
 
-    find_and_draw_contours(img, save_output=True)
+    find_and_draw_contours(img, img, save_output=True)
 
     cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/output.png", img)
 
