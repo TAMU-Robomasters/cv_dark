@@ -108,9 +108,56 @@ def find_contours(frame, is_grayscale=False, save_output=False):
     return contours
 
 
+def draw_contours(frame, contours: list, color=(0,255,0)):
+    cv.drawContours(frame, contours, -1, color, 2) 
 
-def draw_contours(frame, contours: list, save_output=False):
-    cv.drawContours(frame, contours, -1, (0, 255, 0), 2) 
+
+def filter_contours(contours:list):
+    # The below code was modified from https://stackoverflow.com/a/63934162/25598210
+    contours_new = []
+    contours_excluded = []
+
+    for cnt in contours:
+        x, y, w, h = cv.boundingRect(cnt)
+        aspect_ratio = float(w) / h
+
+        area = cv.contourArea(cnt)
+        x, y, w, h = cv.boundingRect(cnt)
+        rect_area = w * h
+        extent = float(area) / rect_area
+
+        hull = cv.convexHull(cnt)
+        hull_area = cv.contourArea(hull)
+        solidity = float(area) / hull_area
+
+        equi_diameter = np.sqrt(4 * area / np.pi)
+
+        if w>10 and h>10 and 0.33<aspect_ratio and aspect_ratio<3:
+            contours_new.append(cnt)
+            #print(f" Width = {w}  Height = {h} area = {area}  aspect ration = {round(aspect_ratio,3)}  extent  = {extent}  solidity = {round(solidity,4)}   equi_diameter = {round(equi_diameter,3)} ")  #orientation = {Orientation}")
+        
+        else:
+            contours_excluded.append(cnt)
+
+        #(x, y), (MA, ma), Orientation = cv.fitEllipse(cnt)
+
+
+    return contours_new, contours_excluded
+
+
+def find_and_draw_contours(frame, save_output=False):
+    contours = find_contours(frame, is_grayscale=False)
+    #print(f"Found {len(contours)} contours.")
+    contours, contours_excluded = filter_contours(contours)
+
+    draw_contours(frame, contours)
+    draw_contours(frame, contours_excluded,color=(255,0,255))
+
+    if save_output:
+        cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/contours.png", frame)
+
+
+
 
 def do_video(save_output=False,save_raw=False):
     print("Now doing video...")
@@ -140,7 +187,10 @@ def do_video(save_output=False,save_raw=False):
             pos_frame = cap.get(1)
             print(f"Frame {pos_frame} ")
             
-            new_frame, mask = clean_image(filter_yellow(frame, save_output=save_output, save_raw=save_raw))
+            new_frame = clean_image(filter_yellow(frame, save_output=save_output, save_raw=save_raw)[0])
+            
+            find_and_draw_contours(new_frame, save_output=False)
+            
             writer.write(new_frame)
 
         else:
@@ -169,14 +219,7 @@ def do_image():
 
     img = clean_image(img,save_output=True)
 
-
-    contours = find_contours(img, is_grayscale=False)
-    print(f"Found {len(contours)} contours.")
-
-    draw_contours(img, contours)
-
-    cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/contours.png", mask)
-    
+    find_and_draw_contours(img, save_output=True)
 
     cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/output.png", img)
 
@@ -186,8 +229,8 @@ def do_image():
 
 
 
-#do_video(False,False)
-do_image()
+do_video(False,False)
+#do_image()
 
 
 # When everything done, release the capture
