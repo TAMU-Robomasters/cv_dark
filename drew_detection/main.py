@@ -15,17 +15,7 @@ import numpy as np
 import cv2 as cv
 import sys
 from PIL import Image
-
-
 #endregion Imports
-
-
-#region Constants
-#endregion Constants
-
-
-#region Classes
-#endregion Classes
 
 
 #region Functions
@@ -200,8 +190,6 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False):
         cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/contours.png", frame_to_write_ontop_of)
 
 
-
-
 def do_video(save_output=False,save_raw=False):
     print("Now doing video...")
 
@@ -280,17 +268,15 @@ def do_image():
 
 #endregion Functions
 
+
 #region Procedural
-
-
 
 do_video(False,False)
 #do_image()
 
-
 # When everything done, release the capture
 print("program complete!")
-
 #endregion Procedural
+
 
 # -- end of file --
