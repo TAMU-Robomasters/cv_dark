@@ -51,14 +51,8 @@ class MessageToEmbedded(Structure):
         ("capture_delay"   , c_uint8   ),
         ("status"          , c_uint8   ),
     ]
-class MessageFromEmbedded(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("magic_number"    , c_uint8   ),
-        ("shoot_at_robot"  , c_bool    ),
-    ]
+
 message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
-message_from_embedded = MessageFromEmbedded(ord('a'), True)
 
 # 
 # main
@@ -89,14 +83,3 @@ def when_aiming_refreshes():
 if port is None:
     def when_aiming_refreshes():
         pass # do nothing intentionally
-
-# 
-# helpers
-# 
-def read_input():
-    """
-    Read data from DJI board
-    :returns: received data (ended with EOL) as a string
-    """
-    if port is not None:
-        return port.readline()
