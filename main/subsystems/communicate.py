@@ -1,11 +1,23 @@
 from ctypes import Structure, c_uint8, c_float, c_bool
 import serial
+import numpy as np
 from time import time
 
 from super_map import LazyDict
 
 from toolbox.globals import path_to, config, print, runtime
+from toolbox.kalman_filter import KalmanFilter
 from subsystems.video_stream import video_stream
+
+
+# initial kinematic state is set to all ones. This might effect convergence time
+# ! warning assuming millimeters
+# ! There's a bug in here 
+# TODO find uncertainty for x, y, z
+capture_time =  getattr(video_stream, 'capture_time', 0)
+capture_delay = min(int(time()*1000 - capture_time), 255) # max 255 ms delay
+kf = KalmanFilter(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, capture_time, 0.05)
+
 
 # 
 # config
@@ -41,6 +53,7 @@ def setup_serial_port():
 port = setup_serial_port()
 
 # C++ struct
+# ? do we still need the magic number
 class MessageToEmbedded(Structure):
     _pack_ = 1
     _fields_ = [
@@ -48,11 +61,17 @@ class MessageToEmbedded(Structure):
         ("X"               , c_float   ),
         ("Y"               , c_float   ),
         ("Z"               , c_float   ),
+        ("VX"               , c_float   ),
+        ("VY"               , c_float   ),
+        ("VZ"               , c_float   ),
+        ("AX"               , c_float   ),
+        ("AY"               , c_float   ),
+        ("AZ"               , c_float   ),
         ("capture_delay"   , c_uint8   ),
         ("status"          , c_uint8   ),
     ]
 
-message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
+message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0)
 
 # 
 # main
@@ -64,11 +83,26 @@ def when_aiming_refreshes():
 
     # Sending XYZ position (meters), time since frame capture, and status of target relative to front of camera plane
     if runtime.aiming.target_3d is None:
-        message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = 0.0
+        message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = message_to_embedded.VX = message_to_embedded.VY = message_to_embedded.VZ = message_to_embedded.AX = message_to_embedded.AY = message_to_embedded.AZ = 0.0
     else:
-        message_to_embedded.X = float(runtime.aiming.target_3d[0])
-        message_to_embedded.Y = float(runtime.aiming.target_3d[1])
-        message_to_embedded.Z = float(runtime.aiming.target_3d[2])
+        kf.correct(np.array([
+            [runtime.aiming.target_3d[0]],
+            [runtime.aiming.target_3d[1]],
+            [runtime.aiming.target_3d[2]]
+        ], dtype=np.float32))
+
+        # estimating where the target is currently at
+        kf.predict(capture_delay)
+        message_to_embedded.X = kf.statePre[0, 0]
+        message_to_embedded.Y = kf.statePre[1, 0]
+        message_to_embedded.Z = kf.statePre[2, 0]
+        message_to_embedded.VX = kf.statePre[3, 0]
+        message_to_embedded.VY = kf.statePre[4, 0]
+        message_to_embedded.VZ = kf.statePre[5, 0]
+        message_to_embedded.AX = kf.statePre[6, 0]
+        message_to_embedded.AY = kf.statePre[7, 0]
+        message_to_embedded.AZ = kf.statePre[8, 0]
+
     message_to_embedded.capture_delay = capture_delay
     message_to_embedded.status = runtime.aiming.target_status.value
     print(f'''msg({f"X:{message_to_embedded.X:.4f}".rjust(7)}, {f"Y:{message_to_embedded.Y:.4f}".rjust(7)}, {f"Z:{message_to_embedded.Z:.4f}".rjust(7)}, {f"delay:{message_to_embedded.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")
