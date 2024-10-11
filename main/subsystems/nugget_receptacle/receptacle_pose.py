@@ -9,9 +9,12 @@
 # Imports
 import cv2
 import numpy as np
+import sys
+import os
 
 #endregion setup
 
+LOCAL_PATH = "main/subsystems/nugget_receptacle"
 
 
 def filter_yellow(frame, save_output=False, save_raw=False):
@@ -35,14 +38,12 @@ def filter_yellow(frame, save_output=False, save_raw=False):
 
     # Save output if respective arguments are true
     if save_output:
-        cv2.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/yellow.png", 
+        cv2.imwrite(os.path.join(LOCAL_PATH,"yellow.png"), 
             result)
         if save_raw:
             frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
-            cv2.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/raw.png", 
-                frame)
-        cv2.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/mask.png", 
-            mask)
+            cv2.imwrite(os.path.join(LOCAL_PATH,"raw.png"), frame)
+        cv2.imwrite(os.path.join(LOCAL_PATH,"mask.png"), mask)
 
     # Return the result and the mask
     return result, mask
@@ -58,12 +59,12 @@ def clean_image(frame,save_output=False):
     kernel = np.ones((5,5),np.uint8)
     frame = cv2.morphologyEx(frame, cv2.MORPH_OPEN, kernel)
     if save_output:
-        cv2.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/morph_open.png", frame)
+        cv2.imwrite(os.path.join(LOCAL_PATH,"morph_open.png"), frame)
     
     # Use Morph Close to decrease noise
     frame = cv2.morphologyEx(frame, cv2.MORPH_CLOSE, kernel)
     if save_output:
-        cv2.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/morph_close.png", frame)
+        cv2.imwrite(os.path.join(LOCAL_PATH,"morph_close.png"), frame)
 
     # Sharpening (isn't tuned very well so I'm disabling it for now)
     #kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
@@ -173,7 +174,7 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False):
         print(f" Found {len(contours_tree)} contours.")
         print("largest contour has ",len(contours_tree[highest_instance[0]]),"points")
 
-        cv2.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/contours.png", frame_to_write_ontop_of)
+        cv2.imwrite(os.path.join(LOCAL_PATH,"contours.png"), frame_to_write_ontop_of)
 
     
 
@@ -181,11 +182,11 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False):
 if __name__ == "__main__":
     print("receptacle_pose was called as main.")
 
-        # Create a VideoCapture object
-    cap = cv2.VideoCapture("main/subsystems/nugget_receptacle/receptacle_example.mp4")
+    # Create a VideoCapture object
+    cap = cv2.VideoCapture(os.path.join(LOCAL_PATH,"receptacle_example.mp4"))
 
     # Read the first frame
     ret, frame = cap.read()
 
-    cv2.imwrite("main/subsystems/nugget_receptacle/temp.png", frame)
+    cv2.imwrite(os.path.join(LOCAL_PATH,"temp.png"), frame)
 
