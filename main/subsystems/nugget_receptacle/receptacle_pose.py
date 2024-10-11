@@ -17,18 +17,18 @@ import os
 LOCAL_PATH = "main/subsystems/nugget_receptacle"
 
 
-def filter_yellow(frame, save_output=False, save_raw=False):
+def filter_binarize(frame, save_output=False, save_raw=False):
     """ TAKES IN BGR """
     # Convert to hsv
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
 
     # Threshold of yellow in HSV space 
-    yellow_lower = np.array([16, 60, 30]) # 50 120 85
-    yellow_upper = np.array([45, 255, 255]) # 80 255 255
+    bounds_lower = np.array([0, 0, 200]) # 50 120 85
+    bounds_upper = np.array([255, 255, 255]) # 80 255 255
 
     # preparing the mask to overlay 
-    mask = cv2.inRange(frame, yellow_lower, yellow_upper) 
+    mask = cv2.inRange(frame, bounds_lower, bounds_upper) 
 
     # Mask the frame
     result = cv2.bitwise_and(frame, frame, mask = mask) 
@@ -189,4 +189,6 @@ if __name__ == "__main__":
     ret, frame = cap.read()
 
     cv2.imwrite(os.path.join(LOCAL_PATH,"temp.png"), frame)
+
+    frame = filter_binarize(frame,save_output=True)
 
