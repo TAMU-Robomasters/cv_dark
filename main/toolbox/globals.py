@@ -13,7 +13,7 @@ info = find_and_load(
     parse_args=True,
     fully_parse_args=True,
     defaults_for_local_data=[
-        "GPU=NONE",
+        "GPU=REGULAR",
         "BOARD=LAPTOP",
         "CAMERA=NONE",
     ],
