@@ -38,7 +38,12 @@ const contentsOfInfiniteRunScript = `#!/usr/bin/env bash
 
 # 
 # 
-#  !!! THIS IS A GENERATED FILE !!!
+#  !!! THIS IS A GENERATED FILE !!! ${
+    // 
+    // Note: if you're reading this, ignore the "EDIT THE REAL ONE"
+    //       (this file (setup_boot_script.js) is the "real one")
+    // 
+''}
 #  EDIT THE REAL ONE INSIDE OF ${FileSystem.thisFile.replace(/\n/g,"")}
 #  then run that file
 # 
@@ -102,7 +107,11 @@ sudo -u "$this_username" -E this_username="$this_username" this_home="$this_home
     }
     if (home != `/home/${userName}`) {
         console.warn(`\n\nThere is something weird going on\nNormally ${cyan("$HOME")} is /home/$username (aka it would be ${`/home/${userName}`})\nBut this time ${cyan("$HOME")} was ${home}\n\nIF YOU'RE RUNNING THIS INSIDE OF THE PROJECT ENV (commands/start)\nTHATS A PROBLEM\nIf that^ home is a fake home folder, this is going to break the boot script\n\n`)
-        await new Promise(r=>setTimeout(r,14000))
+        if (!(await Console.askFor.yesNo("Do you want to continue anyway? (yes/no)"))) {
+            console.log(`\n\nAight...\n`)
+            Deno.exit(1)
+        }
+        console.log(`\n\nContinuing anyway...\n`)
     }
 
 // 
@@ -125,6 +134,7 @@ sudo -u "$this_username" -E this_username="$this_username" this_home="$this_home
             path: pathToOnBootCommand,
             data: defaultBootCommand,
         })
+        console.log(`Note: moving/renaming that file will break the boot script`)
     }
     // ensure those scripts are executable
     await FileSystem.addPermissions({
