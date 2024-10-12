@@ -1,5 +1,6 @@
 import json
 from time import time as now
+from datetime import datetime as dt
 
 from toolbox.globals import path_to, config, print, runtime, absolute_path_to
 from toolbox.video_tools import Video, VideoWriter
@@ -20,18 +21,13 @@ camera                    = config.hardware.camera
 depth_compatible          = config.hardware.camera_has_depth
 should_benchmark          = config.mode == 'benchmark'
 
-# 
-# init
-# 
-permanent_storage = ColdStorage(path=absolute_path_to.permanent_storage)
-permanent_storage["video_count"] += 1
-
 # create incremented storage path
-video_count = permanent_storage["video_count"]
-video_color_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.color.ignore.mp4'
+timestamp = dt.now()
+video_stamp = timestamp.strftime("%m%d%y-%H:%M")
+video_color_output_path = f'{absolute_path_to.record_video_output_color}-{video_stamp}.color.ignore.mp4'
 video_depth_output_path = None
 if depth_compatible and save_depth:
-    video_depth_output_path = f'{absolute_path_to.record_video_output_color}{video_count}.depth.ignore.mp4'
+    video_depth_output_path = f'{absolute_path_to.record_video_output_color}-{video_stamp}.depth.ignore.mp4'
 
 color_video_writer = VideoWriter(save_to=video_color_output_path, fps=config.log.estimated_framerate)
 depth_video_writer = VideoWriter(save_to=video_depth_output_path, fps=config.log.estimated_framerate) if video_depth_output_path else None

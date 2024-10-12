@@ -16,20 +16,6 @@
         model: ./subsystems/modeling/model/yolov4-tiny-416
         yolo_to_onnx: ./subsystems/modeling/model/yolo_to_onnx.py
         tensorrt_so_file: ./subsystems/modeling/plugins/libyolo_layer.so
-        yolo_v4:
-            model_weights: ./subsystems/modeling/model/yolov4-tiny-416.weights
-            model_config: ./subsystems/modeling/model/yolov4-tiny-416.cfg
-            tensor_rt_file: ./subsystems/modeling/model/yolov4-tiny-416.do_not_sync.trt
-        yolo_v5:
-            pytorch_model: ./subsystems/modeling/model/yolo_v5.pt
-            tensor_rt_file: ./subsystems/modeling/model/yolo_v5.engine
-            pickle: ./subsystems/modeling/model/yolo_v5.ignore.pickle
-        yolo_v7:
-            pytorch_model: ./subsystems/modeling/model/011023_yolov7_TINY.pt
-            # pytorch_model: ./subsystems/modeling/model/REP_122222_yolov7.pt
-            tensor_rt_engine: ./subsystems/modeling/model/yolo_v7.engine
-            tensor_rt_plugin: ./subsystems/modeling/plugins/yolo_v7_plugins/libmyplugins.so
-            path_to_folder: "./../yolov7"
         yolo_v8:
             settings: ./subsystems/modeling/model/yolov8/yolov8.yaml
             # pytorch_model: ./subsystems/modeling/model/yolov8/011723_v8n.pt
@@ -60,7 +46,7 @@
                 camera_has_gyro: false
             model:
                 load_from_pickle: false
-                which_model: yolo_v8 # yolo_v5 or yolo_v4
+                which_model: yolo_v8 
                 hardware_acceleration: 'cpu' # one of: [ 'cpu', "gpu", "tensor_rt" ]
                 minimum_confidence: 0.25 # should be a value between 0-1
                 # ^ minimum conf not applied when using tensor_rt
@@ -154,15 +140,6 @@
         TRT: *tensor_rt
         
         
-        V4:
-            model:
-                which_model: yolo_v4
-        V5:
-            model:
-                which_model: yolo_v5
-        V7:
-            model:
-                which_model: yolo_v7
         V8:
             model:
                 which_model: yolo_v8

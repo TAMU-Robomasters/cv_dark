@@ -46,16 +46,7 @@ model = LazyDict(
     H=None,
 )
 
-if which_model == 'yolo_v4':
-    from subsystems.modeling.yolo_v4 import init_yolo_v4
-    init_yolo_v4(model)
-elif which_model == 'yolo_v5':
-    from subsystems.modeling.yolo_v5 import init_yolo_v5
-    init_yolo_v5(model)
-elif which_model == 'yolo_v7':
-    from subsystems.modeling.yolo_v7 import init_yolo_v7
-    init_yolo_v7(model)
-elif which_model == 'yolo_v8':
+if which_model == 'yolo_v8':
     from subsystems.modeling.yolo_v8 import init_yolo_v8
     init_yolo_v8(model)
 else:
@@ -150,16 +141,10 @@ def get_optimal_bounding_box(boxes, confidences, screen_center):
     #     return None, 0
     return best_box, best_conf
 
-if which_model == 'yolo_v5':
-    color_to_class_id = dict(
-        blue=0,
-        red=1,
-    )
-else:
-    color_to_class_id = dict(
-        red=0,
-        blue=1,
-    )
+color_to_class_id = dict(
+    red=0,
+    blue=1,
+)
 
 def filter_plate_color(boxes, confidences, class_ids, color_to_remove):
     """
