@@ -21,7 +21,7 @@ mkdir -p "$shell_hooks_path"
 echo 'export NIXPKGS_ALLOW_UNFREE=1' > "$shell_hooks_path/04_00_00_nix_allow_unfree.bash"
 export NIXPKGS_ALLOW_UNFREE=1
 
-echo 'put this in the ~/.bashrc" if its not already there:
+echo 'put this in the ~/.bashrc" and ~/.zshrc if its not already there:
 
 for each in $('"$shell_hooks_path"')
 do
@@ -39,7 +39,7 @@ fi
 # 
 # setup all the things
 # 
-./commands/setup/ssh
+./commands/setup/ssh_server
 ./commands/setup/zerotier
 ./commands/setup/cli_tools
 ./commands/setup/opencv
