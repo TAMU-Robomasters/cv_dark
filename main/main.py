@@ -4,6 +4,9 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from toolbox.globals import config, print, runtime, time_synchronized
+from toolbox.autoboot_check import throw_if_autoboot_is_already_running
+if config.mode != "production": throw_if_autoboot_is_already_running()
+
 import subsystems.video_stream as video_stream
 import subsystems.model        as model
 import subsystems.aim          as aim

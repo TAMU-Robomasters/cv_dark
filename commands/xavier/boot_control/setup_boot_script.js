@@ -27,11 +27,18 @@ const pathToOldBootLogFile         = FileSystem.makeAbsolutePath(`${home}/boot.o
 const projectFolder                = FileSystem.makeAbsolutePath(await FileSystem.walkUpUntil(".git/config"))
 const pathToMainPy                 = `${projectFolder}/main/main.py`
 const nameOfStartService           = "cv_dark_boot"
+const autobootIdFile               = FileSystem.makeAbsolutePath(`${FileSystem.thisFolder}/autoboot_id`)
 
 const defaultBootCommand = `#!/usr/bin/env bash
 
 # Edit me as needed
-python3 ${shellEscape(pathToMainPy)} @WE_BLUE @BOARD=XAVIER @GPU=TENSOR_RT @CAMERA=REALSENSE @SHOWTIME
+python3 ${shellEscape(pathToMainPy)} \
+    @WE_BLUE \
+    @BOARD=XAVIER \
+    @GPU=TENSOR_RT \
+    @CAMERA=REALSENSE \
+    @SHOWTIME \
+    autoboot_id:"$(${shellEscape(autobootIdFile)})"
 `
 
 const contentsOfInfiniteRunScript = `#!/usr/bin/env bash
