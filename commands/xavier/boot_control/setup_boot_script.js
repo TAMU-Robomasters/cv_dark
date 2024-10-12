@@ -90,9 +90,9 @@ sudo -u "$this_username" -E this_username="$this_username" this_home="$this_home
 // 
 // sanity checks
 // 
-    // if (!OperatingSystem.commonChecks.isLinux || OperatingSystem.commonChecks.isWsl) {
-    //     throw Error(`\n\nThis script is ONLY for the Jetson. DO NOT RUN IT ON YOUR PC.\n\n`)
-    // }
+    if (!OperatingSystem.commonChecks.isLinux || OperatingSystem.commonChecks.isWsl) {
+        throw Error(`\n\nThis script is ONLY for the Jetson. DO NOT RUN IT ON YOUR PC.\n\n`)
+    }
     if (Deno.env.get("FORNIX_FOLDER")) {
         throw Error(`\n\nDon't run this script inside of the project env! (commands/start)\nIt needs to know the jetsons real home folder, and the project env uses a fake home folder\n`)
     }
