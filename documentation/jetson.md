@@ -19,5 +19,5 @@ That script will run all of these:
 - `./commands/setup/zed`
 
 
-Finally, when ready for competition, run `commands/xavier/boot_control/setup_boot_script`
+Finally, when ready for competition, run `commands/xavier/boot_control/setup_boot_script.js`
 If the boot script is already setup, just edit `commands/xavier/boot_control/boot_command.ignore`
