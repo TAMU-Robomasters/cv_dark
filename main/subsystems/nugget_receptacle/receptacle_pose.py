@@ -5,6 +5,8 @@
 
 # Gets the pose of the receptacle given a frame
 
+#TODO: Implement torch and CUDA support, clean up code, move constants to top of file
+
 #region setup
 # Imports
 import cv2
