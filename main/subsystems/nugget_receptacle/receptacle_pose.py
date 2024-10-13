@@ -128,7 +128,13 @@ def virgin_contours(contours_tree, hierarchy_tree):
     return [ contours_tree[i] for i in WithoutChildContour] # Contours without children
 
 
-def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False):
+def draw_contour_points(frame, contour, radius=10, thickness=1, color=(255,40,40)):
+    for point in contour:
+        x, y = point[0]
+        cv2.circle(frame, (x, y), radius, color, thickness)
+
+
+def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do_draw_contours=True):
     """ Input of BGR """
 
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -143,7 +149,7 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False):
 
     # Draw all contours
     # a lot of this I got from https://stackoverflow.com/a/74620309/25598210
-    draw_contours(frame_to_write_ontop_of,contours_tree,color=(0,200,200)) #RGB
+    if do_draw_contours: draw_contours(frame_to_write_ontop_of,contours_tree,color=(0,200,200)) #RGB
 
     #region oldcode
     #TODO: re-enable this stuff later
@@ -177,14 +183,35 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False):
     #endregion oldcode
 
     virgin_contours_list = virgin_contours(contours_tree, hierarchy_tree)
-
     virgin_contours_list = filter_contours(virgin_contours_list)
 
-    for contour in virgin_contours_list:
-        cv2.rectangle(frame_to_write_ontop_of, cv2.boundingRect(contour), (0, 0, 255), 4)
+    # Dark green circles for complex contour points
+    #for contour in virgin_contours_list:        
+    #    draw_contour_points(frame_to_write_ontop_of, contour,color=(0,80,0))
 
-    # get contours from indices
-    draw_contours(frame_to_write_ontop_of, virgin_contours_list,color=(255,249,130))
+
+    # Simplify the contours - see https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html
+    EPSILON_CONSTANT = 0.01 #10%
+
+    copy_ = []
+    for contour in virgin_contours_list:
+        epsilon = EPSILON_CONSTANT*cv2.arcLength(contour,True)
+        copy_.append(cv2.approxPolyDP(contour,epsilon,True))
+    
+    virgin_contours_list = copy_
+
+    # Do some visualization stuff
+    if do_draw_contours:
+        for contour in virgin_contours_list:
+            cv2.rectangle(frame_to_write_ontop_of, cv2.boundingRect(contour), (0, 0, 200), 4)
+            
+            rect = cv2.minAreaRect(contour) # rotated (for minimum area) rectangle
+            cv2.drawContours(frame_to_write_ontop_of,[np.int0(cv2.boxPoints(rect))],0,(0,0,255),1)
+            
+            draw_contour_points(frame_to_write_ontop_of, contour,color=(0,200,0))
+
+        # Draw contours
+        draw_contours(frame_to_write_ontop_of, virgin_contours_list,color=(255,249,130))
     
     # cv2.rectangle(frame_to_write_ontop_of, cv2.boundingRect(contours_tree[highest_instance[0]]), (0, 0, 255), 4)
 
