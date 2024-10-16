@@ -17,26 +17,32 @@ import time
 
 #endregion setup
 
+#region Constants
 LOCAL_PATH = "main/subsystems/nugget_receptacle"
+#endregion Constants
 
 
+#region Functions
 def filter_binarize(frame, save_output=False, save_raw=False):
-    """ Takes in BGR, outputs the frame (BGR) and mask (Greyscale) """
-    # Convert to hsv
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
+    """ 
+    Filters an image (frame) so that everythign except the LEDs are black.
 
-    # Threshold of yellow in HSV space 
+    Takes in BGR frame, outputs the new frame (BGR) and mask (Greyscale) 
+    """
+    # Convert to hsv
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    # Threshold of colors we want in HSV space 
     bounds_lower = np.array([0, 0, 200]) # 50 120 85
     bounds_upper = np.array([255, 255, 255]) # 80 255 255
 
-    # preparing the mask to overlay 
+    # Preparing the mask to overlay 
     mask = cv2.inRange(frame, bounds_lower, bounds_upper) 
 
     # Mask the frame
     result = cv2.bitwise_and(frame, frame, mask = mask) 
     
-    # convert back to BGR
+    # Convert the masked frame back to BGR
     result = cv2.cvtColor(result, cv2.COLOR_HSV2BGR)
 
     # Save output if respective arguments are true
@@ -53,10 +59,13 @@ def filter_binarize(frame, save_output=False, save_raw=False):
 
 
 def clean_image(frame,save_output=False):
-    """ Returns a cleaned version of a given image in BGR. """
+    """ 
+    Cleans an image by using Morph Open and Morph Close filters.
+
+    Returns a cleaned version of the given frame in BGR. 
+    """
     # Convert to hsv
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # Use Morph Open to decrease noise
     kernel = np.ones((4,4),np.uint8)
@@ -76,7 +85,7 @@ def clean_image(frame,save_output=False):
     #if save_output:
     #    cv2.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/sharpen.png", frame)
     
-    # convert back to BGR
+    # Convert back to BGR
     frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
 
     return frame
@@ -95,34 +104,30 @@ def draw_contours(frame, contours: list, color=(0,255,0)): #TODO: remove this - 
     cv2.drawContours(frame, contours, -1, color, 2) 
 
 
-def filter_contours(contours:list, debug_text=False):
+def filter_contours(contours:list):
+    """ Filters a given list of contours by ones that are likely the receptacle. """
     # The below code was modified from https://stackoverflow.com/a/63934162/25598210
     contours_rtn = []
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
-        #aspect_ratio = float(w) / h
-        #area = cv2.contourArea(cnt)
-        #x, y, w, h = cv2.boundingRect(cnt)
         #rect_area = w * h
-        #extent = float(area) / rect_area
-        #hull = cv2.convexHull(cnt)
-        #hull_area = cv2.contourArea(hull)
-        #solidity = float(area) / hull_area
-        #equi_diameter = np.sqrt(4 * area / np.pi)
 
-        # If conditions met
-        #TODO: Fix all of this
+        # If contour is certain shape
+        # (both dimensions > 8px, at least one dimension > 10px)
         if (w>8 and h>8) and (w>10 or h>10):
-            contours_rtn.append(contour)
-
-        #(x, y), (MA, ma), Orientation = cv2.fitEllipse(cnt)
+            contours_rtn.append(contour) # Add it to the return list
 
 
     return contours_rtn
 
 
 def virgin_contours(contours_tree, hierarchy_tree):
-    """ Solution taken from https://stackoverflow.com/a/52398603/25598210 """
+    """
+    Given a contours_tree and hierarchy_tree, returns a list of 'virgin' contours
+    (contours that have no children).
+
+    Solution taken from https://stackoverflow.com/a/52398603/25598210 
+    """
     ChildContour = hierarchy_tree[0, :,2]
 
     WithoutChildContour = (ChildContour==-1).nonzero()[0]
@@ -131,19 +136,22 @@ def virgin_contours(contours_tree, hierarchy_tree):
 
 
 def draw_contour_points(frame, contour, radius=10, thickness=1, color=(255,40,40)):
+    """ Draws the points of a given contour on a given frame. """
     for point in contour:
         x, y = point[0]
         cv2.circle(frame, (x, y), radius, color, thickness)
 
 
 def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do_draw_contours=True):
-    """ Input of BGR """
+    """
+    Findds and draws contours on an image, filtering for valid and virgin contours.
+    Frames are BGR. 
+    """
 
+    # Grayscale the image and find all the contours
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     contours_tree, hierarchy_tree = cv2.findContours(frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
-    # filter_contours isn't working right now - fix it later
-    #contours_tree, hierarchy_tree = filter_contours(contours_tree,hierarchy_tree)
     frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
 
     #print "contours:",len(contours)
@@ -230,7 +238,16 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do
     
 
 def analyze_video(video_path, save_output=False,save_raw=False):
-    """ Returns the number of frames """
+    """ 
+    Analyzes a given video at video_path, draws contours stuff,
+    and saves it as output.mp4 and output_ontop.mp4
+
+    NOTE: The save_outtput argument is only to save intermediate outputs
+    at every frame for every function, and does not control whether
+    the video will be saved.
+
+    Returns the number of frames. 
+    """
 
     print("Now doing video...")
 
@@ -287,6 +304,8 @@ def analyze_video(video_path, save_output=False,save_raw=False):
     writer_ontop.release()
 
     return num_frames
+#endregion Functions
+
 
 
 if __name__ == "__main__":
