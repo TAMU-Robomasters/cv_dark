@@ -18,7 +18,8 @@ import time
 #endregion setup
 
 #region Constants
-LOCAL_PATH = "main/subsystems/nugget_receptacle"
+LOCAL_PATH = os.path.join("main","subsystems","nugget_receptacle")
+CAMERA_CALIB_PATH = os.path.join(LOCAL_PATH,"CalMatrix.npz") # Path to calibration data for camera.
 #endregion Constants
 
 
@@ -307,6 +308,14 @@ def analyze_video(video_path, save_output=False,save_raw=False):
 #endregion Functions
 
 
+#region Procedural
+
+# Load camera distortion coefficients. Source taken from https://github.com/TAMU-Robomasters/aruco-location-estimation
+calib_data = np.load(CAMERA_CALIB_PATH)
+cam_mat    = calib_data["camMatrix"]
+dist_coef  = calib_data["distCoef"]
+
+
 
 if __name__ == "__main__":
     print("receptacle_pose was called as main.")
@@ -339,4 +348,4 @@ if __name__ == "__main__":
         time_taken = time_end - time_start
         print(f"That took {time_taken:.4f} seconds ({num_frames/time_taken:.2f} FPS)")
 
-
+#endregion Procedural
