@@ -10,13 +10,9 @@ from toolbox.kalman_filter import KalmanFilter
 from subsystems.video_stream import video_stream
 
 
-# initial kinematic state is set to all ones. This might effect convergence time
-# ! warning assuming millimeters
-# ! There's a bug in here 
-# TODO find uncertainty for x, y, z
-capture_time =  getattr(video_stream, 'capture_time', 0)
-capture_delay = min(int(time()*1000 - capture_time), 255) # max 255 ms delay
-kf = KalmanFilter(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, capture_time, 0.05)
+# NOTE initial kinematic state is set to all ones. This might effect convergence time
+# TODO find better uncertainty for x, y, z
+kf = KalmanFilter(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, 0.05)
 
 
 # 
@@ -81,7 +77,7 @@ def when_aiming_refreshes():
     capture_time =  getattr(video_stream, 'capture_time', 0)
     capture_delay = min(int(time()*1000 - capture_time), 255) # max 255 ms delay
 
-    # Sending XYZ position (meters), time since frame capture, and status of target relative to front of camera plane
+    # Sending XYZ position (meters), velocity, acceleration, time since frame capture, and status of target relative to front of camera plane
     if runtime.aiming.target_3d is None:
         message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = message_to_embedded.VX = message_to_embedded.VY = message_to_embedded.VZ = message_to_embedded.AX = message_to_embedded.AY = message_to_embedded.AZ = 0.0
     else:
@@ -103,9 +99,13 @@ def when_aiming_refreshes():
         message_to_embedded.AY = kf.statePre[7, 0]
         message_to_embedded.AZ = kf.statePre[8, 0]
 
+    # TODO change capture delay to something more useful
     message_to_embedded.capture_delay = capture_delay
     message_to_embedded.status = runtime.aiming.target_status.value
-    print(f'''msg({f"X:{message_to_embedded.X:.4f}".rjust(7)}, {f"Y:{message_to_embedded.Y:.4f}".rjust(7)}, {f"Z:{message_to_embedded.Z:.4f}".rjust(7)}, {f"delay:{message_to_embedded.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")
+    print(f'''msg({f"X:{message_to_embedded.X:.4f}".rjust(7)}, {f"Y:{message_to_embedded.Y:.4f}".rjust(7)}, {f"Z:{message_to_embedded.Z:.4f}".rjust(7)},
+        {f"VX:{message_to_embedded.X:.4f}".rjust(7)}, {f"VY:{message_to_embedded.Y:.4f}".rjust(7)}, {f"VZ:{message_to_embedded.Z:.4f}".rjust(7)},
+        {f"AX:{message_to_embedded.X:.4f}".rjust(7)}, {f"AY:{message_to_embedded.Y:.4f}".rjust(7)}, {f"AZ:{message_to_embedded.Z:.4f}".rjust(7)},
+        {f"delay:{message_to_embedded.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")
     
     try:
         port.write(bytes(message_to_embedded))
