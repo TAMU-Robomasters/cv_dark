@@ -32,6 +32,7 @@ def setup_serial_port():
         except Exception as error:
             import subprocess
             # very bad hack but it works
+            # FIXME
             subprocess.run([ "bash", "-c", f"sudo -S chmod 777 '{serial_port}' <<<  \"$(cat \"$HOME/.pass\")\" ",])
             return setup_serial_port() # recursion until it works
 
