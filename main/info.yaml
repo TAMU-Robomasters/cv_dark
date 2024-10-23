@@ -218,7 +218,6 @@
         GUI:
             log:
                 display_live_frames: true
-
         DISPLAY_KF:
             log:
                 display_kf_prediction: true
