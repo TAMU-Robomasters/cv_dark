@@ -1,10 +1,9 @@
 import cv2
 import numpy as np
-from typing import Any
 
 
 class KalmanFilter:
-    def __init__(self, init_kinematic_state: np.ndarray[(9, 1), np.float32], x_error, y_error, z_error, acceleration_error: float):
+    def __init__(self, init_kinematic_state, x_error, y_error, z_error, acceleration_error: float):
         dt = 0.04 # seconds
 
         self.acceleration_error = acceleration_error
@@ -104,6 +103,6 @@ class KalmanFilter:
 
         return self.kalman.predict()
 
-    def correct(self, measurement: np.ndarray[(3, 1), np.float32]):
+    def correct(self, measurement):
 
         return self.kalman.correct(measurement)
