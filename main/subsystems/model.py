@@ -112,7 +112,7 @@ def get_optimal_bounding_box(boxes, confidences, screen_center):
     # if len(boxes) == 1:
     #     return boxes[0], confidences[0]
 
-    best_box = boxes[0]
+    best_bounding_box = boxes[0]
     best_score = 0
     best_conf = 0
 
@@ -139,7 +139,7 @@ def get_optimal_bounding_box(boxes, confidences, screen_center):
     #     return None, 0
     # if size_score < 5:
     #     return None, 0
-    return best_box, best_conf
+    return best_bounding_box, best_conf
 
 color_to_class_id = dict(
     red=0,

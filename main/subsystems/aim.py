@@ -149,12 +149,11 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
     # if len(boxes) == 1:
     #     return boxes[0], confidences[0]
 
-    best_box = boxes[0]
+    best_bounding_box = boxes[0]
     best_score = 0
     best_conf = 0
-    best_depth = 0
     best_targ_3d = (0,0,0)
-    best_circle_bias_score = 0
+   
 
     screen_center_normalizer = dist((screen_center[0]*2,screen_center[1]*2),(screen_center[0],screen_center[1])) # Find constant used to scale distance part of score to 1
     size_normalizer = 0.7 # plate at closest distance is 0.7 of the screen
@@ -202,12 +201,11 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
             best_conf = conf
             best_targ_3d = targetXYZ
             best_score = score
-            best_circle_bias_score = circle_bias_score
     # if best_score < 0.15:
     #     return None, 0
     # if size_score < 5:
     #     return None, 0
-    return best_box, best_conf, best_targ_3d
+    return best_bounding_box, best_conf, best_targ_3d
 
 def get_xyz_at_color_coords(point, depth=None):
     # point is [x, y], return tuple (x, y, z)
