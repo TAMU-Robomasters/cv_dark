@@ -11,7 +11,7 @@ from statistics import mean as average
 from toolbox.globals import path_to, config, print, runtime, time_synchronized
 from toolbox.geometry_tools import Position, BoundingBox
 # NOTE change in the future
-from scripts.kf_main import KalmanFilter
+from toolbox.kf_2d import KalmanFilter
 from subsystems.video_stream import video_stream
 
 class TargetStatus(Enum):
@@ -120,9 +120,10 @@ def when_bounding_boxes_refresh():
 
     # Predict position
     # NOTE not final version. just for gui testing
+    center_point_prediction = 0
     dt = 0.5 # TODO make this actually based on the time delay
-    kf.correct(center_point) # TODO make this actually based on 3d_position
-    center_point_prediction =kf.predict(dt)
+    kf.correct(np.array([center_point.x, center_point.y], dtype=np.float32)) # TODO make this actually based on 3d_position
+    center_point_prediction = kf.predict(dt)
     
    
     # update the shared data
