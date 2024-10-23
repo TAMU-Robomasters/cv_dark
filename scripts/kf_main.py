@@ -1,10 +1,9 @@
 import cv2
 import numpy as np
-from typing import Any
 
 
 class KalmanFilter:
-    def __init__(self, init_kinematic_state: np.ndarray[(6, 1), np.float32], x_error, y_error, dt, acceleration_error: float):
+    def __init__(self, init_kinematic_state, x_error, y_error, dt, acceleration_error: float):
         self.acceleration_error = acceleration_error
 
         # no control parameters. Assuming the target is moving with a constant acceleration
@@ -90,6 +89,6 @@ class KalmanFilter:
 
         return self.kalman.predict()
 
-    def correct(self, measurement: np.ndarray[(2, 1), np.float32]):
+    def correct(self, measurement):
 
         return self.kalman.correct(measurement)

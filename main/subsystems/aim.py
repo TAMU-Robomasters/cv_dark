@@ -9,12 +9,16 @@ from statistics import mean as average
 
 from toolbox.globals import path_to, config, print, runtime, time_synchronized
 from toolbox.geometry_tools import Position, BoundingBox
+# NOTE change in the future
+from scripts.kf_main import KalmanFilter
 from subsystems.video_stream import video_stream
 
 class TargetStatus(Enum):
     TARGET_NONE = 0
     TARGET_FOUND = 1
     TARGET_ENGAGE = 2
+
+kf = KalmanFilter(np.ones((6,1), dtype=np.float32), 0.5, 0.5, 10)
 
 # 
 # config
@@ -112,15 +116,22 @@ def when_bounding_boxes_refresh():
     # Overall 1. reject noise in 1 frame,
     # Overall 1.5 Get moving frame data
     # Overall 2. reject noise overtime
-   
+
+    # Predict position
+    # NOTE not final version. just for gui testing
+    dt = 0.5 # TODO make this actually based on the time delay
+    kf.correct(center_point) # TODO make this actually based on 3d_position
+    center_point_prediction =kf.predict(dt)
+    
    
     # update the shared data
-    runtime.aiming.target_status      = target_status
-    runtime.aiming.target_3d          = best_target_3d
-    runtime.aiming.center_point       = center_point
-    runtime.modeling.best_bounding_box  = best_bounding_box
-    runtime.modeling.current_confidence = current_confidence
-    runtime.modeling.found_robot        = best_bounding_box is not None
+    runtime.aiming.target_status           = target_status
+    runtime.aiming.target_3d               = best_target_3d
+    runtime.aiming.center_point            = center_point
+    runtime.aiming.center_point_prediction = center_point_prediction
+    runtime.modeling.best_bounding_box     = best_bounding_box
+    runtime.modeling.current_confidence    = current_confidence
+    runtime.modeling.found_robot           = best_bounding_box is not None
 
 
 # 

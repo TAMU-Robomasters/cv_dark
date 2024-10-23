@@ -46,6 +46,7 @@ class Image(object):
         elif name is None:
             name = "img"
         cv2.imshow(name, self.img)
+        
         cv2.waitKey(1) # doesn't actually wait
     
     def show_and_pause(self, name=None):

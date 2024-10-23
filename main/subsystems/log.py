@@ -13,6 +13,7 @@ from toolbox.cold_storage import ColdStorage
 # 
 display_live_frames       = config.log.display_live_frames
 save_frame_to_file        = config.log.save_frame_to_file
+display_kf_prediction     = config.log.display_kf_prediction
 save_depth                = config.log.save_depth
 save_rate                 = config.log.save_rate
 record_video_output_color = absolute_path_to.record_video_output_color
@@ -129,15 +130,16 @@ def visualize_depth_frame(depth_frame_array):
 
 
 def generate_image(fps=0):
-    color_image        = runtime.color_image
-    found_robot        = runtime.modeling.found_robot
-    current_confidence = runtime.modeling.current_confidence
-    best_bounding_box  = runtime.modeling.best_bounding_box
-    bounding_boxes     = runtime.modeling.bounding_boxes
-    enemy_boxes        = runtime.modeling.enemy_boxes
-    center_point       = runtime.aiming.center_point
-    target_3d          = runtime.aiming.target_3d
-    status             = runtime.aiming.target_status
+    color_image             = runtime.color_image
+    found_robot             = runtime.modeling.found_robot
+    current_confidence      = runtime.modeling.current_confidence
+    best_bounding_box       = runtime.modeling.best_bounding_box
+    bounding_boxes          = runtime.modeling.bounding_boxes
+    enemy_boxes             = runtime.modeling.enemy_boxes
+    center_point            = runtime.aiming.center_point
+    center_point_prediction = runtime.aiming.center_point_prediction
+    target_3d               = runtime.aiming.target_3d
+    status                  = runtime.aiming.target_status
     
     image = Image(runtime.color_image)
 
@@ -157,6 +159,8 @@ def generate_image(fps=0):
             image.add_bounding_box(best_bounding_box, color=rgb(240, 113, 120))
             image.add_point(x=center_point.x     , y=center_point.y     , color=rgb(130, 170, 255), radius=10)
             # image.add_point(x=prediction_point.x , y=prediction_point.y , color=rgb(195, 232, 141), radius=5)
+        if display_kf_prediction:
+            image.add_point(x=center_point_prediction.x     , y=center_point_prediction.y     , color=cyan, radius=10)
     
     x_location = 30
     y_location = 50

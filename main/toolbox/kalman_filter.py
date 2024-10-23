@@ -67,7 +67,8 @@ class KalmanFilter:
                 [0, 0, 0, 0, 0, 0, 0, 0, 1]
             ], dtype=np.float32)
         
-        self.kalman.predict()
+        # this might not be needed
+        # self.kalman.predict()
 
 
     def predict(self, dt=None):
