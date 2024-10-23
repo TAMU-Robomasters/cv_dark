@@ -1,5 +1,6 @@
 from math import dist, exp, sqrt
 import collections
+import numpy as np
 from time import time, perf_counter
 from enum import Enum
 
@@ -18,7 +19,7 @@ class TargetStatus(Enum):
     TARGET_FOUND = 1
     TARGET_ENGAGE = 2
 
-kf = KalmanFilter(np.ones((6,1), dtype=np.float32), 0.5, 0.5, 10)
+kf = KalmanFilter(np.ones((6,1), dtype=np.float32), 0.5, 0.5, 0.5 10)
 
 # 
 # config
