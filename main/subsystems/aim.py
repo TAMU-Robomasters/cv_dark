@@ -92,22 +92,26 @@ def when_bounding_boxes_refresh():
                     valid3dTargets.append(target_3d_test)
                 #     target_status = TargetStatus.TARGET_FOUND
         if (validBoxes == []):
-            target_status = TargetStatus.TARGET_NONE
+            target_status = TargetStatus.TARGET_NONE   
         else:
             target_status = TargetStatus.TARGET_FOUND
+               # now that we have the valid boxes lets compute the best ones as 3dtargets
+            best_bounding_box, current_confidence, best_target_3d  = get_optimal_3d_target(
+                boxes = validBoxes, 
+                confidences = validConfidences,
+                screen_center = screen_center,
+                valid3dTargets = valid3dTargets,
+            )
     else:
+        # if no 3d targets were found try finding the best 2d target
+        best_bounding_box, current_confidence = get_optimal_2d_target(
+            boxes = enemy_boxes,
+            confidences = enemy_confidences,
+            screen_center = screen_center
+        )
         target_status = TargetStatus.TARGET_FOUND
 
-        # target_status = TargetStatus.TARGET_FOUND
-    # now that we have the valid boxes lets compute the best ones as 3dtargets
-    best_bounding_box, current_confidence, best_target_3d  = get_optimal_3d_target(
-        boxes = validBoxes, 
-        confidences = validConfidences,
-        screen_center = screen_center,
-        valid3dTargets = valid3dTargets,
-    )
 
-     
     # if target_3d[1] < 0:
     #     quit()
     if(best_bounding_box != None):
@@ -123,7 +127,7 @@ def when_bounding_boxes_refresh():
     center_point_prediction = 0
     dt = 0.5 # TODO make this actually based on the time delay
     kf.correct(np.array([center_point.x, center_point.y], dtype=np.float32)) # TODO make this actually based on 3d_position
-    center_point_prediction = kf.predict(dt)
+    center_point_prediction = Position(kf.predict(dt))
     
    
     # update the shared data
@@ -221,6 +225,50 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
     # if size_score < 5:
     #     return None, 0
     return best_box, best_conf, best_targ_3d
+
+
+def get_optimal_2d_target(boxes, confidences, screen_center):
+    """
+    Decide the single best bounding box to aim at using a score system.
+
+    Input: All detected bounding boxes with their confidences and the screen_center location of the image.
+    Output: Best bounding box and its confidence.
+    """
+    # no boxes
+    if not boxes:
+        return None, 0
+    # if len(boxes) == 1:
+    #     return boxes[0], confidences[0]
+
+    best_box = boxes[0]
+    best_score = 0
+    best_conf = 0
+
+    screen_center_normalizer = dist((screen_center[0]*2,screen_center[1]*2),(screen_center[0],screen_center[1])) # Find constant used to scale distance part of score to 1
+    size_normalizer = 0.7 # plate at closest distance is 0.7 of the screen
+
+    # Sequentially iterate through all bounding boxes
+    for conf, box in zip(confidences, boxes):
+        size_score = ((box.width / (runtime.color_image.shape[1])) / size_normalizer) # Compute score using size of box, relative to total image size
+        # print(f"size_score: {size_score}")
+        center_score = (1 - dist(screen_center,(box[0] + box[2]/2, box[1] + box[3]/2)) / screen_center_normalizer) # scaled to 1
+        # print(f"center_score: {center_score}")
+        conf_score = conf**2 # Compute score using confidence
+        # print(f"conf_score: {conf_score}")
+        score = 0.75 * size_score + 0.125 * center_score + 0.125 * conf_score # Compute score using weighted average
+        # print(f"score: {score}")
+
+        # Make current box the best if its score is the best so far
+        if score > best_score:
+            best_box = box
+            best_conf = conf
+            best_score = score
+    # if best_score < 0.15:
+    #     return None, 0
+    # if size_score < 5:
+    #     return None, 0
+    return best_box, best_conf
+
 
 def get_xyz_at_color_coords(point, depth=None):
     # point is [x, y], return tuple (x, y, z)
