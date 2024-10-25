@@ -127,7 +127,7 @@ def when_bounding_boxes_refresh():
     center_point_prediction = 0
     dt = 0.5 # TODO make this actually based on the time delay
     np_center_point = center_point.cpu().numpy()
-    kf.correct(np.array([np_center_point.x, np_center_point.y], dtype=np.float32)) # TODO make this actually based on 3d_position
+    kf.correct(np.array([np_center_point[0], np_center_point[1]], dtype=np.float32)) # TODO make this actually based on 3d_position
     center_point_prediction = Position(kf.predict(dt))
     
    
