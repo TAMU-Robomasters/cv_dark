@@ -212,7 +212,6 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
         # score = 0.625 * size_score + 0.125 * center_score + 0.125 * depth_score + 0.125 * circle_bias_score 
         score = 0.125 * size_score + 0.125 * center_score + 0.125 * depth_score + 0.625 * circle_bias_score 
         score *= conf_score
-        # hi 
         print(f"score: {score}")
 
         # Make current box the best if its score is the best so far
