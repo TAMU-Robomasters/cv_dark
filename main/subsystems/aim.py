@@ -126,8 +126,12 @@ def when_bounding_boxes_refresh():
     # NOTE not final version. just for gui testing
     center_point_prediction = 0
     dt = 0.5 # TODO make this actually based on the time delay
-    np_center_point = center_point.cpu().numpy()
-    kf.correct(np.array([np_center_point[0], np_center_point[1]], dtype=np.float32)) # TODO make this actually based on 3d_position
+    if str(type(center_point.x)) != "<class 'int'>":
+        measurement = np.array([center_point.x.cpu(), center_point.y.cpu()], dtype=np.float32)
+    else:
+        measurement = np.array([center_point.x, center_point.y], dtype=np.float32)
+    kf.correct(measurement) # TODO make this actually based on 3d_position
+    # prediction = kf.predict(dt) # this contains all state variables [x, y, z, vx, vy, vz, ax, ay, az]
     center_point_prediction = Position(kf.predict(dt))
     
    

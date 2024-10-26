@@ -160,7 +160,7 @@ def generate_image(fps=0):
             image.add_point(x=center_point.x     , y=center_point.y     , color=rgb(130, 170, 255), radius=10)
             # image.add_point(x=prediction_point.x , y=prediction_point.y , color=rgb(195, 232, 141), radius=5)
         if display_kf_prediction:
-            image.add_point(x=center_point_prediction.x     , y=center_point_prediction.y     , color=cyan, radius=10)
+            image.add_point(x=center_point_prediction.x     , y=center_point_prediction.y     , color=green, radius=10)
     
     x_location = 30
     y_location = 50
