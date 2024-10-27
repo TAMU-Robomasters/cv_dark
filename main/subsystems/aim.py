@@ -19,7 +19,7 @@ class TargetStatus(Enum):
     TARGET_FOUND = 1
     TARGET_ENGAGE = 2
 
-kf = KalmanFilter(np.ones((6,1), dtype=np.float32), 0.5, 0.5, 0.5, 10)
+kf = KalmanFilter(np.ones((6,1), dtype=np.float32), 0.5, 0.5, 0.5, 2)
 
 # 
 # config
@@ -124,15 +124,17 @@ def when_bounding_boxes_refresh():
 
     # Predict position
     # NOTE not final version. just for gui testing
-    center_point_prediction = 0
-    dt = 0.5 # TODO make this actually based on the time delay
+    frame_delay = 0.05 # TODO make this actually based on the time delay
+    forward_time = 0.5 # half a second into the future
     if str(type(center_point.x)) != "<class 'int'>":
         measurement = np.array([center_point.x.cpu(), center_point.y.cpu()], dtype=np.float32)
     else:
         measurement = np.array([center_point.x, center_point.y], dtype=np.float32)
+    kf.predict(frame_delay)
     kf.correct(measurement) # TODO make this actually based on 3d_position
-    # prediction = kf.predict(dt) # this contains all state variables [x, y, z, vx, vy, vz, ax, ay, az]
-    center_point_prediction = Position(kf.predict(dt))
+
+    # this contains the prediction of all the state variables [x, y, z, vx, vy, vz, ax, ay, az]
+    center_point_prediction = Position(kf.forward_predict(forward_time))
     
    
     # update the shared data

@@ -45,24 +45,26 @@ def track_paper(video_path):
             if contour_area >= max_contour_area:
                 max_index = i
                 max_contour_area = contour_area
-
-        contour = contours[max_index]
-        d_t = 0.5
         
-        if len(contour) > 0:
-            x, y, w, h = cv.boundingRect(contour)
-            
-            measurement[0] = x 
-            measurement[1] = y 
-            kalmanFilter.correct(measurement)
-            predicted = kalmanFilter.predict(d_t)
+        d_t = 0.5   
+        if len(contours) > 0:
+            contour = contours[max_index]   
+        
+            if len(contour) > 0:
+                x, y, w, h = cv.boundingRect(contour)
+                
+                measurement[0] = x 
+                measurement[1] = y 
+                kalmanFilter.predict(d_t)
+                kalmanFilter.correct(measurement)
+                predicted = kalmanFilter.forward_predict(1)
 
-            #print(kalman)
-            # print(f"Predicted Position: x={predicted[0][0]}, y={predicted[3][0]}")
+                #print(kalman)
+                # print(f"Predicted Position: x={predicted[0][0]}, y={predicted[3][0]}")
 
-            #print(f"Box x position {x} Box y position {y}")
-            cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv.rectangle(frame, (int(predicted[0]), int(predicted[3])), (int(predicted[0]) + w, int(predicted[3]) +h), (255, 0, 0), 2)
+                #print(f"Box x position {x} Box y position {y}")
+                cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                cv.rectangle(frame, (int(predicted[0]), int(predicted[3])), (int(predicted[0]) + w, int(predicted[3]) +h), (255, 0, 0), 2)
 
         
         cv.imshow("Mask", mask)

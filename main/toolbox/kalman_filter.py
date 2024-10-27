@@ -17,7 +17,7 @@ class KalmanFilter:
 
         # Define the error associated to the initial values of the state variables  
         # TODO see if it converges faster with different values
-        self.kalman.errorCovPost = np.eye(9,9)
+        self.kalman.errorCovPost = np.eye(6, 6, dtype=np.float32)
 
         # Define the measurement noise covariance matrix
         # NOTE y_error could be made into a function that's dependent on the distance. The further out the more uncertain we are. 
@@ -106,3 +106,18 @@ class KalmanFilter:
     def correct(self, measurement):
 
         return self.kalman.correct(measurement)
+    
+    # This function won't affect any of the member variables
+    # won't be used for kalman.correct()
+    def forward_predict(self, dt):
+        transition_mat = np.array(
+            [
+                [1, dt ,0.5 * dt ** 2, 0, 0, 0],
+                [0, 1, dt, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 0, 1, dt, 0.5 * dt ** 2, ],
+                [0, 0, 0, 0, 1, dt],
+                [0, 0, 0, 0, 0, 1],
+            
+            ], dtype=np.float32)
+        return transition_mat @ self.kalman.statePost
