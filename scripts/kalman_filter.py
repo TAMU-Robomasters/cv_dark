@@ -1,5 +1,6 @@
 import numpy as np
 import cv2 as cv
+import time
 
 import matplotlib.pyplot as plt
 
@@ -7,7 +8,7 @@ from kf_main import KalmanFilter as kf
 
 
 stateVar = np.array([1, 1, 1, 1, 1, 1], dtype=np.float32)
-kalmanFilter = kf(stateVar, 0.5, 0.5, 0.04, 20)
+kalmanFilter = kf(stateVar, 0.1, 0.1, 0.04, 10)
 
 
 # Initial Measurement
@@ -20,7 +21,7 @@ predicted_y = []
 
 def track_paper(video_path):
     cap = cv.VideoCapture(video_path)
-
+    prev_time = time.time()
     while True:
         ret , frame = cap.read()
         if not ret:
@@ -46,18 +47,20 @@ def track_paper(video_path):
                 max_index = i
                 max_contour_area = contour_area
         
-        d_t = 0.5   
         if len(contours) > 0:
             contour = contours[max_index]   
         
             if len(contour) > 0:
+                curr_time = time.time()
+                dt = curr_time - prev_time
+                print(dt)
                 x, y, w, h = cv.boundingRect(contour)
                 
                 measurement[0] = x 
                 measurement[1] = y 
-                kalmanFilter.predict(d_t)
+                print(kalmanFilter.predict(dt))
                 kalmanFilter.correct(measurement)
-                predicted = kalmanFilter.forward_predict(1)
+                predicted = kalmanFilter.forward_predict(0.3)
 
                 #print(kalman)
                 # print(f"Predicted Position: x={predicted[0][0]}, y={predicted[3][0]}")
@@ -65,6 +68,8 @@ def track_paper(video_path):
                 #print(f"Box x position {x} Box y position {y}")
                 cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 cv.rectangle(frame, (int(predicted[0]), int(predicted[3])), (int(predicted[0]) + w, int(predicted[3]) +h), (255, 0, 0), 2)
+
+                prev_time = time.time()
 
         
         cv.imshow("Mask", mask)
