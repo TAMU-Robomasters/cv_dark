@@ -16,7 +16,7 @@ import os
 #from PIL import Image
 #endregion Imports
 
-IMAGE_SAVE_PATH = "source"
+IMAGE_SAVE_PATH = "toolbox/drew_tools/source"
 
 #region Functions
 def filter_yellow(frame, save_output=False, save_raw=False):
