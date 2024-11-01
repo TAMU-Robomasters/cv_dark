@@ -1,9 +1,12 @@
 
 import cv2
-from toolbox.drew_tools.drew_image_tools import find_and_draw_contours
+from toolbox.drew_tools.drew_image_tools import clean_image, filter_img, find_and_draw_contours
 
 def detect_numbers(frame, bounding_boxes, DEBUG:bool=False):
-    find_and_draw_contours(frame, frame.copy(), save_output=DEBUG)
+
+    new_frame = clean_image(filter_img(frame, save_output=DEBUG, save_raw=DEBUG)[0])
+    contoured_image = frame.copy()
+    find_and_draw_contours(new_frame, contoured_image, save_output=False)
     # bounding_boxes is a list of box coordinates --> x, y, width, height
     # valid_boxes from aim.py is the list of bounding boxes to run icon detection on
     # frame is 3d array --> x, y, [r, g, b], (rows, columns, channels)
@@ -31,7 +34,7 @@ def get_cropped_image(frame, bounding_boxes, show_image:bool=True):
 
         # insert into list
         cropped_images.append(cropped_image)
-
+        
         cv2.imwrite(f"toolbox/cropped/cropped_image_{n}.jpg", cropped_image) #DEBUG
         n += 1
 

@@ -22,6 +22,7 @@ opencv.zip
 opencv-4.5.0
 main/toolbox/drew_tools/source/*.png
 main/toolbox/drew_tools/source/*.jpg
+main/toolbox/cropped/
 
 # 
 # standard

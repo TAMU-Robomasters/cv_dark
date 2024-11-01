@@ -26,8 +26,8 @@ def filter_img(frame, save_output=False, save_raw=False):
     frame = cv.cvtColor(frame, cv.COLOR_RGB2HSV)
 
     # Threshold of yellow in HSV space 
-    yellow_lower = np.array([16, 60, 30]) # 50 120 85
-    yellow_upper = np.array([45, 255, 255]) # 80 255 255
+    yellow_lower = np.array([0, 60, 30]) # 16, 60, 30
+    yellow_upper = np.array([255, 255, 255]) # 45, 255, 255
 
     # preparing the mask to overlay 
     mask = cv.inRange(frame, yellow_lower, yellow_upper) 
