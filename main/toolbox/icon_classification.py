@@ -1,5 +1,5 @@
 import cv2
-def detect_numbers(frame, bounding_boxes):
+def detect_numbers(frame, bounding_boxes, DEBUG:bool=False):
     # bounding_boxes is a list of box coordinates --> x, y, width, height
     # valid_boxes from aim.py is the list of bounding boxes to run icon detection on
     # frame is 3d array --> x, y, [r, g, b], (rows, columns, channels)
@@ -8,9 +8,11 @@ def detect_numbers(frame, bounding_boxes):
 
 
 
-def get_cropped_image(frame, bounding_boxes, show_image:bool=True): # from frame gets cropped image of armor panel
+def get_cropped_image(frame, bounding_boxes, show_image:bool=True):
+    """ Gets cropped image of armor panel from frame. """
     # list of cropped images
     cropped_images = []
+    n = 0 # Current box
 
     # we need to extract x, y, width, height from bounding box
     for box in bounding_boxes:
@@ -26,7 +28,8 @@ def get_cropped_image(frame, bounding_boxes, show_image:bool=True): # from frame
         # insert into list
         cropped_images.append(cropped_image)
 
-        cv2.imwrite("cropped_image.jpg", cropped_image) #DEBUG
+        cv2.imwrite(f"toolbox/cropped/cropped_image_{n}.jpg", cropped_image) #DEBUG
+        n += 1
 
         # show cropped image
         if show_image:
@@ -39,6 +42,23 @@ def get_cropped_image(frame, bounding_boxes, show_image:bool=True): # from frame
     if show_image:
         cv2.destroyAllWindows()
     
-    raise Exception("This will stop the program for debug purposes.")
+    #raise Exception("This will stop the program for debug purposes.")
 
     return cropped_images
+
+
+def predict_icons(frame, bounding_boxes, DEBUG:bool=False):
+
+    if DEBUG: print(f"[icon_classification.py][predict_icon] Cropping {len(bounding_boxes)} images")
+    cropped_imgs = get_cropped_image(frame, bounding_boxes, show_image=False)
+    if DEBUG: print("[icon_classification.py][predict_icon] Images cropped. Detecting numbers")
+    numbers = []
+    for cropped_icon in cropped_imgs:
+        numbers.append(detect_numbers(cropped_icon, DEBUG=DEBUG))
+    
+    # Stop the program if DEBUG is true before returning
+    if DEBUG:
+        if DEBUG: print(f"[icon_classification.py][predict_icon] Numbers detected ({numbers})")
+        raise Exception("DEBUG is True - Stopping program.")
+
+    return "placeholder icon name"

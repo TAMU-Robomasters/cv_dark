@@ -10,7 +10,7 @@ from statistics import mean as average
 from toolbox.globals import path_to, config, print, runtime, time_synchronized
 from toolbox.geometry_tools import Position, BoundingBox
 from subsystems.video_stream import video_stream
-from toolbox.icon_classification import get_cropped_image, detect_numbers
+from toolbox.icon_classification import predict_icons
 
 class TargetStatus(Enum):
     TARGET_NONE = 0
@@ -97,8 +97,8 @@ def when_bounding_boxes_refresh():
         # If not depth compatible (not running on the Jetson)
         target_status = TargetStatus.TARGET_FOUND
 
-        # Do icon detection
-        cropped_image = get_cropped_image(runtime.color_image, enemy_boxes, show_image=False) # Disable showing image for now
+        # Do icon detection - predict the icon
+        icons_predicted = predict_icons(runtime.color_image, enemy_boxes, DEBUG=True)
 
 
 
