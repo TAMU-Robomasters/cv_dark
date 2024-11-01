@@ -20,9 +20,7 @@ opencv_contrib/
 opencv_contrib*
 opencv.zip
 opencv-4.5.0
-drewvenv/
-drew_detection/source/mask*
-drew_detection/source/yellow*
+main/toolbox/drew_tools/source/
 
 # 
 # standard
