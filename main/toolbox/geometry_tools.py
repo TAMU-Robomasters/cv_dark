@@ -100,6 +100,7 @@ class Geometry():
     def bounds_to_points(self, max_x, max_y, min_x, min_y):
         return (min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, min_y)
     
+    #?confused what this is here for
     @classmethod
     def bounding_box(self, array_of_points):
         """

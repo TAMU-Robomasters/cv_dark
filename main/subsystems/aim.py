@@ -9,7 +9,7 @@ from statistics import mean as average
 
 from toolbox.globals import path_to, config, print, runtime, time_synchronized
 from toolbox.geometry_tools import Position, BoundingBox
-from subsystems.video_stream import video_stream
+from toolbox.distance_xyz import get_dist_to_bbox, get_xyz_at_color_coords
 
 class TargetStatus(Enum):
     TARGET_NONE = 0
@@ -206,57 +206,3 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
     # if size_score < 5:
     #     return None, 0
     return best_bounding_box, best_conf, best_targ_3d
-
-def get_xyz_at_color_coords(point, depth=None):
-    # point is [x, y], return tuple (x, y, z)
-    point_3d = video_stream.get_xyz_at_color_point(point, depth=depth)
-    return point_3d
-
-def get_dist_to_bbox(bbox):
-    depth_sample_coords = get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.5, height_coverage=0.5)
-    depth_sample = np.array([video_stream.get_depth_at_point(point) for point in depth_sample_coords])
-    if depth_sample.shape[0] == 0:
-        return None
-    depth_sample = depth_sample[depth_sample != None]
-    if depth_sample.shape[0] == 0:
-        return None
-    depth_sample = depth_sample[depth_sample != 0]
-    if depth_sample.shape[0] == 0:
-        return None
-    aim_start = perf_counter()
-    depth_sample = reject_depth_outliers(depth_sample)
-    aim_end = perf_counter()
-    if depth_sample.shape[0] == 0:
-        return None
-    # print(f"depth_sample: {depth_sample}")
-    print(f"Took: {(aim_end - aim_start)*1000} ms")
-    # if np.mean(depth_sample) > 5 or np.mean(depth_sample) < 0:
-    #     quit()
-    return np.mean(depth_sample)
-
-def reject_depth_outliers(depth_sample):
-    ''' Use median absolute deviation to reject outliers in depth sample '''
-    median = np.median(depth_sample)
-    mad = np.median(np.abs(depth_sample - median))
-    return depth_sample[np.abs(depth_sample - median) < 3 * mad]
-
-def get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.25, height_coverage=0.25):
-    bbox_width_coverage = bbox.width.item() * width_coverage
-    bbox_height_coverage = bbox.height.item() * height_coverage
-
-    bbxtl = max(bbox.center[0].item() - (bbox_width_coverage // 2), 0)
-    bbytl = max(bbox.center[1].item() - (bbox_height_coverage // 2), 0)
-
-    bbxbr = min(bbxtl + bbox_width_coverage, runtime.color_image.shape[1] - 1)
-    bbybr = min(bbytl + bbox_height_coverage, runtime.color_image.shape[0] - 1)
-
-    x_range = (bbxbr - bbxtl) // (points_per_dimension - 1) if points_per_dimension > 1 else bbxbr - bbxtl
-    y_range = (bbybr - bbytl) // (points_per_dimension - 1) if points_per_dimension > 1 else bbybr - bbytl
-
-    coords = []
-    for i in range(points_per_dimension):
-        for j in range(points_per_dimension):
-            x = int(bbxtl + x_range * i)
-            y = int(bbytl + y_range * j)
-            coords.append([x, y])
-    return np.array(coords)
