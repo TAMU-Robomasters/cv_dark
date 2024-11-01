@@ -19,7 +19,7 @@ import os
 IMAGE_SAVE_PATH = "toolbox/drew_tools/source"
 
 #region Functions
-def filter_yellow(frame, save_output=False, save_raw=False):
+def filter_img(frame, save_output=False, save_raw=False):
     """ Takes in RGB frame and binarizes it. """
     # Convert to hsv
     #frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
@@ -216,7 +216,7 @@ def do_video(save_output=False,save_raw=False):
             pos_frame = cap.get(1)
             print(f"Frame {pos_frame} ")
             
-            new_frame = clean_image(filter_yellow(frame, save_output=save_output, save_raw=save_raw)[0])
+            new_frame = clean_image(filter_img(frame, save_output=save_output, save_raw=save_raw)[0])
             
             find_and_draw_contours(new_frame, frame, save_output=False)
             
@@ -247,7 +247,7 @@ def do_image():
 
     img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
 
-    img, mask = filter_yellow(img,save_output=True, save_raw=False)
+    img, mask = filter_img(img,save_output=True, save_raw=False)
 
     img = clean_image(img,save_output=True)
 
