@@ -1,5 +1,6 @@
 import numpy as np
 from subsystems.video_stream import video_stream
+from toolbox.globals import runtime
 
 def get_xyz_at_color_coords(point, depth=None):
     # point is [x, y], return tuple (x, y, z)
