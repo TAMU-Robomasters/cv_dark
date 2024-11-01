@@ -8,7 +8,7 @@ def detect_numbers(frame, bounding_boxes):
 
 
 
-def get_cropped_image(frame, bounding_boxes): # from frame gets cropped image of armor panel
+def get_cropped_image(frame, bounding_boxes, show_image:bool=True): # from frame gets cropped image of armor panel
     # list of cropped images
     cropped_images = []
 
@@ -26,15 +26,19 @@ def get_cropped_image(frame, bounding_boxes): # from frame gets cropped image of
         # insert into list
         cropped_images.append(cropped_image)
 
+        cv2.imwrite("cropped_image.jpg", cropped_image) #DEBUG
+
         # show cropped image
-        cv2.imwrite('/Users/amasud7/Desktop/roboMasterCV/cv_dark.git/main/subsystems/log/videos/cropped_image.jpg', cropped_image)
-        cv2.imshow("Cropped image", cropped_image)
-        cv2.waitKey()
+        if show_image:
+            cv2.imshow("Cropped image", cropped_image)
+            cv2.waitKey()
 
         # testing to see shape of cropped image
         #print(cropped_image.shape)
     
+    if show_image:
+        cv2.destroyAllWindows()
+    
+    raise Exception("This will stop the program for debug purposes.")
 
-    # return cropped_images
-
-    cv2.destroyAllWindows()
+    return cropped_images
