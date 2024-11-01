@@ -1,28 +1,28 @@
 
 
-# drew_detection/main.py
+# toolbox/drew_tools/drew_image_tools.py
 # Started by Drew Wingfield
 # on 2024/09/19
-
-# usbipd attach --wsl --busid=4-1
 
 # With lots of help (and code) from the docs:
 # https://docs.opencv.org/
 
 #region Imports
-import time
+#import time
 import numpy as np
 import cv2 as cv
 import sys
-from PIL import Image
+import os
+#from PIL import Image
 #endregion Imports
 
+IMAGE_SAVE_PATH = "source"
 
 #region Functions
 def filter_yellow(frame, save_output=False, save_raw=False):
-    """ TAKES IN BGR """
+    """ Takes in RGB frame and binarizes it. """
     # Convert to hsv
-    frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+    #frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
     frame = cv.cvtColor(frame, cv.COLOR_RGB2HSV)
 
     # Threshold of yellow in HSV space 
@@ -35,19 +35,16 @@ def filter_yellow(frame, save_output=False, save_raw=False):
     # Mask the frame
     result = cv.bitwise_and(frame, frame, mask = mask) 
     
-    # convert back to BGR
-    result = cv.cvtColor(result, cv.COLOR_HSV2BGR)
+    # convert back to RGB
+    result = cv.cvtColor(result, cv.COLOR_HSV2RGB)
 
     # Save output if respective arguments are true
     if save_output:
-        cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/yellow.png", 
-            result)
+        cv.imwrite(os.path.join(IMAGE_SAVE_PATH,"filter_img_out.png"), result)
         if save_raw:
-            frame = cv.cvtColor(frame, cv.COLOR_HSV2BGR)
-            cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/raw.png", 
-                frame)
-        cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/mask.png", 
-            mask)
+            frame = cv.cvtColor(frame, cv.COLOR_HSV2RGB)
+            cv.imwrite(os.path.join(IMAGE_SAVE_PATH,"filter_img_raw.png"), frame)
+        cv.imwrite(os.path.join(IMAGE_SAVE_PATH,"filter_img_mask.png"), mask)
 
     # Return the result and the mask
     return result, mask
@@ -63,12 +60,12 @@ def clean_image(frame,save_output=False):
     kernel = np.ones((5,5),np.uint8)
     frame = cv.morphologyEx(frame, cv.MORPH_OPEN, kernel)
     if save_output:
-        cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/morph_open.png", frame)
+        cv.imwrite(os.path.join(IMAGE_SAVE_PATH,"clean_image_morph_open.png"), frame)
     
     # Use Morph Close to decrease noise
     frame = cv.morphologyEx(frame, cv.MORPH_CLOSE, kernel)
     if save_output:
-        cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/morph_close.png", frame)
+        cv.imwrite(os.path.join(IMAGE_SAVE_PATH,"clean_image_morph_close.png"), frame)
 
     # Sharpening (isn't tuned very well so I'm disabling it for now)
     #kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
@@ -127,6 +124,7 @@ def filter_contours(contours:list, hierarchy, debug_text=False):
 
 
 def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False):
+    """ Finds and draws contours for a frame. """
 
     frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     contours_tree, hierarchy_tree = cv.findContours(frame, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
@@ -178,7 +176,7 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False):
         print(f" Found {len(contours_tree)} contours.")
         print("largest contour has ",len(contours_tree[highest_instance[0]]),"points")
 
-        cv.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/contours.png", frame_to_write_ontop_of)
+        cv.imwrite(os.path.join(IMAGE_SAVE_PATH,"find_and_draw_contours_contours.png"), frame_to_write_ontop_of)
 
 
 def do_video(save_output=False,save_raw=False):
@@ -261,12 +259,11 @@ def do_image():
 
 
 #region Procedural
+if __name__ == "__main__":
+    do_video(False,False)
+    #do_image()
 
-do_video(False,False)
-#do_image()
-
-# When everything done, release the capture
-print("program complete!")
+    print("program complete!")
 #endregion Procedural
 
 
