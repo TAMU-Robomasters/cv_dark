@@ -29,10 +29,10 @@ class KalmanFilter:
         # NOTE might need to change how this works because it could prove out to be too computationally expensive
         self.kalman.processNoiseCov = np.array(
             [
-                [(dt ** 4) / 4, (dt ** 3) / 4,  (dt ** 2) / 2, 0, 0, 0],
+                [(dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2, 0, 0, 0],
                 [(dt ** 3) / 2, (dt ** 2), dt, 0, 0, 0],
                 [(dt ** 2) / 2, dt, 1, 0, 0, 0],
-                [0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 4,  (dt ** 2) / 2],
+                [0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2],
                 [0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt],
                 [0, 0, 0, (dt ** 2) / 2, dt, 1],
                 
@@ -67,10 +67,10 @@ class KalmanFilter:
         if dt:
             self.kalman.processNoiseCov = np.array(
             [
-                [(dt ** 4) / 4, (dt ** 3) / 4,  (dt ** 2) / 2, 0, 0, 0],
+                [(dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2, 0, 0, 0],
                 [(dt ** 3) / 2, (dt ** 2), dt, 0, 0, 0],
                 [(dt ** 2) / 2, dt, 1, 0, 0, 0],
-                [0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 4,  (dt ** 2) / 2],
+                [0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2],
                 [0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt],
                 [0, 0, 0, (dt ** 2) / 2, dt, 1],
                 

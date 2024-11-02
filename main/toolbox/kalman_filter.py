@@ -32,13 +32,13 @@ class KalmanFilter:
         # NOTE might need to change how this works because it could prove out to be too computationally expensive
         self.kalman.processNoiseCov = np.array(
             [
-                [(dt ** 4) / 4, (dt ** 3) / 4,  (dt ** 2) / 2, 0, 0, 0, 0, 0, 0],
+                [(dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2, 0, 0, 0, 0, 0, 0],
                 [(dt ** 3) / 2, (dt ** 2), dt, 0, 0, 0, 0, 0, 0],
                 [(dt ** 2) / 2, dt, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 4,  (dt ** 2) / 2, 0, 0, 0],
+                [0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2, 0, 0, 0],
                 [0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt, 0, 0, 0],
                 [0, 0, 0, (dt ** 2) / 2, dt, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 4,  (dt ** 2) / 2],
+                [0, 0, 0, 0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2],
                 [0, 0, 0, 0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt],
                 [0, 0, 0, 0, 0, 0, (dt ** 2) / 2, dt, 1]    
             ], dtype=np.float32
@@ -73,17 +73,17 @@ class KalmanFilter:
     def predict(self, dt=None):
         if dt:
             self.kalman.processNoiseCov = np.array(
-                [
-                    [(dt ** 4) / 4, (dt ** 3) / 4,  (dt ** 2) / 2, 0, 0, 0, 0, 0, 0],
-                    [(dt ** 3) / 2, (dt ** 2), dt, 0, 0, 0, 0, 0, 0],
-                    [(dt ** 2) / 2, dt, 1, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 4,  (dt ** 2) / 2, 0, 0, 0],
-                    [0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt, 0, 0, 0],
-                    [0, 0, 0, (dt ** 2) / 2, dt, 1, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 4,  (dt ** 2) / 2],
-                    [0, 0, 0, 0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt],
-                    [0, 0, 0, 0, 0, 0, (dt ** 2) / 2, dt, 1]    
-                ], dtype=np.float32
+            [
+                [(dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2, 0, 0, 0, 0, 0, 0],
+                [(dt ** 3) / 2, (dt ** 2), dt, 0, 0, 0, 0, 0, 0],
+                [(dt ** 2) / 2, dt, 1, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2, 0, 0, 0],
+                [0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt, 0, 0, 0],
+                [0, 0, 0, (dt ** 2) / 2, dt, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2],
+                [0, 0, 0, 0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt],
+                [0, 0, 0, 0, 0, 0, (dt ** 2) / 2, dt, 1]    
+            ], dtype=np.float32
             ) * (self.acceleration_error ** 2)
 
             self.kalman.transitionMatrix = np.array(
