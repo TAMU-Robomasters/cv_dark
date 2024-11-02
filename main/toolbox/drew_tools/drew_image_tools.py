@@ -20,13 +20,13 @@ IMAGE_SAVE_PATH = "toolbox/drew_tools/source"
 
 #region Functions
 def filter_img(frame, save_output=False, save_raw=False):
-    """ Takes in RGB frame and binarizes it. """
+    """ Takes in RGB frame and binarizes it. Returns the result, mask """
     # Convert to hsv
     #frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
     frame = cv.cvtColor(frame, cv.COLOR_RGB2HSV)
 
     # Threshold of yellow in HSV space 
-    yellow_lower = np.array([0, 60, 30]) # 16, 60, 30
+    yellow_lower = np.array([0, 0, 80]) # 16, 60, 30
     yellow_upper = np.array([255, 255, 255]) # 45, 255, 255
 
     # preparing the mask to overlay 
@@ -50,14 +50,13 @@ def filter_img(frame, save_output=False, save_raw=False):
     return result, mask
 
 
-def clean_image(frame,save_output=False):
+def clean_image(frame,save_output=False, kernel=np.ones((5,5),np.uint8)):
     """ Returns a cleaned version of a given image in BGR. """
     # Convert to hsv
     frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
     frame = cv.cvtColor(frame, cv.COLOR_RGB2HSV)
 
     # Use Morph Open to decrease noise
-    kernel = np.ones((5,5),np.uint8)
     frame = cv.morphologyEx(frame, cv.MORPH_OPEN, kernel)
     if save_output:
         cv.imwrite(os.path.join(IMAGE_SAVE_PATH,"clean_image_morph_open.png"), frame)

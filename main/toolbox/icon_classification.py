@@ -1,12 +1,15 @@
 
 import cv2
+
+import numpy as np
+
 from toolbox.drew_tools.drew_image_tools import clean_image, filter_img, find_and_draw_contours
 
 def detect_numbers(frame, bounding_boxes, DEBUG:bool=False):
 
-    new_frame = clean_image(filter_img(frame, save_output=DEBUG, save_raw=DEBUG)[0])
+    new_frame = clean_image(filter_img(frame, save_output=DEBUG, save_raw=DEBUG)[1], save_output=DEBUG, kernel=np.ones((1,1),np.uint8))
     contoured_image = frame.copy()
-    find_and_draw_contours(new_frame, contoured_image, save_output=False)
+    find_and_draw_contours(new_frame, contoured_image, save_output=DEBUG)
     # bounding_boxes is a list of box coordinates --> x, y, width, height
     # valid_boxes from aim.py is the list of bounding boxes to run icon detection on
     # frame is 3d array --> x, y, [r, g, b], (rows, columns, channels)
@@ -60,7 +63,7 @@ def predict_icons(frame, bounding_boxes, DEBUG:bool=False):
     cropped_imgs = get_cropped_image(frame, bounding_boxes, show_image=False)
     if DEBUG: print("[icon_classification.py][predict_icon] Images cropped. Detecting numbers")
     numbers = []
-    for cropped_icon in cropped_imgs:
+    for cropped_icon in cropped_imgs[:1]:
         numbers.append(detect_numbers(cropped_icon, bounding_boxes, DEBUG=DEBUG))
     
     # Stop the program if DEBUG is true before returning
