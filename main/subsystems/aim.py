@@ -9,7 +9,7 @@ from super_map import LazyDict
 from statistics import mean as average
 
 from toolbox.globals import path_to, config, print, runtime, time_synchronized
-from toolbox.geometry_tools import Position, BoundingBox
+from toolbox.geometry_tools import Position, PositionKF, BoundingBox
 # NOTE change in the future
 from toolbox.kf_2d import KalmanFilter
 from subsystems.video_stream import video_stream
@@ -134,7 +134,7 @@ def when_bounding_boxes_refresh():
     kf.correct(measurement) # TODO make this actually based on 3d_position
 
     # this contains the prediction of all the state variables [x, y, z, vx, vy, vz, ax, ay, az]
-    center_point_prediction = Position(kf.forward_predict(forward_time))
+    center_point_prediction = PositionKF(kf.forward_predict(forward_time))
     
    
     # update the shared data
