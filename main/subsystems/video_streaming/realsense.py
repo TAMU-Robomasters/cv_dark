@@ -150,6 +150,7 @@ class VideoStream:
         # aim_start = perf_counter()
         # print("color point:", point)
         depth = self.depth_frame.get_distance(point[0], point[1])
+        # TODO change this so that we check the depth in the specific file we call this function from
         if depth < self.depth_min or depth > self.depth_max:
             # print(f"depth: {depth} is out of range")
             return None

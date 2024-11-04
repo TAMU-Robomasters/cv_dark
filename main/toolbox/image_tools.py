@@ -4,14 +4,17 @@ import file_system_py as FS
 # project imports 
 from toolbox.globals import print
 
+# ? is RGB really needed
 rgb = lambda red,blue,green: tuple((red, green, blue))
 rgb_to_bgr = lambda red,blue,green: tuple((blue, green, red)) # <- cause cv2 is dumb
 
+white  = rgb(255, 255, 255)
 red    = rgb(240, 113, 120)
 cyan   = rgb(137, 221, 255)
 blue   = rgb(130, 170, 255)
 green  = rgb(195, 232, 141)
 yellow = rgb(254, 195,  85)
+
 
 class Image(object):
     def __init__(self, arg1):
@@ -45,9 +48,8 @@ class Image(object):
             name = self.path
         elif name is None:
             name = "img"
-        cv2.imshow(name, self.img)
-        cv2.waitKey(1) # doesn't actually wait
-    
+        cv2.imshow(name, self.img)   
+
     def show_and_pause(self, name=None):
         """
         this will open the image in a GUI and wait for the user to press
@@ -73,12 +75,25 @@ class Image(object):
             cv2.circle(img_copy, (x, y), radius, color, thickness=-1, lineType=8, shift=0)
         return Image(img_copy)
     
+    #? what is this * for ?
     def add_point(self, *, x, y, color=yellow, radius=3):
         color = rgb_to_bgr(*color)
         try:
             self.img = cv2.circle(self.img, (int(x), int(y)), radius, tuple(int(each) for each in color), thickness=-1, lineType=8, shift=0)
         except Exception as error:
             print(f"error doing .add_point() on image. Probably out of bounds: x={x},y={y}")
+        return self
+    
+    def add_line(self, start, end, color=white, thickness=2):
+        color = rgb_to_bgr(*color)
+
+        self.img = cv2.line(self.img, start, end, color, thickness)
+        return self
+
+    def add_rectangle(self, top_left, bottom_right, color=white, thickness=-1):
+        color = rgb_to_bgr(*color)
+
+        self.img = cv2.rectangle(self.img, top_left, bottom_right, color, thickness)
         return self
     
     def rotated_180_degrees(self):
@@ -113,7 +128,6 @@ class Image(object):
         self.img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
         return self
         
-    
     def add_bounding_box(self, bounding_box, color=green, thickness=2):
         """
         @bounding_box:
@@ -141,6 +155,29 @@ class Image(object):
         # Draw bounding box on image
         self.img = cv2.rectangle(self.img, start, end, color, thickness)
         return self
+    
+    def add_contours(self, contours, color=yellow, thickness=2):
+        """
+        @contour:
+        #TODO double check description
+            an array of an array of points [x,y] 
+            [
+                [
+                    [x1,y1],[x2,y2],[x3,y3],[x1,y1]
+                ],
+                ]
+                    [x1,y1],[x2,y2],[x3,y3],[x1,y1]
+                ]
+            ]
+        @color: tuple of RGB values, each are 0-255
+        @thickness: int of how many pixels
+        """
+        color = rgb_to_bgr(*color)
+        self.img = cv2.drawContours(self.img, contours, -1, color, thickness)
+        return self
+    
+
+
 
     def add_text(self, *, text, location, color=(255, 255, 255), size=0.7):
         color = rgb_to_bgr(*color)
