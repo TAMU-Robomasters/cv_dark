@@ -1,7 +1,8 @@
 from math import dist, exp, sqrt
 import collections
 import numpy as np
-from time import time, perf_counter
+import time
+from time import perf_counter
 from enum import Enum
 
 import numpy as np
@@ -19,7 +20,7 @@ class TargetStatus(Enum):
     TARGET_FOUND = 1
     TARGET_ENGAGE = 2
 
-kf = KalmanFilter(np.ones((6,1), dtype=np.float32), 0.5, 0.5, 0.5, 2)
+kf = KalmanFilter(np.ones((6,1), dtype=np.float32), 0.1, 0.1, 0.05, 0.05)
 
 # 
 # config
@@ -38,6 +39,9 @@ runtime.aiming = LazyDict(
     target_3d = (0, 0, 0),
     center_point = Position((0, 0)),
 )
+
+#TODO find a cleaner way of doing this
+past_time = time.time()  # get time in seconds
 
 # 
 # main
@@ -117,23 +121,27 @@ def when_bounding_boxes_refresh():
     if(best_bounding_box != None):
         center_point = Position(best_bounding_box.center) # for logging/displays
 
-    # 1. get optimal 3dtarget list
-    # Overall 1. reject noise in 1 frame,
-    # Overall 1.5 Get moving frame data
-    # Overall 2. reject noise overtime
+        # 1. get optimal 3dtarget list
+        # Overall 1. reject noise in 1 frame,
+        # Overall 1.5 Get moving frame data
+        # Overall 2. reject noise overtime
 
-    # Predict position
-    # NOTE not final version. just for gui testing
-    frame_delay = 0.05 # TODO make this actually based on the time delay
-    forward_time = 0.5 # half a second into the future
-    if str(type(center_point.x)) != "<class 'int'>":
-        measurement = np.array([center_point.x.cpu(), center_point.y.cpu()], dtype=np.float32)
-    else:
-        measurement = np.array([center_point.x, center_point.y], dtype=np.float32)
-    kf.predict(frame_delay)
-    kf.correct(measurement) # TODO make this actually based on 3d_position
+        # Predict position
+        # NOTE not final version. just for gui testing
+        global past_time #? is there a better way of doing this
+        curr_time = time.time()
+        frame_delay = curr_time - past_time
+        if str(type(center_point.x)) != "<class 'int'>":
+            measurement = np.array([center_point.x.cpu(), center_point.y.cpu()], dtype=np.float32)
+        else:
+            measurement = np.array([center_point.x, center_point.y], dtype=np.float32)
+        kf.predict(frame_delay)
+        kf.correct(measurement) # TODO make this actually based on 3d_position
+        past_time = time.time()
 
     # this contains the prediction of all the state variables [x, y, z, vx, vy, vz, ax, ay, az]
+    #TODO think about what should i do with this if the frame i get has no bounding box 
+    forward_time = 0.3 # half a second into the future
     center_point_prediction = PositionKF(kf.forward_predict(forward_time))
     
    

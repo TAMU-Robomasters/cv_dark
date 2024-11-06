@@ -8,7 +8,7 @@ from kf_main import KalmanFilter as kf
 
 
 stateVar = np.array([1, 1, 1, 1, 1, 1], dtype=np.float32)
-kalmanFilter = kf(stateVar, 0.1, 0.1, 0.04, 1)
+kalmanFilter = kf(stateVar, 0.1, 0.1, 0.06, 0.05)
 
 
 # Initial Measurement
@@ -60,7 +60,7 @@ def track_paper(video_path):
                 measurement[1] = y 
                 print(kalmanFilter.predict(dt))
                 kalmanFilter.correct(measurement)
-                predicted = kalmanFilter.forward_predict(0.7)
+                predicted = kalmanFilter.forward_predict(0.3)
 
                 #print(kalman)
                 # print(f"Predicted Position: x={predicted[0][0]}, y={predicted[3][0]}")
