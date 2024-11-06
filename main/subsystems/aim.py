@@ -1,18 +1,18 @@
 from math import dist, exp, sqrt
 import collections
 import numpy as np
+import torch
 import time
 from time import perf_counter
 from enum import Enum
 
-import numpy as np
 from super_map import LazyDict
 from statistics import mean as average
 
 from toolbox.globals import path_to, config, print, runtime, time_synchronized
 from toolbox.geometry_tools import Position, PositionKF, BoundingBox
 # NOTE change in the future
-from toolbox.kf_2d import KalmanFilter
+from toolbox.kalman_filter import TorchKF2D
 from subsystems.video_stream import video_stream
 
 class TargetStatus(Enum):
@@ -20,7 +20,7 @@ class TargetStatus(Enum):
     TARGET_FOUND = 1
     TARGET_ENGAGE = 2
 
-kf = KalmanFilter(np.ones((6,1), dtype=np.float32), 0.1, 0.1, 0.05, 0.05)
+kf = TorchKF2D(torch.ones((6,1), dtype=torch.float32), 0.1, 0.1, 0.05, 0.05)
 
 # 
 # config
@@ -131,12 +131,8 @@ def when_bounding_boxes_refresh():
         global past_time #? is there a better way of doing this
         curr_time = time.time()
         frame_delay = curr_time - past_time
-        if str(type(center_point.x)) != "<class 'int'>":
-            measurement = np.array([center_point.x.cpu(), center_point.y.cpu()], dtype=np.float32)
-        else:
-            measurement = np.array([center_point.x, center_point.y], dtype=np.float32)
         kf.predict(frame_delay)
-        kf.correct(measurement) # TODO make this actually based on 3d_position
+        kf.correct(center_point) # TODO make this actually based on 3d_position
         past_time = time.time()
 
     # this contains the prediction of all the state variables [x, y, z, vx, vy, vz, ax, ay, az]
