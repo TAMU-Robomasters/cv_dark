@@ -163,10 +163,10 @@ class Image(object):
             an array of an array of points [x,y] 
             [
                 [
-                    [x1,y1],[x2,y2],[x3,y3],[x1,y1]
+                    [x1,y1],[x2,y2],[x3,y3]
                 ],
-                ]
-                    [x1,y1],[x2,y2],[x3,y3],[x1,y1]
+                
+                    [x1,y1],[x2,y2],[x3,y3]
                 ]
             ]
         @color: tuple of RGB values, each are 0-255

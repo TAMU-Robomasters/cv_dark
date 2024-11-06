@@ -34,7 +34,7 @@ DEPTH_COMPATIBLE    = config.hardware.camera_has_depth
 
 #TODO figure out how to use realsense api to get intrinsics
 #TODO add get_instrinsics to videostream class
-calib_data_path = "./subsystems/CalMatrix.npz"
+calib_data_path = "./subsystems/Juan_Cal_Matrix.npz"
 
 calib_data = np.load(calib_data_path)
 
@@ -47,7 +47,7 @@ parameters = aruco.DetectorParameters_create()
 # define an empty custom dictionary with
 aruco_dict = cv2.aruco_Dictionary.create(5, 5)
 
-# add empty bytesList array to fill with 3 markers later
+# add empty bytesList array to fill with
 aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
 
 add_marker(aruco_dict, 0, a_pattern)
@@ -71,6 +71,7 @@ past_time = time_ns() / 1e9  # Get current time in seconds
 current_time = 0
 
 def when_frame_arrives():
+    global past_time
     # import current frame
     frame = runtime.color_image
 
@@ -80,6 +81,10 @@ def when_frame_arrives():
     runtime.camera_position.marker_contours = []
     runtime.camera_position.realsense_robot_coord = []
     runtime.camera_position.vision_robot_coord = []
+
+    #? should we do it like about or reset it like this |
+    #?                                                  v
+    vision_robot_coord = []
 
     # ? is this necessary
     if frame.size > 2:
@@ -93,37 +98,36 @@ def when_frame_arrives():
    
         # filter 3d coord
         # ! only works for one marker
-        if realsense_marker_3ds and vision_marker_3ds:
-            try:
-                vision_measurement = np.array([realsense_marker_3ds[0][0], realsense_marker_3ds[0][1] ]) 
-                realsense_measurement = np.array([vision_marker_3ds[0][0], vision_marker_3ds[0][1]])
-                current_time = time_ns() / 1e9  # Get current time in seconds
-                vision_kalman_filter.predict(dt=current_time - past_time)
-                realsense_kalman_filter.predict(dt=current_time - past_time)
-                past_time = current_time
-                vision_kalman_filter.update(vision_measurement)
-                realsense_kalman_filter.update(realsense_measurement)
+        # TODO change or back to end and uncomment realsense stuff
+        if realsense_marker_3ds or vision_marker_3ds:
+            vision_measurement = np.array([vision_marker_3ds[0][0], vision_marker_3ds[0][1]])
+            # realsense_measurement = np.array([realsense_marker_3ds[0][0], realsense_marker_3ds[0][1]]) 
+            current_time = time_ns() / 1e9  # Get current time in seconds
+            vision_kalman_filter.predict(dt=current_time - past_time)
+            # realsense_kalman_filter.predict(dt=current_time - past_time)
+            past_time = current_time
+            vision_kalman_filter.update(vision_measurement)
+            # realsense_kalman_filter.update(realsense_measurement)
 
-                # ? filter after or before we get robot coords?
-                vision_filtered_x = int(vision_kalman_filter.state[0])
-                vision_filtered_y = int(vision_kalman_filter.state[1])  # Extract filtered x and y positions
+            # ? filter after or before we get robot coords?
+            vision_filtered_x = int(vision_kalman_filter.state[0])
+            vision_filtered_y = int(vision_kalman_filter.state[1])  # Extract filtered x and y positions
 
-                realsense_filtered_x = int(realsense_kalman_filter.state[0])
-                realsense_filtered_y = int(realsense_kalman_filter.state[1])
-            except:
-                pass    
+            # realsense_filtered_x = int(realsense_kalman_filter.state[0])
+            # realsense_filtered_y = int(realsense_kalman_filter.state[1])
+     
 
             # get robot coords
             #! this may be wrong
             #TODO add constants to config file
             #TODO actually reference marker field location to calculate robot coords
             vision_robot_coord = [int(490 - vision_filtered_y), int(800 - (305 + 100) + vision_filtered_x)]
-            realsense_robot_coord = [int(490 - realsense_filtered_y), int(800 - (305 + 100) + realsense_filtered_x)] 
+            # realsense_robot_coord = [int(490 - realsense_filtered_y), int(800 - (305 + 100) + realsense_filtered_x)] 
 
             
             # Detect marker colors
             detected_colors = [] 
-            for ids, corners, i in zip(marker_IDs, marker_corners):
+            for ids, corners in zip(marker_IDs, marker_corners):
                 cv2.polylines(frame, [corners.astype(np.int32)], True, (0, 255, 255), 4, cv2.LINE_AA)
                 corners = corners.reshape(4, 2).astype(np.int32)
                 top_right, top_left, bottom_right, bottom_left = corners[0], corners[1], corners[2], corners[3]
@@ -152,17 +156,20 @@ def when_frame_arrives():
             #!!! new runtime variables
             runtime.camera_position.marker_patterns = [id_to_letter[id] for id in ids]
             runtime.camera_position.marker_colors = detected_colors
-            #TODO decide on a name between marker_contours, marker_corners, or marker_outlines
-            runtime.camera_position.marker_contours = marker_corners
-            runtime.camera_position.realsense_robot_coord = realsense_robot_coord
+            # runtime.camera_position.realsense_robot_coord = realsense_robot_coord
+            print(vision_robot_coord)
             runtime.camera_position.vision_robot_coord = vision_robot_coord
 
+        #TODO decide on a name between marker_contours, marker_corners, or marker_outlines
+        runtime.camera_position.marker_contours = marker_corners
 
 
+
+#TODO change this so that the if statement is outside the function
 def use_vision_depth(marker_corners):
     if marker_corners:
         marker_3d_coords = []
-        for marker_corner in marker_corners:
+        for marker_corner in marker_corners: 
             rVec, tVec, _ = cv2.aruco.estimatePoseSingleMarkers(marker_corner, MARKER_SIZE, cam_mat, dist_coef)
 
             rVec = rVec[0][0]
@@ -172,8 +179,8 @@ def use_vision_depth(marker_corners):
             tVec_flipped = tVec * -1
 
             rotation_matrix, jacobian = cv2.Rodrigues(rVec_flipped)
-            proper_tVec = np.dot(rotation_matrix, tVec_flipped) / 1E3 
-
+            # ! this needs to be converter into meters somewhere
+            proper_tVec = np.dot(rotation_matrix, tVec_flipped)
             # transforms 3d coords to agreed upon frame of reference for camera
             # ! assuming tVec is in meters
             #TODO figure out how to see if we're using realsense
@@ -183,7 +190,7 @@ def use_vision_depth(marker_corners):
 
             marker_3d_coords.append(proper_tVec)
         
-        return marker_3d_coords # / 1E3 # convert everything into meters
+        return marker_3d_coords
 
 def use_realsense_depth(marker_corners):
       if DEPTH_COMPATIBLE and marker_corners:

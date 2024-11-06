@@ -53,9 +53,11 @@ def when_finished_processing_frame():
     depth_image             = runtime.depth_image
     prev_loop_time          = runtime.prev_loop_time
     bounding_boxes          = runtime.modeling.bounding_boxes
-    marker_contours         = runtime.camera_position.marker_contours
-    realsense_robot_coord   = runtime.camera_position.realsense_robot_coord
-    vision_robot_coord      = runtime.camera_position.vision_robot_coord
+    marker_contours         = runtime.camera_position.marker_contours 
+    realsense_robot_coord   = runtime.camera_position.realsense_robot_coord 
+    vision_robot_coord      = runtime.camera_position.vision_robot_coord 
+    print("what's going on", vision_robot_coord)
+    print("sanity check", marker_contours)
     
     # 
     # compute loop time
@@ -77,7 +79,10 @@ def when_finished_processing_frame():
         image = generate_image(1000/iteration_time)
 
         if display_marker_detection:
-            image.add_contours(marker_contours) # outline contours
+            if len(marker_contours) != 0:
+                #! needs to be ints
+                #TODO look into bug/feature
+                image.add_contours(np.array(marker_contours, dtype=np.int32))# outline contours
             #! Does not save 
             #TODO figure out how to save
             field = visualize_camera_position(realsense_robot_coord, vision_robot_coord)
@@ -168,8 +173,11 @@ def visualize_camera_position(realsense_robot_coord, vision_robot_coord):
         field.add_line(start=(400, 800 - (305 + 100)), end=realsense_robot_coord * 100) # show line of sight
     
     if vision_robot_coord:
-        field.add_point(x=vision_robot_coord * 100, y=vision_robot_coord * 100, color=(200, 100, 100)) # show camera position based on pure vision
-        field.add_line(start=(400, 800 - (305 + 100)), end=vision_robot_coord * 100) # show line of sight
+        print("I'm here")
+        print(vision_robot_coord)
+        #TODO fix conversion stuff
+        field.add_point(x=vision_robot_coord[0], y=vision_robot_coord[1], color=(255, 20, 147), radius=5) # show camera position based on pure vision
+        field.add_line(start=(490, 800 - (305 + 100)), end=vision_robot_coord) # show line of sight
 
     return field
 
