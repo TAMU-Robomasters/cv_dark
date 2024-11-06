@@ -6,13 +6,13 @@ from time import time
 from super_map import LazyDict
 
 from toolbox.globals import path_to, config, print, runtime
-from toolbox.kalman_filter import KalmanFilter
+from toolbox.kalman_filter import TorchKF3D
 from subsystems.video_stream import video_stream
 
 
 # NOTE initial kinematic state is set to all ones. This might effect convergence time
 # TODO find better uncertainty for x, y, z
-kf = KalmanFilter(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, 0.05)
+kf = TorchKF3D(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, 0.05, 0.05)
 
 
 # 

@@ -64,7 +64,7 @@ class TorchKF():
         
         # Update state estimate
         self.temp5 = measurement - torch.matmul(self.measurement_matrix, self.state_pre) # innovation
-        self.state_post = self.state_pre + torch.matmul(self.gain, self.temp5)
+        self.state_post = self.state_pre + torch.matmul(self.gain, self.temp5) #!
         
         # Update error covariance estimate
         self.error_cov_post = self.error_cov_pre - torch.matmul(self.gain, self.temp2)
@@ -202,7 +202,7 @@ class TorchKF2D():
 
         # Define the error associated to the initial values of the state variables  
         # TODO see if it converges faster with different values
-        self.kalman.error_cov_post = np.eye(6, 6, dtype=torch.float32)
+        self.kalman.error_cov_post = torch.eye(6, 6, dtype=torch.float32)
 
         # Define the measurement noise covariance matrix
         # NOTE y_error could be made into a function based on the distance. The further out the more uncertain we are. 
@@ -292,6 +292,7 @@ class TorchKF2D():
                 [0, 0, 0, 0, 0, 1],
             
             ], dtype=torch.float32)
+        
         return torch.matmul(transition_mat, self.kalman.state_post)
 
 

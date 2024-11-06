@@ -132,7 +132,7 @@ def when_bounding_boxes_refresh():
         curr_time = time.time()
         frame_delay = curr_time - past_time
         kf.predict(frame_delay)
-        kf.correct(center_point) # TODO make this actually based on 3d_position
+        kf.correct(torch.tensor([[center_point.x], [center_point.y]], dtype=torch.float32)) # TODO make this actually based on 3d_position
         past_time = time.time()
 
     # this contains the prediction of all the state variables [x, y, z, vx, vy, vz, ax, ay, az]
