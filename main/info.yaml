@@ -215,6 +215,15 @@
             hardware:
                 camera: null
 
+          #!!! Temporary use remove at somepoint
+        CAMERA=JUAN:
+            hardware:
+                camera: juan
+                camera_has_depth: false
+                camera_has_pose: false
+                camera_has_acceleration: false
+                camera_has_gyro: false
+
         GUI:
             log:
                 display_live_frames: true
