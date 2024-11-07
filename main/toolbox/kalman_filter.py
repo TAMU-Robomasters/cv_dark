@@ -58,9 +58,10 @@ class TorchKF():
         self.temp2 = torch.matmul(self.measurement_matrix, self.error_cov_pre)
         # temp3 = temp2*Ht + R
         self.temp3 = torch.matmul(self.temp2, self.measurement_matrix.t()) + self.measurement_noise_cov
-        # temp4 = inv(temp3)*temp2 = Kt(k)
-        self.temp4 = torch.linalg.solve(self.temp3, self.temp2)
-        self.gain = self.temp4.t()
+        
+        # temp4 = P'(k)*Ht
+        self.temp4 = torch.matmul(self.error_cov_pre, self.measurement_matrix.t())
+        self.gain = torch.matmul(self.temp4, torch.inverse(self.temp3))
         
         # Update state estimate
         self.temp5 = measurement - torch.matmul(self.measurement_matrix, self.state_pre) # innovation
