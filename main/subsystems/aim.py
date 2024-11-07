@@ -18,14 +18,16 @@ from subsystems.video_stream import video_stream
 hardware_acceleration = config.model.hardware_acceleration
 
 if hardware_acceleration in ['tensor_rt', 'gpu'] and torch.cuda.is_available():
-    torch.set_default_device(torch.device("cuda"))
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
 
 class TargetStatus(Enum):
     TARGET_NONE = 0
     TARGET_FOUND = 1
     TARGET_ENGAGE = 2
 
-kf = TorchKF2D(torch.ones((6,1), dtype=torch.float32), 0.1, 0.1, 0.05, 0.05)
+kf = TorchKF2D(torch.ones((6,1), dtype=torch.float32, device=device), 0.1, 0.1, 0.05, 0.05)
 
 # 
 # config
@@ -137,7 +139,8 @@ def when_bounding_boxes_refresh():
         curr_time = time.time()
         frame_delay = curr_time - past_time
         kf.predict(frame_delay)
-        kf.correct(torch.tensor([[center_point.x], [center_point.y]], dtype=torch.float32)) # TODO make this actually based on 3d_position
+        #! where is center point. The code below might be inefficient 
+        kf.correct(torch.tensor([[center_point.x], [center_point.y]], dtype=torch.float32, device=device)) # TODO make this actually based on 3d_position
         past_time = time.time()
 
     # this contains the prediction of all the state variables [x, y, z, vx, vy, vz, ax, ay, az]

@@ -7,7 +7,9 @@ from toolbox.globals import config
 hardware_acceleration = config.model.hardware_acceleration
 
 if hardware_acceleration in ['tensor_rt', 'gpu'] and torch.cuda.is_available():
-    torch.set_default_device(torch.device("cuda"))
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
 
 class TorchKF():
     def __init__(self, dynam_params: int, measure_params: int, control_params: int = 0, dtype=torch.float32):
@@ -15,29 +17,29 @@ class TorchKF():
         assert measure_params > 0, "Number of measure parameters must be greater than 0"
         assert control_params >= 0, "NUmber of control parameters must be greater than or equal to 0"
 
-        self.state_pre = torch.zeros((dynam_params, 1), dtype=dtype)
-        self.state_post = torch.zeros((dynam_params, 1), dtype=dtype)
-        self.transition_matrix = torch.eye(dynam_params, dtype=dtype)
+        self.state_pre = torch.zeros((dynam_params, 1), dtype=dtype, device=device)
+        self.state_post = torch.zeros((dynam_params, 1), dtype=dtype, device=device)
+        self.transition_matrix = torch.eye(dynam_params, dtype=dtype, device=device)
         
-        self.process_noise_cov = torch.eye(dynam_params, dtype=dtype)
-        self.measurement_matrix = torch.zeros((measure_params, dynam_params), dtype=dtype)
-        self.measurement_noise_cov = torch.eye(measure_params, dtype=dtype)
+        self.process_noise_cov = torch.eye(dynam_params, dtype=dtype, device=device)
+        self.measurement_matrix = torch.zeros((measure_params, dynam_params), dtype=dtype, device=device)
+        self.measurement_noise_cov = torch.eye(measure_params, dtype=dtype, device=device)
         
-        self.error_cov_pre = torch.zeros((dynam_params, dynam_params), dtype=dtype)
-        self.error_cov_post = torch.zeros((dynam_params, dynam_params), dtype=dtype)
-        self.gain = torch.zeros((dynam_params, measure_params), dtype=dtype)
+        self.error_cov_pre = torch.zeros((dynam_params, dynam_params), dtype=dtype, device=device)
+        self.error_cov_post = torch.zeros((dynam_params, dynam_params), dtype=dtype, device=device)
+        self.gain = torch.zeros((dynam_params, measure_params), dtype=dtype, device=device)
         
         if control_params > 0:
-            self.control_matrix = torch.zeros((dynam_params, control_params), dtype=dtype)
+            self.control_matrix = torch.zeros((dynam_params, control_params), dtype=dtype, device=device)
         else:
             self.control_matrix = None
         
         # Temporary matrices
-        self.temp1 = torch.zeros((dynam_params, dynam_params), dtype=dtype)
-        self.temp2 = torch.zeros((measure_params, dynam_params), dtype=dtype)
-        self.temp3 = torch.zeros((measure_params, measure_params), dtype=dtype)
-        self.temp4 = torch.zeros((measure_params, dynam_params), dtype=dtype)
-        self.temp5 = torch.zeros((measure_params, 1), dtype=dtype)
+        self.temp1 = torch.zeros((dynam_params, dynam_params), dtype=dtype, device=device)
+        self.temp2 = torch.zeros((measure_params, dynam_params), dtype=dtype, device=device)
+        self.temp3 = torch.zeros((measure_params, measure_params), dtype=dtype, device=device)
+        self.temp4 = torch.zeros((measure_params, dynam_params), dtype=dtype, device=device)
+        self.temp5 = torch.zeros((measure_params, 1), dtype=dtype, device=device)
     
     def predict(self, control=None):
         # Predict state: x'(k) = A*x(k)
@@ -92,7 +94,7 @@ class TorchKF3D():
 
         # Define the error associated to the initial values of the state variables  
         # TODO see if it converges faster with different values
-        self.kalman.error_cov_post = torch.eye(6, 6, dtype=torch.float32)
+        self.kalman.error_cov_post = torch.eye(6, 6, dtype=torch.float32, device=device)
 
         # Define the measurement noise covariance matrix
         # NOTE y_error could be made into a function that's dependent on the distance. The further out the more uncertain we are. 
@@ -101,7 +103,7 @@ class TorchKF3D():
                 [x_error ** 2, 0, 0],
                 [0, y_error ** 2, 0],
                 [0, 0, z_error ** 2]
-            ], dtype=torch.float32)
+            ], dtype=torch.float32, device=device)
         
         # Encodes how off our dynamic model (i.e. constant acceleration model) is from reality
         # NOTE might need to change how this works because it could prove out to be too computationally expensive
@@ -116,7 +118,7 @@ class TorchKF3D():
                 [0, 0, 0, 0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2],
                 [0, 0, 0, 0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt],
                 [0, 0, 0, 0, 0, 0, (dt ** 2) / 2, dt, 1]    
-            ], dtype=torch.float32
+            ], dtype=torch.float32, device=device
         ) * (self.acceleration_error ** 2)
 
         # maps state variables into measurements
@@ -125,7 +127,7 @@ class TorchKF3D():
                 [1, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 1, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 1, 0, 0]
-            ], dtype=torch.float32)
+            ], dtype=torch.float32, device=device)
 
         # encodes how the state variables will evolve over a certain period of time assuming target has a constant acceleration 
         self.kalman.transition_matrix = torch.tensor(
@@ -139,7 +141,7 @@ class TorchKF3D():
                 [0, 0, 0, 0, 0, 0, 1, dt, 0.5 * dt ** 2],
                 [0, 0, 0, 0, 0, 0, 0, 1, dt],
                 [0, 0, 0, 0, 0, 0, 0, 0, 1]
-            ], dtype=torch.float32)
+            ], dtype=torch.float32, device=device)
 
 
     def predict(self, dt=None):
@@ -155,7 +157,7 @@ class TorchKF3D():
                 [0, 0, 0, 0, 0, 0, (dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2],
                 [0, 0, 0, 0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt],
                 [0, 0, 0, 0, 0, 0, (dt ** 2) / 2, dt, 1]    
-            ], dtype=torch.float32
+            ], dtype=torch.float32, device=device
             ) * (self.acceleration_error ** 2)
 
             self.kalman.transition_matrix = torch.tensor(
@@ -169,7 +171,7 @@ class TorchKF3D():
                     [0, 0, 0, 0, 0, 0, 1, dt, 0.5 * dt ** 2],
                     [0, 0, 0, 0, 0, 0, 0, 1, dt],
                     [0, 0, 0, 0, 0, 0, 0, 0, 1]
-                ], dtype=torch.float32)
+                ], dtype=torch.float32, device=device)
         else:
             print('WARNING: Failed to receive change in time (dt)')
 
@@ -193,7 +195,7 @@ class TorchKF3D():
                 [0, 0, 0, 0, 0, 0, 1, dt, 0.5 * dt ** 2],
                 [0, 0, 0, 0, 0, 0, 0, 1, dt],
                 [0, 0, 0, 0, 0, 0, 0, 0, 1]
-            ], dtype=torch.float32)
+            ], dtype=torch.float32, device=device)
         return torch.matmul(transition_mat, self.kalman.state_post)
 
 class TorchKF2D():
@@ -209,7 +211,7 @@ class TorchKF2D():
 
         # Define the error associated to the initial values of the state variables  
         # TODO see if it converges faster with different values
-        self.kalman.error_cov_post = torch.eye(6, 6, dtype=torch.float32)
+        self.kalman.error_cov_post = torch.eye(6, 6, dtype=torch.float32, device=device)
 
         # Define the measurement noise covariance matrix
         # NOTE y_error could be made into a function based on the distance. The further out the more uncertain we are. 
@@ -217,7 +219,7 @@ class TorchKF2D():
             [
                 [x_error**2, 0],
                 [0, y_error**2]
-            ], dtype=torch.float32)
+            ], dtype=torch.float32, device=device)
         
         # Encodes how off our dynamic model (constant acceleration model) is from reality
         # NOTE might need to change how this works because it could prove out to be too computationally expensive
@@ -230,7 +232,7 @@ class TorchKF2D():
                 [0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt],
                 [0, 0, 0, (dt ** 2) / 2, dt, 1],
                 
-            ], dtype=torch.float32
+            ], dtype=torch.float32, device=device
         ) * (self.acceleration_error ** 2)
 
         # maps state variables into measurements
@@ -239,7 +241,7 @@ class TorchKF2D():
                 [1, 0, 0, 0, 0, 0],
                 [0, 0, 0, 1, 0, 0]
 
-            ], dtype=torch.float32)
+            ], dtype=torch.float32, device=device)
 
         # encodes how the state variables will evolve over a certain period of time assuming target has a constant acceleration 
         self.kalman.transition_matrix = torch.tensor(
@@ -251,7 +253,7 @@ class TorchKF2D():
                 [0, 0, 0, 0, 1, dt],
                 [0, 0, 0, 0, 0, 1],
             
-            ], dtype=torch.float32)
+            ], dtype=torch.float32, device=device)
     
 
     def predict(self, dt=None):
@@ -265,7 +267,7 @@ class TorchKF2D():
                 [0, 0, 0, (dt ** 3) / 2, (dt ** 2), dt],
                 [0, 0, 0, (dt ** 2) / 2, dt, 1],
                 
-            ], dtype=torch.float32
+            ], dtype=torch.float32, device=device
             ) * (self.acceleration_error ** 2)
             self.kalman.transition_matrix = torch.tensor(
             [
@@ -276,7 +278,7 @@ class TorchKF2D():
                 [0, 0, 0, 0, 1, dt],
                 [0, 0, 0, 0, 0, 1],
             
-            ], dtype=torch.float32)
+            ], dtype=torch.float32, device=device)
         else:
             print('WARNING: Failed to receive change in time (dt)')
 
@@ -298,7 +300,7 @@ class TorchKF2D():
                 [0, 0, 0, 0, 1, dt],
                 [0, 0, 0, 0, 0, 1],
             
-            ], dtype=torch.float32)
+            ], dtype=torch.float32, device=device)
         
         return torch.matmul(transition_mat, self.kalman.state_post)
 
