@@ -2,6 +2,12 @@ import cv2
 import numpy as np
 import torch 
 
+from toolbox.globals import config
+
+hardware_acceleration = config.model.hardware_acceleration
+
+if hardware_acceleration in ['tensor_rt', 'gpu'] and torch.cuda.is_available():
+    torch.set_default_device(torch.device("cuda"))
 
 class TorchKF():
     def __init__(self, dynam_params: int, measure_params: int, control_params: int = 0, dtype=torch.float32):

@@ -15,6 +15,11 @@ from toolbox.geometry_tools import Position, PositionKF, BoundingBox
 from toolbox.kalman_filter import TorchKF2D
 from subsystems.video_stream import video_stream
 
+hardware_acceleration = config.model.hardware_acceleration
+
+if hardware_acceleration in ['tensor_rt', 'gpu'] and torch.cuda.is_available():
+    torch.set_default_device(torch.device("cuda"))
+
 class TargetStatus(Enum):
     TARGET_NONE = 0
     TARGET_FOUND = 1
