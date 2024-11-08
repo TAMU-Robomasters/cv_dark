@@ -29,36 +29,6 @@ class Position(list):
         else:
             return '[]'
         
-# FIXME
-class PositionKF(list):
-    @property
-    def x(self): return self[0]
-    
-    @x.setter
-    def x(self, value): self[0] = value
-    
-    @property
-    def y(self): return self[3]
-    
-    @y.setter
-    def y(self, value): self[3] = value
-    
-    @property
-    def z(self): return self[2]
-    
-    @z.setter
-    def z(self, value): self[2] = value
-    
-    def __repr__(self):
-        if len(self) >= 3:
-            return f'(x={self.x},y={self.y},z={self.z})'
-        elif len(self) == 2:
-            return f'(x={self.x},y={self.y})'
-        elif len(self) == 1:
-            return f'(x={self.x})'
-        else:
-            return '[]'
-
 class BoundingBox(list):
     """
     x_top_left, y_top_left, width, height format

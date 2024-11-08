@@ -6,14 +6,13 @@ from time import time
 from super_map import LazyDict
 
 from toolbox.globals import path_to, config, print, runtime
-from toolbox.kalman_filter import KalmanFilter
+from toolbox.kalman_filter import KF3D
 from subsystems.video_stream import video_stream
 
 
 # NOTE initial kinematic state is set to all ones. This might effect convergence time
 # TODO find better uncertainty for x, y, z
-kf = KalmanFilter(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, 0.05)
-
+kf = KF3D(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, 0.05, 0.05)
 
 # 
 # config
@@ -101,7 +100,7 @@ def when_aiming_refreshes():
 
     # TODO change capture delay to something more useful
     message_to_embedded.capture_delay = capture_delay
-    message_to_embedded.status = runtime.aiming.target_status.value
+    message_to_embedded.status = runtime.aiming.target_status.value 
     print(f'''msg({f"X:{message_to_embedded.X:.4f}".rjust(7)}, {f"Y:{message_to_embedded.Y:.4f}".rjust(7)}, {f"Z:{message_to_embedded.Z:.4f}".rjust(7)},
         {f"VX:{message_to_embedded.X:.4f}".rjust(7)}, {f"VY:{message_to_embedded.Y:.4f}".rjust(7)}, {f"VZ:{message_to_embedded.Z:.4f}".rjust(7)},
         {f"AX:{message_to_embedded.X:.4f}".rjust(7)}, {f"AY:{message_to_embedded.Y:.4f}".rjust(7)}, {f"AZ:{message_to_embedded.Z:.4f}".rjust(7)},

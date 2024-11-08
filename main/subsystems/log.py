@@ -6,6 +6,8 @@ from toolbox.globals import path_to, config, print, runtime, absolute_path_to
 from toolbox.video_tools import Video, VideoWriter
 from toolbox.image_tools import Image, rgb
 from toolbox.cold_storage import ColdStorage
+from subsystems.aim import TargetStatus
+from subsystems.video_stream import video_stream
 
 
 # 
@@ -131,11 +133,10 @@ def visualize_depth_frame(depth_frame_array):
 
 def generate_image(fps=0):
     color_image             = runtime.color_image
-    found_robot             = runtime.modeling.found_robot
-    current_confidence      = runtime.modeling.current_confidence
-    best_bounding_box       = runtime.modeling.best_bounding_box
     bounding_boxes          = runtime.modeling.bounding_boxes
     enemy_boxes             = runtime.modeling.enemy_boxes
+    current_confidence      = runtime.aiming.current_confidence
+    best_bounding_box       = runtime.aiming.best_bounding_box
     center_point            = runtime.aiming.center_point
     center_point_prediction = runtime.aiming.center_point_prediction
     target_3d               = runtime.aiming.target_3d
@@ -155,12 +156,16 @@ def generate_image(fps=0):
             image.add_bounding_box(each, color=rgb(255, 255, 255))
         for each in enemy_boxes:
             image.add_bounding_box(each, color=rgb(254, 195,  85))
-        if found_robot:
+        if status == TargetStatus.TARGET_FOUND:
             image.add_bounding_box(best_bounding_box, color=rgb(240, 113, 120))
             image.add_point(x=center_point.x     , y=center_point.y     , color=rgb(130, 170, 255), radius=10)
             # image.add_point(x=prediction_point.x , y=prediction_point.y , color=rgb(195, 232, 141), radius=5)
         if display_kf_prediction:
-            image.add_point(x=center_point_prediction.x     , y=center_point_prediction.y     , color=green, radius=10)
+            if depth_compatible:
+                target_3d_pixel = video_stream.point3d_to_pixel(target_3d)
+                image.add_point(x=target_3d_pixel.x     , y=target_3d_pixel.y     , color=green, radius=10)
+            else:
+                image.add_point(x=center_point_prediction.x     , y=center_point_prediction.y     , color=green, radius=10)
     
     x_location = 30
     y_location = 50

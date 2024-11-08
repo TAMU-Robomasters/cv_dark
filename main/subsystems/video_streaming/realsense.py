@@ -156,6 +156,14 @@ class VideoStream:
         # aim_end = perf_counter()
         # print(f"Took: {(aim_end - aim_start)*1000} ms")
         return depth
+    
+    #! need to detransform point3d
+    def point3d_to_pixel(self, point3d):
+        #! intrinsics may be wrong
+        pixel = rs.rs2_project_point_to_pixel(self.color_intrin, point3d)
+        print(pixel)
+
+        return pixel
 
     def get_xyz_at_color_point(self, point, depth=None):
         """

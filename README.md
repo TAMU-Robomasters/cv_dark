@@ -45,19 +45,20 @@ sudo ./commands/xavier/boot_control/setup_boot_script
 
 # Runtime Variable
 
-```py
+```
 runtime.aiming
 runtime.aiming.center_point
 runtime.aiming.target_3d
 runtime.aiming.target_status
+runtime.aiming.best_bounding_box
+runtime.aiming.current_confidence
+runtime.aiming.center_point_prediction
+runtime.aiming.target_3d_prediction
 
 runtime.modeling
-runtime.modeling.best_bounding_box
 runtime.modeling.bounding_boxes
 runtime.modeling.confidences
-runtime.modeling.current_confidence
 runtime.modeling.enemy_boxes
-runtime.modeling.found_robot
 
 runtime.camera
 runtime.camera.frame
