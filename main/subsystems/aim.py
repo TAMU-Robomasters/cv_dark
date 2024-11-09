@@ -311,7 +311,7 @@ def get_dist_to_bbox(bbox):
     if depth_sample.shape[0] == 0:
         return None
     # print(f"depth_sample: {depth_sample}")
-    print(f"Took: {(aim_end - aim_start)*1000} ms")
+    # print(f"Took: {(aim_end - aim_start)*1000} ms")
     # if np.mean(depth_sample) > 5 or np.mean(depth_sample) < 0:
     #     quit()
     return np.mean(depth_sample)
