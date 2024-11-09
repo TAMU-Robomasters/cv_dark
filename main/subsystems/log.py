@@ -163,9 +163,9 @@ def generate_image(fps=0):
         if display_kf_prediction:
             if depth_compatible:
                 target_3d_pixel = video_stream.point3d_to_pixel(target_3d)
-                image.add_point(x=target_3d_pixel.x     , y=target_3d_pixel.y     , color=green, radius=10)
+                image.add_point(x=target_3d_pixel[0]    , y=target_3d_pixel[1]     , color=green, radius=10)
             else:
-                image.add_point(x=center_point_prediction[0]     , y=center_point_prediction[1]     , color=green, radius=10)
+                image.add_point(x=center_point_prediction.x     , y=center_point_prediction.y     , color=green, radius=10)
     
     x_location = 30
     y_location = 50
