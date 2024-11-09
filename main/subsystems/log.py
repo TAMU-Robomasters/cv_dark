@@ -35,6 +35,9 @@ if depth_compatible and save_depth:
 color_video_writer = VideoWriter(save_to=video_color_output_path, fps=config.log.estimated_framerate)
 depth_video_writer = VideoWriter(save_to=video_depth_output_path, fps=config.log.estimated_framerate) if video_depth_output_path else None
 
+center_points = []
+center_point_predictions = [] 
+
 # 
 # 
 # main
@@ -47,11 +50,13 @@ def when_finished_processing_frame():
     global depth_video_writer
     
     # import data
-    frame_number       = runtime.frame_number
-    color_image        = runtime.color_image
-    depth_image        = runtime.depth_image
-    prev_loop_time     = runtime.prev_loop_time
-    bounding_boxes     = runtime.modeling.bounding_boxes
+    frame_number            = runtime.frame_number
+    color_image             = runtime.color_image
+    depth_image             = runtime.depth_image
+    prev_loop_time          = runtime.prev_loop_time
+    bounding_boxes          = runtime.modeling.bounding_boxes
+    center_point            = runtime.aiming.center_point
+    center_point_prediction = runtime.aiming.center_point_prediction
     
     # 
     # compute loop time
