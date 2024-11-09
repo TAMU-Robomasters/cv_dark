@@ -18,7 +18,11 @@ import time
 #endregion setup
 
 #region Constants
-LOCAL_PATH = os.path.join("main","subsystems","nugget_receptacle")
+if __name__ == "__main__":
+    LOCAL_PATH = os.path.join("main","subsystems","nugget_receptacle")
+else:
+    LOCAL_PATH = os.path.join("subsystems","nugget_receptacle")
+
 CAMERA_CALIB_PATH = os.path.join(LOCAL_PATH,"CalMatrix.npz") # Path to calibration data for camera.
 #endregion Constants
 
@@ -75,7 +79,7 @@ def clean_image(frame,save_output=False):
         cv2.imwrite(os.path.join(LOCAL_PATH,"morph_open.png"), frame)
     
     # Use Morph Close to decrease noise
-    kernel = np.ones((6,7),np.uint8)
+    kernel = np.ones((4,4),np.uint8)
     frame = cv2.morphologyEx(frame, cv2.MORPH_CLOSE, kernel)
     if save_output:
         cv2.imwrite(os.path.join(LOCAL_PATH,"morph_close.png"), frame)
@@ -105,17 +109,19 @@ def draw_contours(frame, contours: list, color=(0,255,0)): #TODO: remove this - 
     cv2.drawContours(frame, contours, -1, color, 2) 
 
 
-def filter_contours(contours:list):
+def filter_contours(contours:list, screensize=(1920,1024)):
     """ Filters a given list of contours by ones that are likely the receptacle. """
     # The below code was modified from https://stackoverflow.com/a/63934162/25598210
     contours_rtn = []
+    max_rect_area = screensize[0] * screensize[1] * 0.75
+
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
-        #rect_area = w * h
+        rect_area = w * h
 
         # If contour is certain shape
         # (both dimensions > 8px, at least one dimension > 10px)
-        if (w>8 and h>8) and (w>10 or h>10):
+        if (w>8 and h>8) and (w>10 or h>10) and (rect_area<max_rect_area):
             contours_rtn.append(contour) # Add it to the return list
 
 
@@ -143,7 +149,40 @@ def draw_contour_points(frame, contour, radius=10, thickness=1, color=(255,40,40
         cv2.circle(frame, (x, y), radius, color, thickness)
 
 
-def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do_draw_contours=True):
+def simplify_contour(contour, n_corners=4, print_stats=False):
+    '''
+    This function was taken from https://stackoverflow.com/a/55339684/25598210
+    Binary searches best `epsilon` value to force contour 
+        approximation contain exactly `n_corners` points.
+        
+    :param contour: OpenCV2 contour.
+    :param n_corners: Number of corners (points) the contour must contain.
+    
+    :returns: Simplified contour in successful case. Otherwise returns initial contour.
+    '''
+    n_iter, max_iter = 0, 100
+    lb, ub = 0., 1.
+    
+    while True:
+        n_iter += 1
+        if n_iter > max_iter:
+            if print_stats: print("[simplify_contour] n_iter>max_iter, returning contour.")
+            return contour
+        
+        k = (lb + ub)/2.
+        eps = k*cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, eps, True)
+        
+        if len(approx) > n_corners:
+            lb = (lb + ub)/2.
+        elif len(approx) < n_corners:
+            ub = (lb + ub)/2.
+        else:
+            if print_stats: print(f"[simplify_contour] eps={eps}.")
+            return approx
+
+
+def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do_draw_contours=True, screensize=(1920,1024)):
     """
     Findds and draws contours on an image, filtering for valid and virgin contours.
     Frames are BGR. 
@@ -194,7 +233,7 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do
     #endregion oldcode
 
     virgin_contours_list = virgin_contours(contours_tree, hierarchy_tree)
-    virgin_contours_list = filter_contours(virgin_contours_list)
+    virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize)
 
     # Dark green circles for complex contour points
     #for contour in virgin_contours_list:        
@@ -202,14 +241,17 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do
 
 
     # Simplify the contours - see https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html
-    EPSILON_CONSTANT = 0.01 #10%
+    # EPSILON_CONSTANT = 0.005 # The lower the epsilon constant, the more the contours will fit the image
 
     copy_ = []
     for contour in virgin_contours_list:
-        epsilon = EPSILON_CONSTANT*cv2.arcLength(contour,True)
-        copy_.append(cv2.approxPolyDP(contour,epsilon,True))
+        # epsilon = EPSILON_CONSTANT*cv2.arcLength(contour,True)
+        # copy_.append(cv2.approxPolyDP(contour,epsilon,True))
+        copy_.append(simplify_contour(contour, n_corners=6))
+        #TODO: also look into the Ramer–Douglas–Peucker algorithm
     
     virgin_contours_list = copy_
+    del copy_
 
     # Do some visualization stuff
     if do_draw_contours:
@@ -217,7 +259,7 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do
             cv2.rectangle(frame_to_write_ontop_of, cv2.boundingRect(contour), (0, 0, 200), 4)
             
             rect = cv2.minAreaRect(contour) # rotated (for minimum area) rectangle
-            cv2.drawContours(frame_to_write_ontop_of,[np.int0(cv2.boxPoints(rect))],0,(0,0,255),1)
+            cv2.drawContours(frame_to_write_ontop_of,[np.intp(cv2.boxPoints(rect))],0,(0,0,255),1)
             
             draw_contour_points(frame_to_write_ontop_of, contour,color=(0,200,0))
 
@@ -305,15 +347,35 @@ def analyze_video(video_path, save_output=False,save_raw=False):
     writer_ontop.release()
 
     return num_frames
+
+
+
+def analyze_frame(frame, save_output=False, save_raw=False):
+    """ Gets most likely pose of nugget from frame. """
+
+    height, width, channels = frame.shape
+    screensize = (width, height)
+    
+    new_frame = clean_image(filter_binarize(frame, save_output=save_output, save_raw=save_raw)[0])
+    
+    find_and_draw_contours(new_frame, frame, save_output=False, screensize=screensize)
+
+
 #endregion Functions
 
 
 #region Procedural
 
 # Load camera distortion coefficients. Source taken from https://github.com/TAMU-Robomasters/aruco-location-estimation
-calib_data = np.load(CAMERA_CALIB_PATH)
-cam_mat    = calib_data["camMatrix"]
-dist_coef  = calib_data["distCoef"]
+try:
+    calib_data = np.load(CAMERA_CALIB_PATH)
+    cam_mat    = calib_data["camMatrix"]
+    dist_coef  = calib_data["distCoef"]
+
+except FileNotFoundError as e:
+    print(" [receptacle_pose.py] ERROR: Cannot find file for camera calibration data. Listing dirs below: ")
+    print(os.listdir())
+    raise e
 
 
 
@@ -326,19 +388,9 @@ if __name__ == "__main__":
     #for i in range(30*25): # Get the frame at 30 seconds
     #    # Read the first frame
     #    ret, frame = cap.read()
-    
-    frame = cv2.imread(os.path.join(LOCAL_PATH,"receptacle_pdf.png"))
-    cv2.imwrite(os.path.join(LOCAL_PATH,"temp.png"), frame)
-
-    frame, mask = filter_binarize(frame,save_output=True)
-
-    #print(frame)
-    frame = clean_image(frame, save_output=True)
-
-    frame = find_and_draw_contours(frame, frame, save_output=True)
 
     #cap.release()
-    DO_VIDEO = True
+    DO_VIDEO = False
 
     if DO_VIDEO:
         print("doing video now")
@@ -347,5 +399,17 @@ if __name__ == "__main__":
         time_end = time.time()
         time_taken = time_end - time_start
         print(f"That took {time_taken:.4f} seconds ({num_frames/time_taken:.2f} FPS)")
+
+    else:
+        print("Analyzing frame...")
+        frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench.png"))
+        cv2.imwrite(os.path.join(LOCAL_PATH,"temp.png"), frame)
+        
+        # Binarize
+        frame, mask = filter_binarize(frame,save_output=True)
+        
+        #print(frame)
+        frame = clean_image(frame, save_output=True)
+        frame = find_and_draw_contours(frame, frame, save_output=True)
 
 #endregion Procedural
