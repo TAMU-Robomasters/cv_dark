@@ -103,6 +103,7 @@ def when_bounding_boxes_refresh():
 
             # pulling out from GPU only drops the fps by ~3
             measurement = np.array(target_3d, dtype=np.float32)
+            print(measurement, measurement.shape)
             kf_3d.predict(time_since_last_measurement)
             kf_3d.correct(measurement) 
             past_time = time.time()
@@ -128,8 +129,7 @@ def when_bounding_boxes_refresh():
         if (best_bounding_box != None):
             center_point = Position(best_bounding_box.center) # for logging/displays
 
-            # Predict position using Kalman filters
-            past_time
+            # Predict position using Kalman filters4
             curr_time = time.time()
             time_since_last_measurement = curr_time - past_time # in seconds
 
@@ -146,7 +146,7 @@ def when_bounding_boxes_refresh():
                 frame_delay = time_since_last_measurement
             if frame_delay > 0.255:
                 print(f"Warming frame delay of {frame_delay} is really high")
-            # this contains the prediction of all the state variables [x, z, vx, vz, ax, az]
+            # this contains the prediction of all the state variables [x, vx, ax, z, vz, az]
             forward_prediction = kf_2d.forward_predict(frame_delay)
             center_point_prediction = Position((forward_prediction[0], forward_prediction[3]))
    
