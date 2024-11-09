@@ -18,7 +18,7 @@ class KF3D:
 
         # Define the error associated to the initial values of the state variables  
         # TODO see if it converges faster with different values
-        self.kalman.errorCovPost = np.eye(6, 6, dtype=np.float32)
+        self.kalman.errorCovPost = np.eye(9, 9, dtype=np.float32)
 
         # Define the measurement noise covariance matrix
         # NOTE y_error could be made into a function that's dependent on the distance. The further out the more uncertain we are. 
