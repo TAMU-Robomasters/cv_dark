@@ -198,11 +198,11 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
     # Sequentially iterate through all bounding boxes
     for conf, box, targetXYZ in zip(confidences, boxes, valid3dTargets):
         size_score = ((box.width / (runtime.color_image.shape[1])) / size_normalizer) # Compute score using size of box, relative to total image size
-        print(f"size_score: {size_score}")
+        # print(f"size_score: {size_score}")
         center_score = (1 - dist(screen_center,(box[0] + box[2]/2, box[1] + box[3]/2)) / screen_center_normalizer) # scaled to 1
-        print(f"center_score: {center_score}")
+        # print(f"center_score: {center_score}")
         conf_score = conf**2 # Compute score using confidence
-        print(f"conf_score: {conf_score}")
+        # print(f"conf_score: {conf_score}")
 
         # clamped to 0 to 1
         # this is a 2d point - want to draw a circle
@@ -214,7 +214,7 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
             circle_bias_score = 0  # The point is at the edge or outside the circle
         else:
             circle_bias_score = 1 - (distance / radius)  # Calculate the score based on the normalized distance
-        print(f"circle_bias_score: {circle_bias_score}")
+        # print(f"circle_bias_score: {circle_bias_score}")
         
         # linear appraoch (based on max and min range in info.yaml min and max is 1m to 5m)
         # ex. when targetXYZ[1] is 3.5, 
@@ -225,12 +225,12 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
         # (values closer to 1 will result in higher depth_score values)
         # ex. targetXYZ[1] is 3.5, the depth_score calculated using the exponential approach is approximately 0.2865
         depth_score = max(0, min(MIN_RANGE, exp((1 - targetXYZ[1]) / 2)))
-        print(f"depth_score: {depth_score}")
+        # print(f"depth_score: {depth_score}")
         # Compute score using weighted average
         # score = 0.625 * size_score + 0.125 * center_score + 0.125 * depth_score + 0.125 * circle_bias_score 
         score = 0.125 * size_score + 0.125 * center_score + 0.125 * depth_score + 0.625 * circle_bias_score 
         score *= conf_score
-        print(f"score: {score}")
+        # print(f"score: {score}")
 
         # Make current box the best if its score is the best so far
         if score > best_score:

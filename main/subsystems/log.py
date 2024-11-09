@@ -152,14 +152,12 @@ def generate_image(fps=0):
         green  = rgb(195, 232, 141)
         yellow = rgb(254, 195,  85)
         for each in bounding_boxes:
-            # print(f"visual bounding_box: {each}")
             image.add_bounding_box(each, color=rgb(255, 255, 255))
         for each in enemy_boxes:
             image.add_bounding_box(each, color=rgb(254, 195,  85))
         if status == TargetStatus.TARGET_FOUND:
             image.add_bounding_box(best_bounding_box, color=rgb(240, 113, 120))
             image.add_point(x=center_point.x     , y=center_point.y     , color=rgb(130, 170, 255), radius=10)
-            # image.add_point(x=prediction_point.x , y=prediction_point.y , color=rgb(195, 232, 141), radius=5)
         if display_kf_prediction:
             if depth_compatible:
                 target_3d_pixel = video_stream.point3d_to_pixel(target_3d)
