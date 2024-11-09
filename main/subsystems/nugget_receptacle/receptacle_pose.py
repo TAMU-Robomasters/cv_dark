@@ -114,7 +114,6 @@ def find_contours_list(frame, is_grayscale=False, save_output=False): #TODO: rem
     return cv2.findContours(frame, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
 
-
 def draw_center_of_mass_circles(frame, contours):
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
@@ -125,18 +124,21 @@ def draw_center_of_mass_circles(frame, contours):
         cx = int(moments['m10'] / moments['m00'])
         cy = int(moments['m01'] / moments['m00'])
 
-        cv2.circle(frame, (x, y),               5, (0,0,255),   1)
-        cv2.circle(frame, (cx, cy),             5, (0,255,255), 1)
-        cv2.circle(frame, (center_x, center_y), 5, (255,0,0),   1)
+        cv2.circle(frame, (x, y),               5, (0,0,255),   1) # red
+        cv2.circle(frame, (cx, cy),             8, (13,128,255), 2) # yellowish
         cv2.line(frame, (center_x, center_y), (cx, cy), (0, 255, 0), 2)
+        cv2.circle(frame, (center_x, center_y), 6, (255,100,100),   2) # blue
 
+        cv2.rectangle(frame, cv2.boundingRect(contour), (0, 0, 200), 1) 
+    
     return frame
 
-def is_l_shape(contour, max_x_percent = 0.05, max_y_percent = 0.05) -> bool:
+
+def is_l_shape(contour, min_x_percent = 0.05, min_y_percent = 0.05, or_=False) -> tuple:
     """ 
-    Returns bool on whether contour is an l shape and confidence. 
-    max_x_percent and max_y_percent are the maximum percentage of the bounding box that 
-    the center of mass can be off before it's considered an l.
+    Returns bool, x_diff_percent, y_diff_percent on whether contour is an l shape and confidence. 
+    min_x_percent and min_y_percent are the minimum percentage of the bounding box that 
+    the center of mass can be off to be considered an L shape.
     """
     #up-right bounding rectangle
     x, y, w, h = cv2.boundingRect(contour)
@@ -152,15 +154,17 @@ def is_l_shape(contour, max_x_percent = 0.05, max_y_percent = 0.05) -> bool:
     percent_off_x = (cx - center_x)/w # TODO: Maybe figure out a way to do floor division (faster?)
     percent_off_y = (cy - center_y)/h
 
-    #print(f"x={center_x}, y={center_y}, cx={cx}, cy={cy}, x_size={w}, y_size={h}")
-    print(f"x={center_x}, y={center_y}, cx is {percent_off_x*100 :.2f}% off, cy is {percent_off_y*100 :.2f}% off.")
+    if __name__ == "__main__":
+        #print(f"x={center_x}, y={center_y}, cx={cx}, cy={cy}, x_size={w}, y_size={h}")
+        print(f"x={center_x}, y={center_y}, cx is {percent_off_x*100 :.2f}% off, cy is {percent_off_y*100 :.2f}% off.")
 
-    return not((abs(percent_off_x)<=max_x_percent) and (abs(percent_off_y)<=max_y_percent))
+    is_l = (abs(percent_off_x)>min_x_percent) and (abs(percent_off_y)>min_y_percent) or (
+        (or_)
+        and ((abs(percent_off_x)>min_x_percent) or (abs(percent_off_y)>min_y_percent)))
+    return is_l, percent_off_x, percent_off_y
 
-    
 
-
-def filter_contours(contours:list, screensize=(1920,1024)):
+def filter_contours(contours:list, screensize=(1920,1024), filter_l=False):
     """ Filters a given list of contours by ones that are likely the receptacle. """
     # The below code was modified from https://stackoverflow.com/a/63934162/25598210
     contours_rtn = []
@@ -172,7 +176,7 @@ def filter_contours(contours:list, screensize=(1920,1024)):
 
         # If contour is certain shape
         # (both dimensions > 8px, at least one dimension > 10px)
-        if (w>8 and h>8) and (w>10 or h>10) and (rect_area<max_rect_area) and is_l_shape(contour):
+        if (w>8 and h>8) and (w>10 or h>10) and (rect_area<max_rect_area) and (is_l_shape(contour, or_=True)[0] or not(filter_l)):
             contours_rtn.append(contour) # Add it to the return list
 
 
@@ -244,7 +248,13 @@ def draw_corners(img, corners, imgpts):
 
 # Find the average pixel location and see how far that differs from the center of the overall bounding box
 
-def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do_draw_contours=True, screensize=(1920,1024)):
+def find_and_draw_contours(
+    frame, frame_to_write_ontop_of, 
+    save_output=False, do_draw_contours=True, 
+    screensize=(1920,1024),
+    write_l_debug_circles=False,
+    save_intermediate=False
+    ):
     """
     Findds and draws contours on an image, filtering for valid and virgin contours.
     Frames are BGR. 
@@ -254,6 +264,9 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do
     contours_tree, hierarchy_tree = cv2.findContours(frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
     frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+
+    if save_intermediate:
+        cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_1_greyscale.png"), frame)
 
     #print "contours:",len(contours)
     #print "largest contour has ",len(contours[0]),"points"
@@ -294,7 +307,7 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do
     #endregion oldcode
 
     virgin_contours_list = virgin_contours(contours_tree, hierarchy_tree)
-    virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize)
+    virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize, filter_l=False)
     # Dark green circles for complex contour points
     #for contour in virgin_contours_list:        
     #    draw_contour_points(frame_to_write_ontop_of, contour,color=(0,80,0))
@@ -313,28 +326,33 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do
     if do_draw_contours:
         for contour in virgin_contours_list:
             # Thick red bounding boxes
-            cv2.rectangle(frame_to_write_ontop_of, cv2.boundingRect(contour), (0, 0, 200), 4) 
+            cv2.rectangle(frame_to_write_ontop_of, cv2.boundingRect(contour), (0, 0, 200), 1) 
             
             #rect = cv2.minAreaRect(contour) # Rotated (for minimum area) rectangle, red
-            #cv2.drawContours(frame_to_write_ontop_of,[np.intp(cv2.boxPoints(rect))],0,(0,0,255),1)
+            #cv2.drawContours(frame_to_write_ontop_of,[np.intp(cv2.boxPoints(rect))],0,(100,100,100),1)
             
             # Draw circles around the contour points
             draw_contour_points(frame_to_write_ontop_of, contour,color=(0,200,0))
 
         # Draw contours
         draw_contours(frame_to_write_ontop_of, virgin_contours_list,color=(255,249,130))
-    
-    # cv2.rectangle(frame_to_write_ontop_of, cv2.boundingRect(contours_tree[highest_instance[0]]), (0, 0, 255), 4)
 
+    if save_intermediate:
+        cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_2_virgin_contours_before_l_filter.png"), frame_to_write_ontop_of)
+        cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_2_before_l_COM_Circles.png"), draw_center_of_mass_circles(frame.copy(), virgin_contours_list))
 
-    #draw_contours(frame_original, contours_tree,color=(255,0,255))
+    # Filter contours once more
+    virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize, filter_l=True)
     
     if save_output:
         print(f" Found {len(contours_tree)} total contours.")
         print(f" Found {len(virgin_contours_list)} good contours.")
-        frame_to_write_ontop_of = draw_center_of_mass_circles(frame, virgin_contours_list)
         #print("largest contour has ",len(contours_tree[highest_instance[0]]),"points")
         cv2.imwrite(os.path.join(LOCAL_PATH,"contours.png"), frame_to_write_ontop_of)
+        cv2.imwrite(os.path.join(LOCAL_PATH,"COM_Circles.png"), draw_center_of_mass_circles(frame.copy(), virgin_contours_list))
+
+    if write_l_debug_circles:
+        frame_to_write_ontop_of = draw_center_of_mass_circles(frame_to_write_ontop_of, virgin_contours_list)
 
 #endregion Contours Stuff
     
@@ -353,6 +371,7 @@ def analyze_video(video_path, save_output=False,save_raw=False):
 
     print("Now doing video...")
 
+    #region setup
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
     width = int(cap.get(3))
@@ -378,6 +397,7 @@ def analyze_video(video_path, save_output=False,save_raw=False):
     )
 
     pos_frame = cap.get(1) #cv2.CV_CAP_PROP_POS_FRAMES
+    #endregion setup
 
     num_frames=0
 
@@ -392,7 +412,7 @@ def analyze_video(video_path, save_output=False,save_raw=False):
             
             new_frame = clean_image(filter_binarize(frame, save_output=save_output, save_raw=save_raw)[0])
             
-            find_and_draw_contours(new_frame, frame, save_output=False)
+            find_and_draw_contours(new_frame, frame, save_output=False, screensize=(width, height))
             
             writer_ontop.write(frame)
             writer.write(new_frame)
@@ -409,7 +429,7 @@ def analyze_video(video_path, save_output=False,save_raw=False):
 
 
 
-def analyze_frame(frame, save_output=False, save_raw=False):
+def analyze_frame(frame, save_output=False, save_raw=False, write_l_debug_circles=True):
     """ Gets most likely pose of nugget from frame. """
 
     height, width, channels = frame.shape
@@ -417,7 +437,9 @@ def analyze_frame(frame, save_output=False, save_raw=False):
     
     new_frame = clean_image(filter_binarize(frame, save_output=save_output, save_raw=save_raw)[0])
     
-    find_and_draw_contours(new_frame, frame, save_output=False, screensize=screensize)
+    find_and_draw_contours(new_frame, new_frame, save_output=save_output, screensize=screensize, write_l_debug_circles=write_l_debug_circles, save_intermediate=True)
+
+    return new_frame
 
 
 #endregion Functions
@@ -461,16 +483,9 @@ if __name__ == "__main__":
 
     else:
         print("Analyzing frame...")
-        frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench.png"))
+        #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench.png"))
+        frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_3.png"))
         #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_cropped.PNG"))
-        
-        cv2.imwrite(os.path.join(LOCAL_PATH,"temp.png"), frame)
-        
-        # Binarize
-        frame, mask = filter_binarize(frame,save_output=True)
-        
-        #print(frame)
-        frame = clean_image(frame, save_output=True)
-        frame = find_and_draw_contours(frame, frame, save_output=True)
+        analyze_frame(frame, save_output=True, save_raw=True, write_l_debug_circles=True)
 
 #endregion Procedural
