@@ -28,6 +28,8 @@ CAMERA_CALIB_PATH = os.path.join(LOCAL_PATH,"CalMatrix.npz") # Path to calibrati
 
 
 #region Functions
+
+#region Image Stuff
 def filter_binarize(frame, save_output=False, save_raw=False):
     """ 
     Filters an image (frame) so that everythign except the LEDs are black.
@@ -96,6 +98,13 @@ def clean_image(frame,save_output=False):
     return frame
 
 
+def draw_contours(frame, contours: list, color=(0,255,0)): #TODO: remove this - it's a oneliner
+    cv2.drawContours(frame, contours, -1, color, 2) 
+
+#endregion Image Stuff
+
+
+#region Contours Stuff
 def find_contours_list(frame, is_grayscale=False, save_output=False): #TODO: remove this - it's a oneliner
     if not is_grayscale:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -105,8 +114,50 @@ def find_contours_list(frame, is_grayscale=False, save_output=False): #TODO: rem
     return cv2.findContours(frame, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
 
-def draw_contours(frame, contours: list, color=(0,255,0)): #TODO: remove this - it's a oneliner
-    cv2.drawContours(frame, contours, -1, color, 2) 
+
+def draw_center_of_mass_circles(frame, contours):
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        center_x = x+(w//2)
+        center_y = y+(h//2)
+
+        moments = cv2.moments(contour)
+        cx = int(moments['m10'] / moments['m00'])
+        cy = int(moments['m01'] / moments['m00'])
+
+        cv2.circle(frame, (x, y),               5, (0,0,255),   1)
+        cv2.circle(frame, (cx, cy),             5, (0,255,255), 1)
+        cv2.circle(frame, (center_x, center_y), 5, (255,0,0),   1)
+        cv2.line(frame, (center_x, center_y), (cx, cy), (0, 255, 0), 2)
+
+    return frame
+
+def is_l_shape(contour, max_x_percent = 0.05, max_y_percent = 0.05) -> bool:
+    """ 
+    Returns bool on whether contour is an l shape and confidence. 
+    max_x_percent and max_y_percent are the maximum percentage of the bounding box that 
+    the center of mass can be off before it's considered an l.
+    """
+    #up-right bounding rectangle
+    x, y, w, h = cv2.boundingRect(contour)
+    center_x = x+(w//2)
+    center_y = y+(h//2)
+    
+
+    
+    moments = cv2.moments(contour)
+    cx = int(moments['m10'] / moments['m00'])
+    cy = int(moments['m01'] / moments['m00'])
+
+    percent_off_x = (cx - center_x)/w # TODO: Maybe figure out a way to do floor division (faster?)
+    percent_off_y = (cy - center_y)/h
+
+    #print(f"x={center_x}, y={center_y}, cx={cx}, cy={cy}, x_size={w}, y_size={h}")
+    print(f"x={center_x}, y={center_y}, cx is {percent_off_x*100 :.2f}% off, cy is {percent_off_y*100 :.2f}% off.")
+
+    return not((abs(percent_off_x)<=max_x_percent) and (abs(percent_off_y)<=max_y_percent))
+
+    
 
 
 def filter_contours(contours:list, screensize=(1920,1024)):
@@ -121,7 +172,7 @@ def filter_contours(contours:list, screensize=(1920,1024)):
 
         # If contour is certain shape
         # (both dimensions > 8px, at least one dimension > 10px)
-        if (w>8 and h>8) and (w>10 or h>10) and (rect_area<max_rect_area):
+        if (w>8 and h>8) and (w>10 or h>10) and (rect_area<max_rect_area) and is_l_shape(contour):
             contours_rtn.append(contour) # Add it to the return list
 
 
@@ -182,12 +233,22 @@ def simplify_contour(contour, n_corners=4, print_stats=False):
             return approx
 
 
+def draw_corners(img, corners, imgpts):
+    """ Returns the given image with corners drawn. Function taken from https://docs.opencv.org/4.x/d7/d53/tutorial_py_pose.html """
+    corner = tuple(corners[0].ravel())
+    img = cv2.line(img, 
+    corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
+    img = cv2.line(img, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
+    img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
+    return img
+
+# Find the average pixel location and see how far that differs from the center of the overall bounding box
+
 def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do_draw_contours=True, screensize=(1920,1024)):
     """
     Findds and draws contours on an image, filtering for valid and virgin contours.
     Frames are BGR. 
     """
-
     # Grayscale the image and find all the contours
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     contours_tree, hierarchy_tree = cv2.findContours(frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -199,7 +260,7 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do
 
     # Draw all contours
     # a lot of this I got from https://stackoverflow.com/a/74620309/25598210
-    if do_draw_contours: draw_contours(frame_to_write_ontop_of,contours_tree,color=(0,200,200)) #RGB
+    #if do_draw_contours: draw_contours(frame_to_write_ontop_of,contours_tree,color=(0,200,200)) # All contours - yellowish - RGB
 
     #region oldcode
     #TODO: re-enable this stuff later
@@ -234,21 +295,16 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do
 
     virgin_contours_list = virgin_contours(contours_tree, hierarchy_tree)
     virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize)
-
     # Dark green circles for complex contour points
     #for contour in virgin_contours_list:        
     #    draw_contour_points(frame_to_write_ontop_of, contour,color=(0,80,0))
 
-
     # Simplify the contours - see https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html
-    # EPSILON_CONSTANT = 0.005 # The lower the epsilon constant, the more the contours will fit the image
-
     copy_ = []
     for contour in virgin_contours_list:
-        # epsilon = EPSILON_CONSTANT*cv2.arcLength(contour,True)
-        # copy_.append(cv2.approxPolyDP(contour,epsilon,True))
+        # Simplify the contour
         copy_.append(simplify_contour(contour, n_corners=6))
-        #TODO: also look into the Ramer–Douglas–Peucker algorithm
+        #TODO: also look into the Ramer–Douglas–Peucker algorithm for simplification
     
     virgin_contours_list = copy_
     del copy_
@@ -256,11 +312,13 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do
     # Do some visualization stuff
     if do_draw_contours:
         for contour in virgin_contours_list:
-            cv2.rectangle(frame_to_write_ontop_of, cv2.boundingRect(contour), (0, 0, 200), 4)
+            # Thick red bounding boxes
+            cv2.rectangle(frame_to_write_ontop_of, cv2.boundingRect(contour), (0, 0, 200), 4) 
             
-            rect = cv2.minAreaRect(contour) # rotated (for minimum area) rectangle
-            cv2.drawContours(frame_to_write_ontop_of,[np.intp(cv2.boxPoints(rect))],0,(0,0,255),1)
+            #rect = cv2.minAreaRect(contour) # Rotated (for minimum area) rectangle, red
+            #cv2.drawContours(frame_to_write_ontop_of,[np.intp(cv2.boxPoints(rect))],0,(0,0,255),1)
             
+            # Draw circles around the contour points
             draw_contour_points(frame_to_write_ontop_of, contour,color=(0,200,0))
 
         # Draw contours
@@ -274,10 +332,11 @@ def find_and_draw_contours(frame, frame_to_write_ontop_of, save_output=False, do
     if save_output:
         print(f" Found {len(contours_tree)} total contours.")
         print(f" Found {len(virgin_contours_list)} good contours.")
+        frame_to_write_ontop_of = draw_center_of_mass_circles(frame, virgin_contours_list)
         #print("largest contour has ",len(contours_tree[highest_instance[0]]),"points")
-
         cv2.imwrite(os.path.join(LOCAL_PATH,"contours.png"), frame_to_write_ontop_of)
 
+#endregion Contours Stuff
     
 
 def analyze_video(video_path, save_output=False,save_raw=False):
@@ -403,6 +462,8 @@ if __name__ == "__main__":
     else:
         print("Analyzing frame...")
         frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench.png"))
+        #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_cropped.PNG"))
+        
         cv2.imwrite(os.path.join(LOCAL_PATH,"temp.png"), frame)
         
         # Binarize
