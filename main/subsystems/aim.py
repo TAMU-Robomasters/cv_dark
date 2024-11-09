@@ -206,7 +206,7 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
         print(f"center_score: {center_score}")
         conf_score = conf**2 # Compute score using confidence
         print(f"conf_score: {conf_score}")
-
+    
         # clamped to 0 to 1
         # this is a 2d point - want to draw a circle
         # radius dependent on the depth? tweak1

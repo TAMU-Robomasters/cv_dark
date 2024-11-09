@@ -42,6 +42,9 @@ depth_video_writer = VideoWriter(save_to=video_depth_output_path, fps=config.log
 center_points = []
 center_point_predictions = [] 
 
+target_3d_points = []
+target_3d_predictions = []
+
 # 
 # 
 # main
@@ -61,9 +64,15 @@ def when_finished_processing_frame():
     bounding_boxes          = runtime.modeling.bounding_boxes
     center_point            = runtime.aiming.center_point
     center_point_prediction = runtime.aiming.center_point_prediction
+    target_3d_point         = runtime.aiming.target_3d
+    target_3d_prediction    = runtime.aiming.target_3d_prediction
     
     center_points.append(center_point)
     center_point_predictions.append(center_point_prediction)
+    
+    target_3d_points.append(target_3d_point)
+    target_3d_predictions.append(target_3d_prediction)
+    print(runtime.aiming.target_3d)
     
     # 
     # compute loop time
@@ -124,12 +133,36 @@ def when_iteration_stops():
         if(center_points[i+1].y != 0 and i >= 4):
             predicted_error = abs((center_point_predictions[i].y - center_points[i+1].y)/ center_points[i+1].y)
             predicted_errors_y.append(predicted_error)
+
+        
+    # 3d prediction error 
+    predicted_errors_3d_x = []
+    for i in range(0,(len(target_3d_points)-1)):
+        if(target_3d_points[i+1][0] != 0 and i >= 4):
+            predicted_error = abs((target_3d_predictions[i].x - target_3d_points[i+1][0])/ target_3d_points[i+1][0])
+            predicted_errors_3d_x.append(predicted_error)
+            
+    predicted_errors_3d_y = []
+    for i in range(0,(len(target_3d_points)-1)):
+        if(target_3d_points[i+1][1] != 0 and i >= 4):
+            predicted_error = abs((target_3d_predictions[i].y - target_3d_points[i+1][1])/ target_3d_points[i+1][1])
+            predicted_errors_3d_y.append(predicted_error)
+            
+    predicted_errors_3d_z = []
+    for i in range(0,(len(target_3d_points)-1)):
+        if(target_3d_points[i+1][2] != 0 and i >= 4):
+            predicted_error = abs((target_3d_predictions[i].z - target_3d_points[i+1][2])/ target_3d_points[i+1][2])
+            predicted_errors_3d_z.append(predicted_error)
     
     # Convert to np array
     predicted_errors_np_x = np.array(predicted_errors_x)
     predicted_errors_np_y = np.array(predicted_errors_y)
     
-    # Plot functions
+    predicted_errors_np_3d_x = np.array(predicted_errors_3d_x)
+    predicted_errors_np_3d_y = np.array(predicted_errors_3d_y)
+    predicted_errors_np_3d_z = np.array(predicted_errors_3d_z)
+    
+    # Plot functions for 2d
     fig, (ax1, ax2) = plt.subplots(2, 1) 
     index = np.arange(0, len(predicted_errors_np_x),1)
 
@@ -142,8 +175,26 @@ def when_iteration_stops():
     plt.tight_layout()
     
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    plt.savefig(dir_path+ "/log/kf_error_figures/" + str(dt.now())+".jpg")
+    plt.savefig(dir_path+ "/log/kf_error_figures/2d/" + "2d"+str(dt.now())+".jpg")
     
+    # plot functions for 3d
+    fig, (ax1, ax2,ax3) = plt.subplots(3, 1) 
+    index = np.arange(0, len(predicted_errors_np_3d_x),1)
+    print(predicted_errors_np_3d_x)
+
+    ax1.plot(index, predicted_errors_np_3d_x)
+    ax1.set_title('Predicted error x')
+
+    ax2.plot(index, predicted_errors_np_3d_y)
+    ax2.set_title('Predicted error y')
+    
+    ax3.plot(index, predicted_errors_np_3d_z)
+    ax3.set_title('Predicted error z')
+
+    plt.tight_layout()
+    
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    plt.savefig(dir_path+ "/log/kf_error_figures/3d/" + "3d" +str(dt.now())+".jpg")
     
     if save_frame_to_file:
         color_video_writer.save()
