@@ -103,6 +103,7 @@ def when_bounding_boxes_refresh():
             # pulling out from GPU only drops the fps by ~3
             measurement = np.reshape(np.array(target_3d, dtype=np.float32), (3,1))
             print(measurement, measurement.shape)
+            print("dt:", time_since_last_measurement)
             kf_3d.predict(time_since_last_measurement)
             kf_3d.correct(measurement) 
             past_time = time.time()
@@ -114,7 +115,6 @@ def when_bounding_boxes_refresh():
                 frame_delay = time_since_last_measurement
             if frame_delay > 0.255:
                 print(f"Warming frame delay of {frame_delay} is really high")
-            print(frame_delay)
             # this contains the prediction of all the state variables [x, y, z, vx, vy, vz, ax, ay, az]
             forward_prediction = kf_3d.forward_predict(frame_delay) 
             target_3d_prediction = Position((forward_prediction[0], forward_prediction[3], forward_prediction[6]))
