@@ -533,7 +533,8 @@ if __name__ == "__main__":
     else:
         print("Analyzing frame...")
         #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench.png"))
-        frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_3.png"))
+        frame = cv2.imread(os.path.join(LOCAL_PATH,"example_vid_30.png"))
+        #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_3.png"))
         #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_cropped.PNG"))
         analyze_frame(frame, save_output=True, save_raw=True, write_l_debug_circles=True)
 
