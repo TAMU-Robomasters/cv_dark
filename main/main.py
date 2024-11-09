@@ -28,8 +28,8 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
     aim.when_bounding_boxes_refresh()
     
     if synchronized_debug: t3 = time_synchronized()
-    communicate.when_aiming_refreshes()
-    
+    #communicate.when_aiming_refreshes()
+    communicate.test_communicate_read()
     if synchronized_debug: t4 = time_synchronized()
     log.when_finished_processing_frame()
     

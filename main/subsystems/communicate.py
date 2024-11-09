@@ -80,7 +80,22 @@ def when_aiming_refreshes():
         print(f"\n[Communication]: error when writing over UART: {error}")
         port = setup_serial_port() # attempt re-setup
 
+
+def test_communicate_read():
+    global port
+    try:
+        byte = port.read(1)
+        if(byte):
+            print(f"there is a byte: {byte}")
+        else:
+            print("no byte")
+    except Exception as error:
+        print(f"\n[Communication]: error when read over UART: {error}")
+        port = setup_serial_port()  # attempt re-setup
+
 # overwrite function if port is None
 if port is None:
     def when_aiming_refreshes():
         pass # do nothing intentionally
+    def test_communicate_read():
+        pass
