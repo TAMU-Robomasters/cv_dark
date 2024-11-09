@@ -21,7 +21,7 @@ atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_itera
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
 
     # TODO: Delete this before prod! This is for testing only, and we should find a better way to integrate nugget code.
-    nugget_pose = nugg_pose.analyze_frame(runtime.color_image, save_output=True, save_raw=True)
+    #nugget_pose = nugg_pose.analyze_frame(runtime.color_image, save_output=True, save_raw=True)
 
     if synchronized_debug: t1 = time_synchronized()
     model.when_frame_arrives() # Get the bounding boxes
