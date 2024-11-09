@@ -97,12 +97,11 @@ def when_bounding_boxes_refresh():
                 valid3dTargets = valid3dTargets,
             )
         if (best_bounding_box != None):
-            past_time 
             curr_time = time.time()
             time_since_last_measurement = curr_time - past_time # in seconds
 
             # pulling out from GPU only drops the fps by ~3
-            measurement = np.array(target_3d, dtype=np.float32)
+            measurement = np.reshape(np.array(target_3d, dtype=np.float32), (3,1))
             print(measurement, measurement.shape)
             kf_3d.predict(time_since_last_measurement)
             kf_3d.correct(measurement) 
