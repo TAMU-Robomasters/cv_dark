@@ -642,3 +642,7 @@ settings/home/.gitconfig
 settings/home/.mongorc.js
 settings/home/.ungitrc
 settings/home/.vuerc
+
+
+# Kalman Filter
+main/subsystems/log/kf_error_figures/*

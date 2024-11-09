@@ -9,6 +9,10 @@ from toolbox.cold_storage import ColdStorage
 from subsystems.aim import TargetStatus
 from subsystems.video_stream import video_stream
 
+import matplotlib.pyplot as plt
+import os
+import numpy as np
+
 
 # 
 # config
@@ -58,6 +62,9 @@ def when_finished_processing_frame():
     center_point            = runtime.aiming.center_point
     center_point_prediction = runtime.aiming.center_point_prediction
     
+    center_points.append(center_point)
+    center_point_predictions.append(center_point_prediction)
+    
     # 
     # compute loop time
     # 
@@ -99,6 +106,45 @@ def when_iteration_stops():
     # NOTE: this function might get run a couple times at exit (main.py calls it)
     avg_fps = runtime.total_fps / runtime.get("frame_number", 1)
     print(f"\naverage FPS: {avg_fps:.2f}")
+    
+    # Find average error
+    
+    # account for divide by zero error, no target center point none
+    # More than 4 index (do top first)
+    
+    # predict error using the error estimation formula
+    predicted_errors_x = []
+    for i in range(0,(len(center_points)-1)):
+        if(center_points[i+1].x != 0 and i >= 4):
+            predicted_error = abs((center_point_predictions[i].x - center_points[i+1].x)/ center_points[i+1].x)
+            predicted_errors_x.append(predicted_error)
+    
+    predicted_errors_y = []
+    for i in range(0,(len(center_points)-1)):
+        if(center_points[i+1].y != 0 and i >= 4):
+            predicted_error = abs((center_point_predictions[i].y - center_points[i+1].y)/ center_points[i+1].y)
+            predicted_errors_y.append(predicted_error)
+    
+    # Convert to np array
+    predicted_errors_np_x = np.array(predicted_errors_x)
+    predicted_errors_np_y = np.array(predicted_errors_y)
+    
+    # Plot functions
+    fig, (ax1, ax2) = plt.subplots(2, 1) 
+    index = np.arange(0, len(predicted_errors_np_x),1)
+
+    ax1.plot(index, predicted_errors_np_x)
+    ax1.set_title('Predicted error x')
+
+    ax2.plot(index, predicted_errors_np_y)
+    ax2.set_title('Predicted error y')
+
+    plt.tight_layout()
+    
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    plt.savefig(dir_path+ "/log/kf_error_figures/" + str(dt.now())+".jpg")
+    
+    
     if save_frame_to_file:
         color_video_writer.save()
         if save_depth and depth_video_writer:
