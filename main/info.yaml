@@ -5,6 +5,7 @@
         main_folder:  ./
         project_root: ../
         main_test_video: &main_test_video ../data/test.avi
+        nugget_test_video: &nugget_test_video ../data/nugget_test.mp4
         video_output:              ../result.do_not_sync.mp4
         permanent_storage:         ./subsystems/log/permanent_storage.json
         record_video_output_color: ./subsystems/log/videos/fall24testing
@@ -82,7 +83,7 @@
                 simulation:
                     grab_method: 'next_frame' # 'next_frame', 'latest_frame', 'threaded_frame'
                     assumed_framerate: 30 # frames per second
-                    input_file: *main_test_video
+                    input_file: *nugget_test_video
                     threaded_update_rate: 0.001
                 
                 testing:
@@ -92,7 +93,6 @@
                 disable_all_logging: false
                 disable_print: false
                 save_frame_to_file: false
-                display_live_frames: false
                 save_depth: false
                 estimated_framerate: 40 # based on yolov8 and recent tests. Not the worst thing if this number is wrong (even very wrong)
                 save_rate: 20 # once every __ frames
@@ -213,7 +213,6 @@
         LOG:
             log:
                 disable_all_logging: false
-                display_live_frames: false
                 save_rate: 1 # every frame (1 frame per frame)
                 save_frame_to_file: true
                 save_depth: false
