@@ -158,9 +158,19 @@ def is_l_shape(contour, min_x_percent = 0.05, min_y_percent = 0.05, or_=False) -
         #print(f"x={center_x}, y={center_y}, cx={cx}, cy={cy}, x_size={w}, y_size={h}")
         print(f"x={center_x}, y={center_y}, cx is {percent_off_x*100 :.2f}% off, cy is {percent_off_y*100 :.2f}% off.")
 
-    is_l = (abs(percent_off_x)>min_x_percent) and (abs(percent_off_y)>min_y_percent) or (
-        (or_)
-        and ((abs(percent_off_x)>min_x_percent) or (abs(percent_off_y)>min_y_percent)))
+    is_l = (
+        #    (abs(percent_off_x)>0) 
+        #and (abs(percent_off_y)>0)
+         (abs(percent_off_x)>min_x_percent) 
+        and (abs(percent_off_y)>min_y_percent) 
+        or (
+            (or_)
+            and (
+                   (abs(percent_off_x)>min_x_percent) 
+                or (abs(percent_off_y)>min_y_percent)
+                )
+            )
+    )
     return is_l, percent_off_x, percent_off_y
 
 
@@ -176,7 +186,12 @@ def filter_contours(contours:list, screensize=(1920,1024), filter_l=False):
 
         # If contour is certain shape
         # (both dimensions > 8px, at least one dimension > 10px)
-        if (w>8 and h>8) and (w>10 or h>10) and (rect_area<max_rect_area) and (is_l_shape(contour, or_=True)[0] or not(filter_l)):
+        if (
+                (w>8 and h>8) 
+            and (w>10 or h>10) 
+            and (rect_area < max_rect_area) 
+            and (is_l_shape(contour, or_=True)[0] or not(filter_l))
+            ):
             contours_rtn.append(contour) # Add it to the return list
 
 
@@ -246,7 +261,38 @@ def draw_corners(img, corners, imgpts):
     img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
     return img
 
-# Find the average pixel location and see how far that differs from the center of the overall bounding box
+
+def filter_n_contours(contours:list, n:int) -> list:
+    """ Filters out n number of contours for likely candidates of the four corners of the receptacle. """
+    if len(contours)==0: return [] # Prevent errors
+    
+    rtnlist = []
+    contour_sizes = []
+
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        contour_sizes.append(w*h)
+
+    for i in range(n):
+        try:
+            if len(contours)==0: break
+            biggest_contour = contours[contour_sizes.index(max(contour_sizes))]
+            rtnlist.append(biggest_contour)
+            del contours[contour_sizes.index(max(contour_sizes))]
+            contour_sizes.remove(max(contour_sizes))
+        
+        except IndexError: # If n < len(contours) we eventually hit an index error
+            break # Just return whatever we currently have
+
+        except ValueError as e:
+            print(f"Value Error, here is some debug info: n={n}, there are {len(contour_sizes)} sizes for {len(contours)} contours. contour_sizes={contour_sizes}, i={i}, rtnlist={rtnlist}")
+            raise e
+
+    assert len(rtnlist) <= n
+    return rtnlist
+
+
+
 
 def find_and_draw_contours(
     frame, frame_to_write_ontop_of, 
@@ -308,9 +354,6 @@ def find_and_draw_contours(
 
     virgin_contours_list = virgin_contours(contours_tree, hierarchy_tree)
     virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize, filter_l=False)
-    # Dark green circles for complex contour points
-    #for contour in virgin_contours_list:        
-    #    draw_contour_points(frame_to_write_ontop_of, contour,color=(0,80,0))
 
     # Simplify the contours - see https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html
     copy_ = []
@@ -319,30 +362,35 @@ def find_and_draw_contours(
         copy_.append(simplify_contour(contour, n_corners=6))
         #TODO: also look into the Ramer–Douglas–Peucker algorithm for simplification
     
-    virgin_contours_list = copy_
+    virgin_contours_list = copy_.copy()
     del copy_
+
+    # Filter contours once more, but with L-shape filtering
+    #virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize, filter_l=True)
+
+    # Filter out the four corners
+    big_four = filter_n_contours(virgin_contours_list, n=4)
+
+    # Filter out the four corners??
+    virgin_contours_list = filter_n_contours(virgin_contours_list, n=4)
 
     # Do some visualization stuff
     if do_draw_contours:
         for contour in virgin_contours_list:
             # Thick red bounding boxes
-            cv2.rectangle(frame_to_write_ontop_of, cv2.boundingRect(contour), (0, 0, 200), 1) 
-            
+            cv2.rectangle(frame_to_write_ontop_of, cv2.boundingRect(contour), (0, 0, 200), 3) 
             #rect = cv2.minAreaRect(contour) # Rotated (for minimum area) rectangle, red
             #cv2.drawContours(frame_to_write_ontop_of,[np.intp(cv2.boxPoints(rect))],0,(100,100,100),1)
-            
             # Draw circles around the contour points
-            draw_contour_points(frame_to_write_ontop_of, contour,color=(0,200,0))
-
+            #draw_contour_points(frame_to_write_ontop_of, contour,color=(0,200,0))
         # Draw contours
         draw_contours(frame_to_write_ontop_of, virgin_contours_list,color=(255,249,130))
 
-    if save_intermediate:
-        cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_2_virgin_contours_before_l_filter.png"), frame_to_write_ontop_of)
-        cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_2_before_l_COM_Circles.png"), draw_center_of_mass_circles(frame.copy(), virgin_contours_list))
+    draw_center_of_mass_circles(frame_to_write_ontop_of, virgin_contours_list)
 
-    # Filter contours once more
-    virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize, filter_l=True)
+    #if save_intermediate:
+    #    cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_2_virgin_contours_before_l_filter.png"), frame_to_write_ontop_of)
+    #    cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_2_before_l_COM_Circles.png"), draw_center_of_mass_circles(frame.copy(), virgin_contours_list))
     
     if save_output:
         print(f" Found {len(contours_tree)} total contours.")
@@ -350,9 +398,10 @@ def find_and_draw_contours(
         #print("largest contour has ",len(contours_tree[highest_instance[0]]),"points")
         cv2.imwrite(os.path.join(LOCAL_PATH,"contours.png"), frame_to_write_ontop_of)
         cv2.imwrite(os.path.join(LOCAL_PATH,"COM_Circles.png"), draw_center_of_mass_circles(frame.copy(), virgin_contours_list))
+        cv2.imwrite(os.path.join(LOCAL_PATH,"big_four.png"), draw_center_of_mass_circles(frame_to_write_ontop_of.copy(), big_four))
 
     if write_l_debug_circles:
-        frame_to_write_ontop_of = draw_center_of_mass_circles(frame_to_write_ontop_of, virgin_contours_list)
+        draw_center_of_mass_circles(frame_to_write_ontop_of, virgin_contours_list)
 
 #endregion Contours Stuff
     
@@ -437,7 +486,7 @@ def analyze_frame(frame, save_output=False, save_raw=False, write_l_debug_circle
     
     new_frame = clean_image(filter_binarize(frame, save_output=save_output, save_raw=save_raw)[0])
     
-    find_and_draw_contours(new_frame, new_frame, save_output=save_output, screensize=screensize, write_l_debug_circles=write_l_debug_circles, save_intermediate=True)
+    find_and_draw_contours(new_frame, new_frame, save_output=save_output, screensize=screensize, write_l_debug_circles=write_l_debug_circles, save_intermediate=save_raw)
 
     return new_frame
 
