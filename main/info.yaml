@@ -5,6 +5,7 @@
         main_folder:  ./
         project_root: ../
         main_test_video: &main_test_video ../data/test.avi
+        icon_test_image: &icon_test_image ../data/testt.jpg
         video_output:              ../result.do_not_sync.mp4
         permanent_storage:         ./subsystems/log/permanent_storage.json
         record_video_output_color: ./subsystems/log/videos/fall24testing
@@ -210,6 +211,16 @@
                 stream_framerate: 60
                 min_depth: 0.2
                 max_depth: 10.0
+        CAMERA=ICON_TEST:
+            hardware:
+                camera: "icon_test"
+                camera_has_depth: false
+                camera_has_pose: false
+                camera_has_acceleration: false
+                camera_has_gyro: false
+            test:
+                input_file: *icon_test_image
+
         CAMERA=NONE:
             hardware:
                 camera: null

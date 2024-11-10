@@ -98,7 +98,7 @@ def when_bounding_boxes_refresh():
         target_status = TargetStatus.TARGET_FOUND
 
         # Do icon detection - predict the icon
-        icons_predicted = predict_icons(runtime.color_image, enemy_boxes, DEBUG=True)
+        icons_predicted = predict_icons(runtime.color_image, enemy_boxes, DEBUG=False)
 
 
 
