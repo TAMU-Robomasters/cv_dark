@@ -645,4 +645,4 @@ settings/home/.vuerc
 
 
 # Kalman Filter
-# main/subsystems/log/kf_error_figures/2d/*
+main/subsystems/log/kf_error_figures/2d/*
