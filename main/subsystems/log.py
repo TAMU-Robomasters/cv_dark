@@ -125,13 +125,13 @@ def when_iteration_stops():
     predicted_errors_x = []
     for i in range(0,(len(center_points)-1)):
         if(center_points[i+1].x != 0 and i >= 4):
-            predicted_error = abs((center_point_predictions[i].x - center_points[i+1].x)/ center_points[i+1].x)
+            predicted_error = abs((center_point_predictions[i].x - center_points[i+1].x)/ center_points[i+1].x) * 100
             predicted_errors_x.append(predicted_error)
     
     predicted_errors_y = []
     for i in range(0,(len(center_points)-1)):
         if(center_points[i+1].y != 0 and i >= 4):
-            predicted_error = abs((center_point_predictions[i].y - center_points[i+1].y)/ center_points[i+1].y)
+            predicted_error = abs((center_point_predictions[i].y - center_points[i+1].y)/ center_points[i+1].y) * 100
             predicted_errors_y.append(predicted_error)
 
         
@@ -139,19 +139,19 @@ def when_iteration_stops():
     predicted_errors_3d_x = []
     for i in range(0,(len(target_3d_points)-1)):
         if(target_3d_points[i+1][0] != 0 and i >= 4):
-            predicted_error = abs((target_3d_predictions[i].x - target_3d_points[i+1][0])/ target_3d_points[i+1][0])
+            predicted_error = abs((target_3d_predictions[i].x - target_3d_points[i+1][0])/ target_3d_points[i+1][0]) * 100
             predicted_errors_3d_x.append(predicted_error)
             
     predicted_errors_3d_y = []
     for i in range(0,(len(target_3d_points)-1)):
         if(target_3d_points[i+1][1] != 0 and i >= 4):
-            predicted_error = abs((target_3d_predictions[i].y - target_3d_points[i+1][1])/ target_3d_points[i+1][1])
+            predicted_error = abs((target_3d_predictions[i].y - target_3d_points[i+1][1])/ target_3d_points[i+1][1]) * 100
             predicted_errors_3d_y.append(predicted_error)
             
     predicted_errors_3d_z = []
     for i in range(0,(len(target_3d_points)-1)):
         if(target_3d_points[i+1][2] != 0 and i >= 4):
-            predicted_error = abs((target_3d_predictions[i].z - target_3d_points[i+1][2])/ target_3d_points[i+1][2])
+            predicted_error = abs((target_3d_predictions[i].z - target_3d_points[i+1][2])/ target_3d_points[i+1][2]) * 100
             predicted_errors_3d_z.append(predicted_error)
     
     # Convert to np array
