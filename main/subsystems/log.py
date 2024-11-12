@@ -193,6 +193,8 @@ def when_iteration_stops():
 
     plt.tight_layout()
     
+    #TODO rework how we get file paths
+    #TODO find a consensus on how we ignore logging files in git
     dir_path = os.path.dirname(os.path.realpath(__file__))
     plt.savefig(dir_path+ "/log/kf_error_figures/3d/" + "3d" +str(dt.now())+".jpg")
     
