@@ -97,6 +97,8 @@ def when_bounding_boxes_refresh():
                 valid3dTargets = valid3dTargets,
             )
         if (best_bounding_box != None):
+            center_point = Position(best_bounding_box.center) # for logging/displays
+            
             curr_time = time.time()
             """!TODO Fix bug: during the first iteration of the kalman filter the 
             velocity and acceleration could be really high if there's no target found
@@ -153,7 +155,6 @@ def when_bounding_boxes_refresh():
    
     # update the shared data
     runtime.aiming.target_status            = TargetStatus.TARGET_NONE if best_bounding_box is None else TargetStatus.TARGET_FOUND
-    print("target status", runtime.aiming.target_status)
     runtime.aiming.target_3d                = best_target_3d
     runtime.aiming.center_point             = center_point
     runtime.aiming.center_point_prediction  = center_point_prediction
