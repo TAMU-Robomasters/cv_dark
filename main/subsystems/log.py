@@ -146,25 +146,28 @@ def generate_image(fps=0):
     image = Image(runtime.color_image)
 
     if len(bounding_boxes) > 0:
-        white  = rgb(255, 255, 255)
-        red    = rgb(240, 113, 120)
-        blue   = rgb(130, 170, 255)
-        cyan   = rgb(137, 221, 255)
-        green  = rgb(195, 232, 141)
-        yellow = rgb(254, 195,  85)
+        white           = rgb(255, 255, 255)
+        red             = rgb(240, 113, 120)
+        blue            = rgb(130, 170, 255)
+        cyan            = rgb(137, 221, 255)
+        green           = rgb(195, 232, 141)
+        yellow          = rgb(254, 195,  85)
+        light_orange    = rgb(254, 195, 85)
+
         for each in bounding_boxes:
-            image.add_bounding_box(each, color=rgb(255, 255, 255))
+            image.add_bounding_box(each, color=white)
         for each in enemy_boxes:
-            image.add_bounding_box(each, color=rgb(254, 195,  85))
+            image.add_bounding_box(each, color=light_orange)
         if status == TargetStatus.TARGET_FOUND:
-            image.add_bounding_box(best_bounding_box, color=rgb(240, 113, 120))
-            image.add_point(x=center_point.x     , y=center_point.y     , color=rgb(130, 170, 255), radius=10)
+            image.add_bounding_box(best_bounding_box, color=red)
+            image.add_point(x=center_point.x     , y=center_point.y     , color=blue, radius=10)
         if display_kf_prediction:
             if depth_compatible:
                 target_3d_pixel = video_stream.point3d_to_pixel(target_3d_prediction)
                 image.add_point(x=target_3d_pixel[0]    , y=target_3d_pixel[1]     , color=green, radius=10)
             else:
                 image.add_point(x=center_point_prediction.x     , y=center_point_prediction.y     , color=green, radius=10)
+    
     
     x_location = 30
     y_location = 50

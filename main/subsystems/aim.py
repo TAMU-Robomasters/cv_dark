@@ -71,7 +71,7 @@ def when_bounding_boxes_refresh():
     # update core aiming data
     #
 
-    # filter list of boxes/confidences that are valid before finding best one func.
+    # filter list of boxes/confidences that are valid before finding the best one
     if DEPTH_COMPATIBLE:
         for box,confidence in zip(enemy_boxes,enemy_confidences):
             sampled_depth = get_dist_to_bbox(box)
@@ -152,7 +152,8 @@ def when_bounding_boxes_refresh():
    
    
     # update the shared data
-    runtime.aiming.target_status            = TargetStatus.TARGET_FOUND if best_bounding_box is not None else TargetStatus.TARGET_NONE
+    runtime.aiming.target_status            = TargetStatus.TARGET_NONE if best_bounding_box is None else TargetStatus.TARGET_FOUND
+    print("target status", runtime.aiming.target_status)
     runtime.aiming.target_3d                = best_target_3d
     runtime.aiming.center_point             = center_point
     runtime.aiming.center_point_prediction  = center_point_prediction
@@ -187,7 +188,7 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
     # if len(boxes) == 1:
     #     return boxes[0], confidences[0]
 
-    best_box = boxes[0]
+    best_bounding_box = boxes[0]
     best_score = 0
     best_conf = 0
     best_depth = 0
@@ -240,12 +241,11 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
             best_conf = conf
             best_targ_3d = targetXYZ
             best_score = score
-            best_circle_bias_score = circle_bias_score
     # if best_score < 0.15:
     #     return None, 0
     # if size_score < 5:
     #     return None, 0
-    return best_box, best_conf, best_targ_3d
+    return best_bounding_box, best_conf, best_targ_3d
 
 
 def get_best_bounding_box(boxes, confidences, screen_center):
@@ -261,7 +261,7 @@ def get_best_bounding_box(boxes, confidences, screen_center):
     # if len(boxes) == 1:
     #     return boxes[0], confidences[0]
 
-    best_box = boxes[0]
+    best_bounding_box = boxes[0]
     best_score = 0
     best_conf = 0
 
@@ -281,14 +281,14 @@ def get_best_bounding_box(boxes, confidences, screen_center):
 
         # Make current box the best if its score is the best so far
         if score > best_score:
-            best_box = box
+            best_bounding_box = box
             best_conf = conf
             best_score = score
     # if best_score < 0.15:
     #     return None, 0
     # if size_score < 5:
     #     return None, 0
-    return best_box, best_conf
+    return best_bounding_box, best_conf
 
 
 def get_xyz_at_color_coords(point, depth=None):
