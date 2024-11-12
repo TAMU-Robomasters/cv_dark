@@ -163,6 +163,15 @@ class VideoStream:
         pixel = rs.rs2_project_point_to_pixel(self.color_intrin, point3d)
         print(pixel)
 
+        print("This is what pixel looks like", pixel)
+        print("This is what a pixel is", type(pixel))
+
+        # for testing
+        point = rs.rs2_deproject_pixel_to_point(self.color_intrin, pixel)
+
+        print("This is what point looks like", point)
+        print("This is what a point is", type(point))
+
         return pixel
 
     def get_xyz_at_color_point(self, point, depth=None):

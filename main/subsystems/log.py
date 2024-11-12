@@ -139,7 +139,7 @@ def generate_image(fps=0):
     best_bounding_box       = runtime.aiming.best_bounding_box
     center_point            = runtime.aiming.center_point
     center_point_prediction = runtime.aiming.center_point_prediction
-    target_3d               = runtime.aiming.target_3d
+    target_3d_prediction    = runtime.aiming.target_3d_prediction
     status                  = runtime.aiming.target_status
     
     image = Image(runtime.color_image)
@@ -160,7 +160,7 @@ def generate_image(fps=0):
             image.add_point(x=center_point.x     , y=center_point.y     , color=rgb(130, 170, 255), radius=10)
         if display_kf_prediction:
             if depth_compatible:
-                target_3d_pixel = video_stream.point3d_to_pixel(target_3d)
+                target_3d_pixel = video_stream.point3d_to_pixel(target_3d_prediction)
                 image.add_point(x=target_3d_pixel[0]    , y=target_3d_pixel[1]     , color=green, radius=10)
             else:
                 image.add_point(x=center_point_prediction.x     , y=center_point_prediction.y     , color=green, radius=10)

@@ -98,10 +98,12 @@ def when_bounding_boxes_refresh():
             )
         if (best_bounding_box != None):
             curr_time = time.time()
+            """!TODO Fix bug: during the first iteration of the kalman filter the 
+            velocity and acceleration could be really high if there's no target found
+            with a short period of time."""
             time_since_last_measurement = curr_time - past_time # in seconds
 
-            # pulling out from GPU only drops the fps by ~3
-            measurement = np.array(target_3d, dtype=np.float32)
+            measurement = np.array(best_target_3d, dtype=np.float32)
             kf_3d.predict(time_since_last_measurement)
             kf_3d.correct(measurement) 
             past_time = time.time()
