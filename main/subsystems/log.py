@@ -139,6 +139,7 @@ def generate_image(fps=0):
     best_bounding_box       = runtime.aiming.best_bounding_box
     center_point            = runtime.aiming.center_point
     center_point_prediction = runtime.aiming.center_point_prediction
+    target_3d               = runtime.aiming.target_3d
     target_3d_prediction    = runtime.aiming.target_3d_prediction
     status                  = runtime.aiming.target_status
     
