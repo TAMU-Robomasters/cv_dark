@@ -147,12 +147,12 @@ def generate_image(fps=0):
 
     if len(bounding_boxes) > 0:
         white           = rgb(255, 255, 255)
-        red             = rgb(240, 113, 120)
+        red             = rgb(255,   0,   0)
         blue            = rgb(130, 170, 255)
         cyan            = rgb(137, 221, 255)
         green           = rgb(195, 232, 141)
         yellow          = rgb(254, 195,  85)
-        light_orange    = rgb(254, 195, 85)
+        light_orange    = rgb(254, 195,  85)
 
         for each in bounding_boxes:
             image.add_bounding_box(each, color=white)
@@ -168,7 +168,7 @@ def generate_image(fps=0):
             else:
                 image.add_point(x=center_point_prediction.x     , y=center_point_prediction.y     , color=green, radius=10)
     
-    
+
     x_location = 30
     y_location = 50
     if depth_compatible:
