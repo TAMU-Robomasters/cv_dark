@@ -158,15 +158,10 @@ class VideoStream:
         return depth
     
     def point_3d_to_pixel(self, point_3d):
-        print("This is the point_3d", point_3d)
-
         # revert point_3d to realsense coordinate system
         point_3d = self.camera_relative_to_realsense(point_3d)
-        #! intrinsics may be wrong
-        pixel = rs.rs2_project_point_to_pixel(self.color_intrin, point_3d)
 
-        print("This is what pixel looks like", pixel)
-        print("This is what a pixel is", type(pixel))
+        pixel = rs.rs2_project_point_to_pixel(self.color_intrin, point_3d)
 
         return pixel
 
