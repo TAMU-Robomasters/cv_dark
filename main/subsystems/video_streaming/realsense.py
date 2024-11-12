@@ -157,7 +157,7 @@ class VideoStream:
         # print(f"Took: {(aim_end - aim_start)*1000} ms")
         return depth
     
-    def point3d_to_pixel(self, point_3d):
+    def point_3d_to_pixel(self, point_3d):
         print("This is the point_3d", point_3d)
 
         # revert point_3d to realsense coordinate system

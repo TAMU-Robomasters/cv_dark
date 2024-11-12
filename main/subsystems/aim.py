@@ -37,7 +37,7 @@ POSE_COMPATIBLE     = config.hardware.camera_has_pose
 #? is the lazy dict necessary?
 runtime.aiming = LazyDict(
     target_status = TargetStatus.TARGET_NONE,
-    target_3d = (0, 0, 0),
+    target_3d = Position((0, 0, 0)),
     center_point = Position((0, 0)),
     best_bounding_box=[],
     current_confidence=0
@@ -57,7 +57,7 @@ def when_bounding_boxes_refresh():
     # Reset variables at beginning of loop
     center_point            = Position((0, 0))
     center_point_prediction = Position((0, 0))
-    target_3d_prediction    = (0, 0, 0)
+    target_3d_prediction    = Position((0, 0, 0))
 
     validBoxes          = []
     validConfidences    = []
@@ -65,7 +65,7 @@ def when_bounding_boxes_refresh():
 
     best_bounding_box   = None
     current_confidence  = 0
-    best_target_3d      = (0,0,0)
+    best_target_3d      = Position((0,0,0))
 
     # 
     # update core aiming data
@@ -98,7 +98,7 @@ def when_bounding_boxes_refresh():
             )
         if (best_bounding_box != None):
             center_point = Position(best_bounding_box.center) # for logging/displays
-            
+
             curr_time = time.time()
             """!TODO Fix bug: during the first iteration of the kalman filter the 
             velocity and acceleration could be really high if there's no target found
