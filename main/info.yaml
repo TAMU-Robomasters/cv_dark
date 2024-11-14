@@ -8,6 +8,7 @@
         video_output:              ../result.do_not_sync.mp4
         permanent_storage:         ./subsystems/log/permanent_storage.json
         record_video_output_color: ./subsystems/log/videos/fall24testing
+        kalman_filter_error_figs:  ./subsystems/log/kf_error_figures
         kalman_video:              ./kalman_video.do_not_sync.mp4
         npy_frames:                ./scripts/data1 # replace with whichever frame set you want to use in the source/scripts/data<num> directory
         # model

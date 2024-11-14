@@ -136,7 +136,9 @@ def when_bounding_boxes_refresh():
             time_since_last_measurement = curr_time - past_time # in seconds
 
             # pulling out from GPU only drops the fps by ~3
-            measurement = np.array([center_point.x.cpu(), center_point.y.cpu()], dtype=np.float32)
+            center_point.x = int(center_point.x.cpu())
+            center_point.y = int(center_point.y.cpu())
+            measurement = np.array([center_point.x, center_point.y], dtype=np.float32)
             kf_2d.predict(time_since_last_measurement)
             kf_2d.correct(measurement) 
             past_time = time.time()
