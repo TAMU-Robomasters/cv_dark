@@ -99,6 +99,8 @@ def when_finished_processing_frame():
     
     if display_kf_prediction and depth_compatible and target_3d_point != None:
         #! hotfix [1]
+        print("target:", target_3d_point)
+        print("target_prediction:", target_3d_prediction)
         depth = show_depth_prediction(target_3d_point[1], target_3d_prediction[1])
     
     if display_live_frames:
