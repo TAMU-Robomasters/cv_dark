@@ -117,7 +117,7 @@ def when_bounding_boxes_refresh():
                 frame_delay = time_since_last_measurement
             if frame_delay > 0.255:
                 print(f"Warming frame delay of {frame_delay} is really high")
-            # this contains the prediction of all the state variables [x, y, z, vx, vy, vz, ax, ay, az]
+            # this contains the prediction of all the state variables [x, vx, ax, y, vy, ay, z, vz, az]
             forward_prediction = kf_3d.forward_predict(frame_delay) 
             target_3d_prediction = Position((forward_prediction[0], forward_prediction[3], forward_prediction[6]))
     else:

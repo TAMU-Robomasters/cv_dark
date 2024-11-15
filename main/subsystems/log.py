@@ -76,7 +76,6 @@ def when_finished_processing_frame():
     
     target_3d_points.append(target_3d_point)
     target_3d_predictions.append(target_3d_prediction)
-    print(runtime.aiming.target_3d)
     
     # 
     # compute loop time
@@ -98,10 +97,10 @@ def when_finished_processing_frame():
         image = generate_image(1000/iteration_time)
     
     if display_kf_prediction and depth_compatible and target_3d_point != None:
-        #! hotfix [1]
+        #! hotfix [1] [2][0]
         print("target:", target_3d_point)
         print("target_prediction:", target_3d_prediction)
-        depth = show_depth_prediction(target_3d_point[1], target_3d_prediction[1])
+        depth = show_depth_prediction(target_3d_point[1], target_3d_prediction[2][0])
     
     if display_live_frames:
             if depth_compatible:
