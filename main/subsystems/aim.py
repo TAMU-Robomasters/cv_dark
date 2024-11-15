@@ -18,6 +18,9 @@ class TargetStatus(Enum):
     TARGET_NONE = 0
     TARGET_FOUND = 1
 
+
+# NOTE initial kinematic state is set to all ones. This might effect convergence time
+# TODO find better uncertainty for x, y, z
 kf_2d = KF2D(np.ones((6,1), dtype=np.float32), 0.1, 0.1, 0.05, 0.05)
 kf_3d = KF3D(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, 0.05, 0.2)
 

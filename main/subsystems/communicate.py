@@ -6,13 +6,9 @@ from time import time
 from super_map import LazyDict
 
 from toolbox.globals import path_to, config, print, runtime
-from toolbox.kalman_filter import KF3D
+from subsystems.aim import kf_3d
 from subsystems.video_stream import video_stream
 
-
-# NOTE initial kinematic state is set to all ones. This might effect convergence time
-# TODO find better uncertainty for x, y, z
-kf = KF3D(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, 0.05, 0.05)
 
 # 
 # config
@@ -41,6 +37,7 @@ def setup_serial_port():
             # very bad hack but it works
             subprocess.run([ "bash", "-c", f"sudo -S chmod 777 '{serial_port}' <<<  \"$(cat \"$HOME/.pass\")\" ",])
             return setup_serial_port() # recursion until it works
+
 
 # 
 # initialize
@@ -80,23 +77,19 @@ def when_aiming_refreshes():
     if runtime.aiming.target_3d is None:
         message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = message_to_embedded.VX = message_to_embedded.VY = message_to_embedded.VZ = message_to_embedded.AX = message_to_embedded.AY = message_to_embedded.AZ = 0.0
     else:
-        kf.correct(np.array([
-            [runtime.aiming.target_3d[0]],
-            [runtime.aiming.target_3d[1]],
-            [runtime.aiming.target_3d[2]]
-        ], dtype=np.float32))
-
+        
         # estimating where the target is currently at
-        kf.predict(capture_delay)
-        message_to_embedded.X = kf.statePre[0, 0]
-        message_to_embedded.Y = kf.statePre[1, 0]
-        message_to_embedded.Z = kf.statePre[2, 0]
-        message_to_embedded.VX = kf.statePre[3, 0]
-        message_to_embedded.VY = kf.statePre[4, 0]
-        message_to_embedded.VZ = kf.statePre[5, 0]
-        message_to_embedded.AX = kf.statePre[6, 0]
-        message_to_embedded.AY = kf.statePre[7, 0]
-        message_to_embedded.AZ = kf.statePre[8, 0]
+        #! not sure if this works
+        target_kinematic_state = kf_3d.forward_predict(capture_delay)
+        message_to_embedded.X = target_kinematic_state[0]
+        message_to_embedded.Y = target_kinematic_state[1]
+        message_to_embedded.Z = target_kinematic_state[2]
+        message_to_embedded.VX = target_kinematic_state[3] 
+        message_to_embedded.VX = target_kinematic_state[4]
+        message_to_embedded.VZ = target_kinematic_state[5]
+        message_to_embedded.AX = target_kinematic_state[6]
+        message_to_embedded.AY = target_kinematic_state[7]
+        message_to_embedded.AZ = target_kinematic_state[8]
 
     # TODO change capture delay to something more useful
     message_to_embedded.capture_delay = capture_delay
