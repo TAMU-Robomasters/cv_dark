@@ -95,8 +95,8 @@ def when_aiming_refreshes():
     message_to_embedded.capture_delay = capture_delay
     message_to_embedded.status = runtime.aiming.target_status.value 
     print(f'''msg({f"X:{message_to_embedded.X:.4f}".rjust(7)}, {f"Y:{message_to_embedded.Y:.4f}".rjust(7)}, {f"Z:{message_to_embedded.Z:.4f}".rjust(7)},
-        {f"VX:{message_to_embedded.X:.4f}".rjust(7)}, {f"VY:{message_to_embedded.Y:.4f}".rjust(7)}, {f"VZ:{message_to_embedded.Z:.4f}".rjust(7)},
-        {f"AX:{message_to_embedded.X:.4f}".rjust(7)}, {f"AY:{message_to_embedded.Y:.4f}".rjust(7)}, {f"AZ:{message_to_embedded.Z:.4f}".rjust(7)},
+        {f"VX:{message_to_embedded.VX:.4f}".rjust(7)}, {f"VY:{message_to_embedded.VY:.4f}".rjust(7)}, {f"VZ:{message_to_embedded.VZ:.4f}".rjust(7)},
+        {f"AX:{message_to_embedded.AX:.4f}".rjust(7)}, {f"AY:{message_to_embedded.AY:.4f}".rjust(7)}, {f"AZ:{message_to_embedded.AZ:.4f}".rjust(7)},
         {f"delay:{message_to_embedded.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")
     
     try:
