@@ -264,6 +264,8 @@ def show_depth_prediction(depth, depth_prediction):
 
     depth.add_point(x=50, y=norm_depth * 848, color=rgb(130, 170, 255), radius=10)
     depth.add_point(x=50, y=norm_depth_prediction * 848, color=rgb(195, 232, 141), radius=10)
+    print("realsense depth:", norm_depth)
+    print("kalman filter depth:", norm_depth_prediction)
 
     return depth
 
