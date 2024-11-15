@@ -350,29 +350,6 @@ def find_and_draw_contours(
     if save_intermediate:
         cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_1_greyscale.png"), frame)
 
-
-    if save_output:
-        minVal = 100
-        maxVal = 200
-        canny = cv2.Canny(frame_to_write_ontop_of.copy(),minVal,maxVal)
-
-        #cv2.imwrite(os.path.join(LOCAL_PATH,"canny"), canny)
-
-
-        canny_corners = canny
-        
-        corners = cv2.goodFeaturesToTrack(canny,4,0.5,50)
-
-        for corner in corners:
-            x,y = corner.ravel()
-            #print(f"x={x},y={y}")
-            #cv.goodFeaturesToTrack(	image, maxCorners, qualityLevel, minDistance[, corners[, mask[, blockSize[, useHarrisDetector[, k]]]]]
-            cv2.circle(canny_corners,(x,y), 5, (36,255,12), 3)
-            #cv2.circle(frame, (x, y), radius, color, thickness)
-
-
-
-        cv2.imwrite(os.path.join(LOCAL_PATH,"canny_corners"), canny_corners)
     
     #print "contours:",len(contours)
     #print "largest contour has ",len(contours[0]),"points"
@@ -564,9 +541,39 @@ if __name__ == "__main__":
     else:
         print("Analyzing frame...")
         frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench.png"))
+
+        frametwo = frame.copy()
+        h,  w = frame.shape[:2]
+        newcameramtx, roi = cv2.getOptimalNewCameraMatrix(cam_mat, dist_coef, (w,h), 1, (w,h))
+
+        # undistort
+        dst = cv2.undistort(frametwo, cam_mat, dist_coef, None, newcameramtx)
+        # crop the image
+        x, y, w, h = roi
+        dst = dst[y:y+h, x:x+w]
+        cv2.imwrite(os.path.join(LOCAL_PATH,"undistorted.png"), dst)
+
         #frame = cv2.imread(os.path.join(LOCAL_PATH,"example_vid_30.png"))
         #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_3.png"))
         #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_cropped.PNG"))
+
+        # minVal = 100
+        # maxVal = 200
+        # canny = cv2.Canny(frame.copy(),minVal,maxVal)
+
+        # canny_corners = canny
+        
+        # corners = cv2.goodFeaturesToTrack(canny, 10, 0.5, 50)
+        # #         cv.goodFeaturesToTrack(image, maxCorners, qualityLevel, minDistance[, corners[, mask[, blockSize[, useHarrisDetector[, k]]]]]
+
+        # for corner in corners:
+        #     x,y = corner.ravel()
+        #     #print(f"x={x},y={y}")
+        #     cv2.circle(canny_corners,(int(x),int(y)), 3, (255,40,40), 3)
+        #     #cv2.circle(frame, (x, y), radius, color, thickness)
+
+        # cv2.imwrite(os.path.join(LOCAL_PATH,"canny_corners.png"), canny_corners)
+
         analyze_frame(frame, save_output=True, save_raw=True, write_l_debug_circles=True)
 
 #endregion Procedural
