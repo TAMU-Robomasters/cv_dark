@@ -85,7 +85,7 @@ def when_aiming_refreshes():
         message_to_embedded.Y = target_kinematic_state[1]
         message_to_embedded.Z = target_kinematic_state[2]
         message_to_embedded.VX = target_kinematic_state[3] 
-        message_to_embedded.VX = target_kinematic_state[4]
+        message_to_embedded.VY = target_kinematic_state[4]
         message_to_embedded.VZ = target_kinematic_state[5]
         message_to_embedded.AX = target_kinematic_state[6]
         message_to_embedded.AY = target_kinematic_state[7]
