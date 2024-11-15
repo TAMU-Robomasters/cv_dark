@@ -101,6 +101,42 @@ def clean_image(frame,save_output=False):
 def draw_contours(frame, contours: list, color=(0,255,0)): #TODO: remove this - it's a oneliner
     cv2.drawContours(frame, contours, -1, color, 2) 
 
+def draw_points(img, corners, imgpts):
+    """
+    WIP
+    Draws the plane and points of the receptacle given the four corners and imgpts
+    This function taken from https://docs.opencv.org/4.x/d7/d53/tutorial_py_pose.html
+    """
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    objp = np.zeros((6*7,3), np.float32)
+    objp[:,:2] = np.mgrid[0:7,0:6].T.reshape(-1,2)
+ 
+    axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
+    ret, corners = cv2.findChessboardCorners(gray, (7,6),None)
+    if ret == True:
+        corners2 = cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
+ 
+        # Find the rotation and translation vectors.
+        ret,rvecs, tvecs = cv2.solvePnP(objp, corners2, mtx, dist)
+ 
+        # project 3D points to image plane
+        imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
+    imgpts = np.int32(imgpts).reshape(-1,2)
+ 
+    # draw ground floor in green
+    img = cv2.drawContours(img, [imgpts[:4]],-1,(0,255,0),-3)
+ 
+    # draw pillars in blue color
+    for i,j in zip(range(4),range(4,8)):
+        img = cv2.line(img, tuple(imgpts[i]), tuple(imgpts[j]),(255),3)
+ 
+    # draw top layer in red color
+    img = cv2.drawContours(img, [imgpts[4:]],-1,(0,0,255),3)
+ 
+    return img
+
+
+    
 #endregion Image Stuff
 
 
@@ -302,7 +338,7 @@ def find_and_draw_contours(
     save_intermediate=False
     ):
     """
-    Findds and draws contours on an image, filtering for valid and virgin contours.
+    Finds and draws contours on an image, filtering for valid and virgin contours.
     Frames are BGR. 
     """
     # Grayscale the image and find all the contours
@@ -314,41 +350,36 @@ def find_and_draw_contours(
     if save_intermediate:
         cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_1_greyscale.png"), frame)
 
+
+    if save_output:
+        minVal = 100
+        maxVal = 200
+        canny = cv2.Canny(frame_to_write_ontop_of.copy(),minVal,maxVal)
+
+        #cv2.imwrite(os.path.join(LOCAL_PATH,"canny"), canny)
+
+
+        canny_corners = canny
+        
+        corners = cv2.goodFeaturesToTrack(canny,4,0.5,50)
+
+        for corner in corners:
+            x,y = corner.ravel()
+            #print(f"x={x},y={y}")
+            #cv.goodFeaturesToTrack(	image, maxCorners, qualityLevel, minDistance[, corners[, mask[, blockSize[, useHarrisDetector[, k]]]]]
+            cv2.circle(canny_corners,(x,y), 5, (36,255,12), 3)
+            #cv2.circle(frame, (x, y), radius, color, thickness)
+
+
+
+        cv2.imwrite(os.path.join(LOCAL_PATH,"canny_corners"), canny_corners)
+    
     #print "contours:",len(contours)
     #print "largest contour has ",len(contours[0]),"points"
 
     # Draw all contours
     # a lot of this I got from https://stackoverflow.com/a/74620309/25598210
     #if do_draw_contours: draw_contours(frame_to_write_ontop_of,contours_tree,color=(0,200,200)) # All contours - yellowish - RGB
-
-    #region oldcode
-    #TODO: re-enable this stuff later
-    # # Draw contours with a certain heigharchy
-    # parent_instances = {}
-    # highest_instance = (0,0)
-
-    # for i in range(len(hierarchy_tree[0])-1):
-    #     #[next, previous, first child, parent]
-    #     #print(f"Contour {i} - {hierarchy_tree[0,i]}")
-
-    #     if hierarchy_tree[0,i][3] != -1:
-    #         #print(f"Has parent of {hierarchy_tree[0,i][3]}")
-    #         if not (hierarchy_tree[0,i][3] in parent_instances.keys()):
-    #             parent_instances[hierarchy_tree[0,i][3]]=1
-    #         else:
-    #             parent_instances[hierarchy_tree[0,i][3]]+=1
-            
-    #         if parent_instances[hierarchy_tree[0,i][3]]>highest_instance[1]:
-    #             highest_instance = (hierarchy_tree[0,i][3], parent_instances[hierarchy_tree[0,i][3]])
-    
-    # #print(f"Highest instance of {highest_instance}")
-
-
-    # for i in range(len(hierarchy_tree[0])-1):
-    #     if hierarchy_tree[0,i][3]==highest_instance[0]:
-    #         #print(f"Contour {i} - {hierarchy_tree[0,i]}")
-    #         #print(f"{hierarchy_tree[0,i][0]} Has parent of {hierarchy_tree[0,i][3]}")
-    #         draw_contours(frame_to_write_ontop_of, [contours_tree[hierarchy_tree[0,i][0]]],color=(255,0,255))
     
     #endregion oldcode
 
@@ -532,8 +563,8 @@ if __name__ == "__main__":
 
     else:
         print("Analyzing frame...")
-        #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench.png"))
-        frame = cv2.imread(os.path.join(LOCAL_PATH,"example_vid_30.png"))
+        frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench.png"))
+        #frame = cv2.imread(os.path.join(LOCAL_PATH,"example_vid_30.png"))
         #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_3.png"))
         #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_cropped.PNG"))
         analyze_frame(frame, save_output=True, save_raw=True, write_l_debug_circles=True)
