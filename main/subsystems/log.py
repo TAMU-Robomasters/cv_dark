@@ -11,6 +11,7 @@ from subsystems.aim import TargetStatus
 from subsystems.video_stream import video_stream
 
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation 
 import os
 import numpy as np
 
@@ -31,6 +32,7 @@ depth_compatible            = config.hardware.camera_has_depth
 should_benchmark            = config.mode == 'benchmark'
 MIN_RANGE                   = config.aiming.min_range
 MAX_RANGE                   = config.aiming.max_range
+
 
 
 # create incremented storage path
@@ -101,6 +103,50 @@ def when_finished_processing_frame():
         print("target:", target_3d_point)
         print("target_prediction:", target_3d_prediction)
         depth = show_depth_prediction(target_3d_point[1], target_3d_prediction[2])
+
+         # 3d prediction error 
+        predicted_errors_3d_x = []
+        for i in range(0,(len(target_3d_points)-1)):
+            if(target_3d_points[i+1][0] != 0 and i >= 4):
+                predicted_error = abs((target_3d_predictions[i].x - target_3d_points[i+1][0])/ target_3d_points[i+1][0]) * 100
+                predicted_errors_3d_x.append(predicted_error)
+                
+        predicted_errors_3d_y = []
+        for i in range(0,(len(target_3d_points)-1)):
+            if(target_3d_points[i+1][1] != 0 and i >= 4):
+                predicted_error = abs((target_3d_predictions[i].y - target_3d_points[i+1][1])/ target_3d_points[i+1][1]) * 100
+                predicted_errors_3d_y.append(predicted_error)
+                
+        predicted_errors_3d_z = []
+        for i in range(0,(len(target_3d_points)-1)):
+            if(target_3d_points[i+1][2] != 0 and i >= 4):
+                predicted_error = abs((target_3d_predictions[i].z - target_3d_points[i+1][2])/ target_3d_points[i+1][2]) * 100
+                predicted_errors_3d_z.append(predicted_error)
+        
+        
+        predicted_errors_np_3d_x = np.array(predicted_errors_3d_x)
+        predicted_errors_np_3d_y = np.array(predicted_errors_3d_y)
+        predicted_errors_np_3d_z = np.array(predicted_errors_3d_z)
+  
+        # plot functions for 3d
+        fig, (ax1, ax2,ax3) = plt.subplots(3, 1) 
+        index = np.arange(0, len(predicted_errors_np_3d_x),1)
+        print(predicted_errors_np_3d_x)
+
+        ax1.plot(index, predicted_errors_np_3d_x)
+        ax1.set_title('Predicted error x')
+
+        ax2.plot(index, predicted_errors_np_3d_y)
+        ax2.set_title('Predicted error y')
+        
+        ax3.plot(index, predicted_errors_np_3d_z)
+        ax3.set_title('Predicted error z')
+
+        plt.tight_layout()
+        plt.show()
+        
+       
+       
     
     if display_live_frames:
             if depth_compatible:
