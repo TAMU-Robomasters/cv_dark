@@ -192,11 +192,19 @@
             hardware:
                 camera: null
 
+        CAMERA=WEB_CAM:
+            hardware:
+                camera: web cam
+                camera_has_depth: false
+                camera_has_pose: false
+                camera_has_acceleration: false
+                camera_has_gyro: false
+
         GUI:
             log:
                 display_live_frames: true
-        
-        
+
+
         SHOWTIME:
             mode: production
             log:
@@ -222,7 +230,7 @@
         BENCH:
             mode: benchmark
             stop_after: 1000 # frames
-        
+
         WE_RED:
             our_team_color: 'red'
         WE_BLUE:
