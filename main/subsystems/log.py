@@ -1,4 +1,5 @@
 import json
+import cv2
 from time import time as now
 from datetime import datetime as dt
 
@@ -17,17 +18,19 @@ import numpy as np
 # 
 # config
 # 
-display_live_frames       = config.log.display_live_frames
-save_frame_to_file        = config.log.save_frame_to_file
-display_kf_prediction     = config.log.display_kf_prediction
-kf_fig_dir               = absolute_path_to.kalman_filter_error_figs
-save_depth                = config.log.save_depth
-save_rate                 = config.log.save_rate
-record_video_output_color = absolute_path_to.record_video_output_color
-video_output              = absolute_path_to.video_output
-camera                    = config.hardware.camera
-depth_compatible          = config.hardware.camera_has_depth
-should_benchmark          = config.mode == 'benchmark'
+display_live_frames         = config.log.display_live_frames
+save_frame_to_file          = config.log.save_frame_to_file
+display_kf_prediction       = config.log.display_kf_prediction
+kf_fig_dir                  = absolute_path_to.kalman_filter_error_figs
+save_depth                  = config.log.save_depth
+save_rate                   = config.log.save_rate
+record_video_output_color   = absolute_path_to.record_video_output_color
+video_output                = absolute_path_to.video_output
+camera                      = config.hardware.camera
+depth_compatible            = config.hardware.camera_has_depth
+should_benchmark            = config.mode == 'benchmark'
+MIN_RANGE                   = config.aiming.min_range
+MAX_RANGE                   = config.aiming.max_range
 
 
 # create incremented storage path
@@ -94,8 +97,17 @@ def when_finished_processing_frame():
     if display_live_frames or should_save_frame:
         image = generate_image(1000/iteration_time)
     
+    if display_kf_prediction and depth_compatible:
+        depth = show_depth_prediction(target_3d_point.y, target_3d_prediction.y)
+
     if display_live_frames:
         image.show()
+    
+    if display_live_frames:
+            if depth_compatible:
+                cv2.imshow("depth", depth.img)
+            cv2.imshow("main", image.img)
+            cv2.waitKey(1) # doesn't actually wait  
     
     if should_save_frame:
         color_video_writer.add_frame(runtime.color_image)
@@ -239,6 +251,23 @@ def visualize_depth_frame(depth_frame_array):
         cv2.destroyAllWindows()
 
 
+def show_depth_prediction(depth, depth_prediction):
+    """
+    Display a window that shows Y value of the target and
+    the predicted Y value of the target based of the Kalman Filter stuff
+    """
+    total_range = MAX_RANGE - MIN_RANGE
+
+    # normalize the depth
+    norm_depth = (depth - MIN_RANGE) / total_range
+    norm_depth_prediction =  (depth_prediction - MIN_RANGE) / total_range
+
+    depth = Image(np.zeros((100, 848, 3)))
+
+    depth.add_point(x=50, y=norm_depth * 848, color=rgb(130, 170, 255), radius=10)
+    depth.add_point(x=50, y=norm_depth_prediction * 848, color=rgb(195, 232, 141), radius=10)
+
+
 def generate_image(fps=0):
     color_image             = runtime.color_image
     bounding_boxes          = runtime.modeling.bounding_boxes
@@ -253,6 +282,7 @@ def generate_image(fps=0):
     
     image = Image(runtime.color_image)
 
+    # TODO possibly define these globally
     if len(bounding_boxes) > 0:
         white           = rgb(255, 255, 255)
         red             = rgb(255,   0,   0)
