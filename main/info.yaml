@@ -192,6 +192,14 @@
             hardware:
                 camera: null
 
+        CAMERA=WEB_CAM:
+            hardware:
+                camera: web cam
+                camera_has_depth: false
+                camera_has_pose: false
+                camera_has_acceleration: false
+                camera_has_gyro: false
+
         GUI:
             log:
                 display_live_frames: true
