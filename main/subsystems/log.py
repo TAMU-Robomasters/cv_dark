@@ -99,9 +99,6 @@ def when_finished_processing_frame():
     
     if display_kf_prediction and depth_compatible:
         depth = show_depth_prediction(target_3d_point.y, target_3d_prediction.y)
-
-    if display_live_frames:
-        image.show()
     
     if display_live_frames:
             if depth_compatible:
@@ -266,6 +263,8 @@ def show_depth_prediction(depth, depth_prediction):
 
     depth.add_point(x=50, y=norm_depth * 848, color=rgb(130, 170, 255), radius=10)
     depth.add_point(x=50, y=norm_depth_prediction * 848, color=rgb(195, 232, 141), radius=10)
+
+    return depth
 
 
 def generate_image(fps=0):
