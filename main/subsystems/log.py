@@ -98,7 +98,8 @@ def when_finished_processing_frame():
         image = generate_image(1000/iteration_time)
     
     if display_kf_prediction and depth_compatible and target_3d_point != None:
-        depth = show_depth_prediction(target_3d_point.y, target_3d_prediction.y)
+        #! hotfix [1]
+        depth = show_depth_prediction(target_3d_point[1], target_3d_prediction[1])
     
     if display_live_frames:
             if depth_compatible:
