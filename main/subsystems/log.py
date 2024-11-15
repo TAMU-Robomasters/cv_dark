@@ -97,7 +97,7 @@ def when_finished_processing_frame():
     if display_live_frames or should_save_frame:
         image = generate_image(1000/iteration_time)
     
-    if display_kf_prediction and depth_compatible:
+    if display_kf_prediction and depth_compatible and target_3d_point != None:
         depth = show_depth_prediction(target_3d_point.y, target_3d_prediction.y)
     
     if display_live_frames:
