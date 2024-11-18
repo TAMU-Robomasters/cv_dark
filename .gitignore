@@ -24,16 +24,6 @@ drewvenv/
 drew_detection/source/mask*
 drew_detection/source/yellow*
 
-# Nugget receptacle debug images
-main/subsystems/nugget_receptacle/contours*
-main/subsystems/nugget_receptacle/morph_close*
-main/subsystems/nugget_receptacle/morph_open*
-main/subsystems/nugget_receptacle/output*
-main/subsystems/nugget_receptacle/temp*
-main/subsystems/nugget_receptacle/yellow*
-main/subsystems/nugget_receptacle/mask*
-
-
 
 # 
 # standard

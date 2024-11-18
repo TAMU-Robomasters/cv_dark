@@ -21,16 +21,19 @@ atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_itera
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
 
     # TODO: Delete this before prod! This is for testing only, and we should find a better way to integrate nugget code.
-    #runtime.color_image = nugg_pose.analyze_frame(runtime.color_image, save_output=False, save_raw=False, write_l_debug_circles=False)
+    runtime.color_image = nugg_pose.analyze_frame(
+        runtime.color_image, save_output=False, save_raw=False,
+        do_draw_cross=True, do_draw_com_circles=True
+        )
 
     if synchronized_debug: t1 = time_synchronized()
-    model.when_frame_arrives() # Get the bounding boxes
+    #model.when_frame_arrives() # Get the bounding boxes #TODO: Re-enable
     
     if synchronized_debug: t2 = time_synchronized()
-    aim.when_bounding_boxes_refresh() # Prioritize the best bounding box to shoot at
+    #aim.when_bounding_boxes_refresh() # Prioritize the best bounding box to shoot at #TODO: Re-enable
     
     if synchronized_debug: t3 = time_synchronized()
-    communicate.when_aiming_refreshes() # Send XYZ pos of the arm panel to embedded
+    #communicate.when_aiming_refreshes() # Send XYZ pos of the arm panel to embedded #TODO: Re-enable
     
     if synchronized_debug: t4 = time_synchronized()
     log.when_finished_processing_frame() # Save the frame

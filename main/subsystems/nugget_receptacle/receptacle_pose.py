@@ -9,11 +9,17 @@
 
 #region setup
 # Imports
-import cv2
-import numpy as np
+
+# Builtins
 import sys
 import os
 import time
+import math
+
+# Externals
+import cv2
+import numpy as np
+import itertools
 
 #endregion setup
 
@@ -28,6 +34,94 @@ CAMERA_CALIB_PATH = os.path.join(LOCAL_PATH,"CalMatrix.npz") # Path to calibrati
 
 
 #region Functions
+def order_points(A, B, C, D, Ai, Bi, Ci, Di):
+    """ 
+    Orders points top-left, top-right, bottom-left, bottom-right using angles.
+    With help from https://math.stackexchange.com/a/2587852
+    """
+    average_point = (sum([A[0], B[0], C[0], D[0]])/4, sum([A[1], B[1], C[1], D[1]])/4)
+
+    # Sort the points by angle from the "average point"
+    angles = []
+    for pt in [A, B, C, D]:
+        angles.append(math.atan2(pt[1]-average_point[1], pt[0]-average_point[0]))
+
+    #print([math.degrees(angle) for angle in angles]) #DEBUG
+
+    # Sorting with help from https://stackoverflow.com/a/6618543/25598210
+    try:
+        sorted_ = [x for _,x in sorted(zip(angles, [A, B, C, D]))]
+
+        # Numpy gets angry if we do this like the one above, so we must use indices
+        Is = [Ai, Bi, Ci, Di]
+        sorted_i= [x for _,x in sorted(zip(angles, [0,1,2,3]))]
+        sorted_i= [Is[x] for x in sorted_i]
+
+    except ValueError as e:
+        print(f"Ai, Bi, Ci, Di = {[Ai, Bi, Ci, Di]}")
+        print("Angles:",[math.degrees(angle) for angle in angles]) #DEBUG
+        test = [(angles[0], Ai,), (angles[1], Bi), (angles[2], Ci), (angles[3], Di)]
+        test = sorted(test)
+        raise e
+
+    return sorted_[0], sorted_[3], sorted_[1], sorted_[2], sorted_i[0], sorted_i[3], sorted_i[1], sorted_i[2],
+
+
+def intersection_point(point_A:tuple, point_B:tuple, point_C:tuple, point_D:tuple)->tuple:
+    """ 
+    Returns a tuple of the intersection point coords between two lines from A-D and B-C. 
+    If lines are parallel, returns (-1, -1).
+
+    With help from https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Given_two_line_equations
+    """
+    try:
+        a = (point_D[1]-point_A[1])/(point_D[0]-point_A[0]) # Slope of line A-D
+        b = (point_B[1]-point_C[1])/(point_B[0]-point_C[0]) # Slope of line B-C
+    
+    except ZeroDivisionError: # If Xs or Ys are the same, recalculate but with an added modifier
+        a = (point_D[1]+0.1-point_A[1])/(point_D[0]+0.1-point_A[0]) # Slope of line A-D
+        b = (point_B[1]+0.1-point_C[1])/(point_B[0]+0.1-point_C[0]) # Slope of line B-C
+
+    #print(f"a slope={a:.4f}  b slope={b:.4f}") #DEBUG
+
+    if a==b: return (-1, -1)
+
+    c = point_A[1] - a*point_A[0] # y-intercept of line A-D
+    d = point_C[1] - b*point_C[0] # y-intercept of line B-C
+
+    #print(f"AD y-intercept={c:.4f}  BC y-intercept={d:.4f}") #DEBUG
+
+    return  ( (d-c)/(a-b), a*((d-c)/(a-b))+c)
+
+
+def non_square_factor(Ax:int, Ay:int, Bx:int, By:int, Cx:int, Cy:int, Dx:int, Dy:int) -> float:
+    """ 
+    Returns the non_square_factor of a given four points. 
+    The higher the number, the less of a square it is (curcumvents more division which is slow).
+    If the four points form a perfect parallelogram, 0 is returned
+
+    This function and its algorithm is (c) 2024 Drew Wingfield, All Rights Reserved.
+    Used by the Texas A&M University Texas Aimbots RoboMasters robotics team with permission.
+
+    Ax, Ay is top left
+    Bx, By is top right
+    Cx, Cy is bottom left
+    Dx, Dy is bottom right
+    """
+    # TODO: Return 1000 if AD and BC don't cross
+    # TODO: Return 1000 if AD and BC don't cross within the bounding box of the four points
+    # TODO: Find an approximation of this algorithm that's much faster and doesn't need as much
+    # division, squaring, or square rooting.
+    AD_center = ( (Ax + Dx)*0.5, (Ay + Dy)*0.5 ) # Centerpoint between point A and point D
+    BC_center = ( (Bx + Cx)*0.5, (By + Cy)*0.5 ) # Centerpoint between point A and point D
+    G = intersection_point((Ax,Ay),(Bx,By),(Cx,Cy),(Dx,Dy)) # Crossing point of AD and BC
+    #print(f"G={G[0]:.2f}, {G[1]:.2f}  --  AD_center={AD_center[0]:.2f},{AD_center[1]:.2f}  --  BC_center={BC_center[0]:.2f},{BC_center[1]:.2f}") #DEBUG
+
+    if G==(-1,-1): # G returns -1,-1 if lines are parallel.
+        return 0 # If this is the case, it's a perfect parallelogram so return 0.
+
+    return math.sqrt((AD_center[0] - G[0])**2 + (AD_center[1] - G[1])**2) + math.sqrt((BC_center[0] - G[0])**2 + (BC_center[1] - G[1])**2)
+
 
 #region Image Stuff
 def filter_binarize(frame, save_output=False, save_raw=False):
@@ -54,12 +148,12 @@ def filter_binarize(frame, save_output=False, save_raw=False):
 
     # Save output if respective arguments are true
     if save_output:
-        cv2.imwrite(os.path.join(LOCAL_PATH,"yellow.png"), 
+        cv2.imwrite(os.path.join(LOCAL_PATH,"binarized.ignore.png"), 
             result)
         if save_raw:
             frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
-            cv2.imwrite(os.path.join(LOCAL_PATH,"raw.png"), frame)
-        cv2.imwrite(os.path.join(LOCAL_PATH,"mask.png"), mask)
+            cv2.imwrite(os.path.join(LOCAL_PATH,"raw.ignore.png"), frame)
+        cv2.imwrite(os.path.join(LOCAL_PATH,"mask.ignore.png"), mask)
 
     # Return the result and the mask
     return result, mask
@@ -78,19 +172,19 @@ def clean_image(frame,save_output=False):
     kernel = np.ones((4,4),np.uint8)
     frame = cv2.morphologyEx(frame, cv2.MORPH_OPEN, kernel)
     if save_output:
-        cv2.imwrite(os.path.join(LOCAL_PATH,"morph_open.png"), frame)
+        cv2.imwrite(os.path.join(LOCAL_PATH,"morph_open.ignore.png"), frame)
     
     # Use Morph Close to decrease noise
     kernel = np.ones((4,4),np.uint8)
     frame = cv2.morphologyEx(frame, cv2.MORPH_CLOSE, kernel)
     if save_output:
-        cv2.imwrite(os.path.join(LOCAL_PATH,"morph_close.png"), frame)
+        cv2.imwrite(os.path.join(LOCAL_PATH,"morph_close.ignore.png"), frame)
 
     # Sharpening (isn't tuned very well so I'm disabling it for now)
     #kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
     #frame = cv2.filter2D(frame, -1, kernel)
     #if save_output:
-    #    cv2.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/sharpen.png", frame)
+    #    cv2.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/sharpen.ignore.png", frame)
     
     # Convert back to BGR
     frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
@@ -101,42 +195,131 @@ def clean_image(frame,save_output=False):
 def draw_contours(frame, contours: list, color=(0,255,0)): #TODO: remove this - it's a oneliner
     cv2.drawContours(frame, contours, -1, color, 2) 
 
-def draw_points(img, corners, imgpts):
+def draw_pose(img, corner_contours):
     """
     WIP
-    Draws the plane and points of the receptacle given the four corners and imgpts
-    This function taken from https://docs.opencv.org/4.x/d7/d53/tutorial_py_pose.html
+    Draws the plane and points of the receptacle given the four corners and imgpts.
+    Four corner contours should be in order of topleft, topright, bottomleft, bottomright
+    This function modified from https://docs.opencv.org/4.x/d7/d53/tutorial_py_pose.html
     """
+    OBJECT_HEIGHT = 2
+    OBJECT_WIDTH = 2
+    AXIS_LENGTH = 1
+    DRAW_TYPE = "simple" # simple or advanced, for just axes or 8-point cube, respectively
+    
+    if DRAW_TYPE=="simple":
+        DRAW_POINTS = np.float32([[AXIS_LENGTH,0,0], [0,AXIS_LENGTH,0], [0,0,-AXIS_LENGTH]]).reshape(-1,3)
+
+    else:
+        DRAW_POINTS = np.float32([
+            [0,0,0],          [0,AXIS_LENGTH,0],   [AXIS_LENGTH,AXIS_LENGTH,0], 
+            [AXIS_LENGTH,0,0],[0,0,-AXIS_LENGTH],  [0,AXIS_LENGTH,-AXIS_LENGTH],
+            [AXIS_LENGTH,AXIS_LENGTH,-AXIS_LENGTH],[AXIS_LENGTH,0,-AXIS_LENGTH] 
+            ]).reshape(-1,3)
+
+    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    corners = []
+    for cont in range(len(corner_contours)):
+        cont = corner_contours[cont]
+        x, y, w, h = cv2.boundingRect(cont)
+        # Draw center points
+        Center_cord = (x+(w//2), y+(h//2))
+        cv2.circle(img, Center_cord, 6, (255,0,234), 4)
+        corners.append(Center_cord)
+    
+    corner_contours = np.array(corners).astype(np.float32)
+
+    #print(f"corner_contours ({corner_contours.shape}) = {corner_contours}")
+
+    objpoints = [] # 3d point in real world space
+    imgpoints = [] # 2d points in image plane.
+    
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-    objp = np.zeros((6*7,3), np.float32)
-    objp[:,:2] = np.mgrid[0:7,0:6].T.reshape(-1,2)
+    objpoints = np.zeros((OBJECT_HEIGHT*OBJECT_WIDTH,3), np.float32)
+    objpoints[:,:2] = np.mgrid[0:OBJECT_HEIGHT,0:OBJECT_WIDTH].T.reshape(-1,2)
  
-    axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
-    ret, corners = cv2.findChessboardCorners(gray, (7,6),None)
-    if ret == True:
-        corners2 = cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
- 
-        # Find the rotation and translation vectors.
-        ret,rvecs, tvecs = cv2.solvePnP(objp, corners2, mtx, dist)
- 
-        # project 3D points to image plane
-        imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
-    imgpts = np.int32(imgpts).reshape(-1,2)
- 
-    # draw ground floor in green
-    img = cv2.drawContours(img, [imgpts[:4]],-1,(0,255,0),-3)
- 
-    # draw pillars in blue color
-    for i,j in zip(range(4),range(4,8)):
-        img = cv2.line(img, tuple(imgpts[i]), tuple(imgpts[j]),(255),3)
- 
-    # draw top layer in red color
-    img = cv2.drawContours(img, [imgpts[4:]],-1,(0,0,255),3)
+    # Find corners
+    corners2 = cv2.cornerSubPix(gray.astype(np.uint8),corner_contours,(2,2),(-1,-1),criteria)
+
+    #print(f"corners2 (Image Points) ({corners2.shape}): {corners2}")
+    #print(f"objpoints ({objpoints.shape}): {objpoints}")
+    #print(f"cam_mat ({cam_mat.shape}): {cam_mat}")
+    #print(f"dist_coef ({dist_coef.shape}): {dist_coef}")
+
+    #objectPoints expects Array of object points in the object coordinate space, Nx3 1-channel or 1xN/Nx1 3-channel, 
+    # where N is the number of points. vector<Point3d> can be also passed here.  while imagePoints expects an Array of
+    #  corresponding image points, Nx2 1-channel or 1xN/Nx1 2-channel, where N is the number of points.
+
+    # Find the rotation and translation vectors.
+    ret,rvecs, tvecs = cv2.solvePnP(objpoints, corners2, cam_mat, dist_coef) 
+    # cv.solvePnP(objectPoints, imagePoints, cameraMatrix, distCoeffs[, rvec[, tvec[, useExtrinsicGuess[, flags]]]]	) 
+
+    # project 3D points to image plane
+    projected_points, jac = cv2.projectPoints(DRAW_POINTS, rvecs, tvecs, cam_mat, dist_coef)
+    #print(f"imgpoints projected ({imgpoints.shape}): {imgpoints}")
+    projected_points = np.int32(projected_points).reshape(-1,2)
+    #print(f"imgpoints int32'd ({imgpoints.shape}): {imgpoints}")
+
+
+    # So our X axis is drawn from (0,0,0) to (1,0,0)
+    #        Y axis is drawn from (0,0,0) to (0,1,0) 
+    #        Z axis is drawn from (0,0,0) to (0,0,-1). 
+    # Negative denotes it is drawn towards the camera.
+    if DRAW_TYPE=="simple":
+        corner = list(corners2[0].ravel())
+        corner = tuple(int(x) for x in corner)
+        # X axis
+        img = cv2.line(img, corner, tuple(projected_points[0].ravel()), (255,0,0), 5)
+        # Y axis, Green
+        img = cv2.line(img, corner, tuple(projected_points[1].ravel()), (0,255,0), 5)
+        # Z axis
+        img = cv2.line(img, corner, tuple(projected_points[2].ravel()), (0,0,255), 5)
+
+    else: # Drawing 8-point cube
+        # draw bottom in green
+        img = cv2.drawContours(img, [projected_points[:4]],-1,(0,255,0),-3)
+    
+        # draw pillars in blue color
+        for i,j in zip(range(4),range(4,8)):
+            img = cv2.line(img, tuple(projected_points[i]), tuple(projected_points[j]),(255),3)
+    
+        # draw top layer in red color
+        img = cv2.drawContours(img, [projected_points[4:]],-1,(0,0,255),3)
+
+    # Draw points on top
+    for pt in imgpoints:
+        cv2.circle(img, tuple(pt), 5, (0,0,0), 4)
+        cv2.circle(img, tuple(pt), 3, (0,150,0), 4)
+        #print(f"pt {pt}")
  
     return img
 
+def draw_cross(frame, pts):
+    """ Draws the green cross with midpoints on the given frame. """
+    # Draw green lines connecting centers
+    for pair in [(pts[0], pts[3]), (pts[1], pts[2])]:
+        x, y, w, h = cv2.boundingRect(pair[0])
+        x2, y2, w2, h2 = cv2.boundingRect(pair[1])
+        cv2.line(frame, (x+(w//2), y+(h//2)), (x2+(w2//2), y2+(h2//2)), (0, 200, 0), 2)
 
+        # Draw center points
+        Center_cord = ( (x+(w//2) + x2+(w2//2))//2, (y+(h//2) + y2+(h2//2))//2 )
+        cv2.circle(frame, Center_cord, 6, (255,0,234), 4)
+
+
+def undistort(frame, save_output=False):
+    """ Returns an undistorted version of a given image. """
+    h,  w = frame.shape[:2]
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(cam_mat, dist_coef, (w,h), 1, (w,h))
     
+    # undistort
+    dst = cv2.undistort(frame, cam_mat, dist_coef, None, newcameramtx)
+    # crop the image
+    x, y, w, h = roi
+    dst = dst[y:y+h, x:x+w]
+    if save_output: cv2.imwrite(os.path.join(LOCAL_PATH,"undistorted.ignore.png"), dst)
+    return dst
+
 #endregion Image Stuff
 
 
@@ -190,9 +373,9 @@ def is_l_shape(contour, min_x_percent = 0.05, min_y_percent = 0.05, or_=False) -
     percent_off_x = (cx - center_x)/w # TODO: Maybe figure out a way to do floor division (faster?)
     percent_off_y = (cy - center_y)/h
 
-    if __name__ == "__main__":
-        #print(f"x={center_x}, y={center_y}, cx={cx}, cy={cy}, x_size={w}, y_size={h}")
-        print(f"x={center_x}, y={center_y}, cx is {percent_off_x*100 :.2f}% off, cy is {percent_off_y*100 :.2f}% off.")
+    #if __name__ == "__main__":
+    #    #print(f"x={center_x}, y={center_y}, cx={cx}, cy={cy}, x_size={w}, y_size={h}")
+    #    print(f"x={center_x}, y={center_y}, cx is {percent_off_x*100 :.2f}% off, cy is {percent_off_y*100 :.2f}% off.")
 
     is_l = (
         #    (abs(percent_off_x)>0) 
@@ -298,31 +481,134 @@ def draw_corners(img, corners, imgpts):
     return img
 
 
-def filter_n_contours(contours:list, n:int) -> list:
-    """ Filters out n number of contours for likely candidates of the four corners of the receptacle. """
+def filter_n_contours(contours:list, n:int, filter_by:str, debug=False) -> list:
+    """ 
+    Filters out n number of contours for likely candidates of the four corners of the receptacle. 
+    filter_by may be either 'drew algorithm' or 'size.'
+
+    NOTE: Contours MUST be free of duplicates, or you risk many extra iterations and wasted time.
+    """
+    assert filter_by in ["drew algorithm", "size"]
     if len(contours)==0: return [] # Prevent errors
     
     rtnlist = []
-    contour_sizes = []
 
-    for contour in contours:
-        x, y, w, h = cv2.boundingRect(contour)
-        contour_sizes.append(w*h)
+    if filter_by=="size":
+        contour_sizes = []
 
-    for i in range(n):
-        try:
-            if len(contours)==0: break
-            biggest_contour = contours[contour_sizes.index(max(contour_sizes))]
-            rtnlist.append(biggest_contour)
-            del contours[contour_sizes.index(max(contour_sizes))]
-            contour_sizes.remove(max(contour_sizes))
+        for contour in contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            contour_sizes.append(w*h)
+
+        for i in range(n):
+            try:
+                if len(contours)==0: break
+                biggest_contour = contours[contour_sizes.index(max(contour_sizes))]
+                rtnlist.append(biggest_contour)
+                del contours[contour_sizes.index(max(contour_sizes))]
+                contour_sizes.remove(max(contour_sizes))
+            
+            except IndexError: # If n < len(contours) we eventually hit an index error
+                break # Just return whatever we currently have
+
+            except ValueError as e:
+                print(f"Value Error, here is some debug info: n={n}, there are {len(contour_sizes)} sizes for {len(contours)} contours. contour_sizes={contour_sizes}, i={i}, rtnlist={rtnlist}")
+                raise e
+    
+    elif filter_by=="drew algorithm":
+
+        # Prevent errors if n or less contours exist
+        if len(contours)<=n: return contours
+
+        # Filter by how much of a squished rectangle it is.
+        # Or rather (to save cpu time), filter by how much it isn't a squished rectangle.
         
-        except IndexError: # If n < len(contours) we eventually hit an index error
-            break # Just return whatever we currently have
+        #combination_index_list = [] # Each item is a set of the combination indices
+        combination_list = []
+        coordinate_list = []
+        nsqf_list = [] # List of non-square-factors corresponding to items in contours list
 
-        except ValueError as e:
-            print(f"Value Error, here is some debug info: n={n}, there are {len(contour_sizes)} sizes for {len(contours)} contours. contour_sizes={contour_sizes}, i={i}, rtnlist={rtnlist}")
-            raise e
+        if debug: # TODO: Remove this before prod for speed
+            # Max number of combos: n!/r!(n-r)!
+            # where n is number of objects and r is number of objects per combination (4)
+            print(f" [filter_n_counters] There will be a maximum number of {math.factorial(len(contours))/(24*math.factorial(len(contours)-4)):.0f} combinations of 4 points.")
+
+        iteration=0
+        # Iterate over the indexes of every combination of four contours.
+        for A, B, C, D in itertools.combinations(contours, r=4):
+            iteration += 1
+            # A, B, C, and D are the contours
+            # A_cord, B_cord, C_cord, and D_cord are (x,y) coordinate tuples
+            x, y, w, h = cv2.boundingRect(A)
+            A_cord = ((x+(w//2), y+(h//2)))
+            x, y, w, h = cv2.boundingRect(B)
+            B_cord = ((x+(w//2), y+(h//2)))
+            x, y, w, h = cv2.boundingRect(C)
+            C_cord = ((x+(w//2), y+(h//2)))
+            x, y, w, h = cv2.boundingRect(D)
+            D_cord = ((x+(w//2), y+(h//2)))
+
+            try: #TODO: Remove the try/except before prod because it takes up memory and time
+                A_cord, B_cord, C_cord, D_cord, A, B, C, D = order_points(A_cord, B_cord, C_cord, D_cord, A, B, C, D)
+            except ValueError as e:
+                print(f"ValueError has occured! Some debug info:")
+                print(f"A_cord={A_cord}, B_cord={B_cord}, C_cord={C_cord}, D_cord={D_cord}")
+                print(f"Types of A, B, C, and D: {type(A), type(B), type(C), type(D)}")
+                raise e
+
+            NSqF = non_square_factor(A_cord[0], A_cord[1], B_cord[0], B_cord[1], C_cord[0], C_cord[1], D_cord[0], D_cord[1])
+            #print(f" [filter_n_contours] Iteration {iteration:4}, Ai={Ai:3}, Bi={Bi:3}, Ci={Ci:3}, Di={str(Di):3}, A={str(A):12}, B={str(B):12}, C={str(C):12}, D={str(D):12},  NSqF={NSqF:.3f}")
+            nsqf_list.append(NSqF)
+            #combination_index_list.append({Ai, Bi, Ci, Di})
+            coordinate_list.append([A_cord, B_cord, C_cord, D_cord])
+            combination_list.append([A, B, C, D])
+        
+        if debug: # TODO: Remove this before prod for speed
+            print(f" [filter_n_contours] Iterated through {len(nsqf_list)} combinations. Now sorting.")
+            print(f" [filter_n_contours] Average NSqF: {sum(nsqf_list)/len(nsqf_list):.3f}")
+            print(f" [filter_n_contours] Highest & lowest NSqF: {max(nsqf_list):.3f} - {min(nsqf_list):.3f}")
+
+        # Just return the lowest non-square combination
+        indx = nsqf_list.index(min(nsqf_list))
+
+        if debug:
+            print(f" Returning combination #{indx} and nsqf {nsqf_list[indx]:.2f}")
+            comb = combination_list[indx]
+            print(f" Best combination types (should be arrays): {[type(i) for i in combination_list[indx]]}")
+            print("Ordered points:")
+            print(coordinate_list[indx])
+            #print(f"combination index list: {combination_index_list}")
+
+        return combination_list[indx] # Should return the top combination of four points
+        
+
+        # Sort the combinations by the least non-squareish (the most square)
+        # Sorting with help from https://stackoverflow.com/a/6618543/25598210
+        # sorted_combos = [x for _,x in sorted(zip(nsqf_list, combination_index_list))]
+        
+        # Unpack all combinations and remove duplicates into a sorted list of contour indices
+        # sorted_indices = []
+        # for combo in sorted_combos: # Unpack combos
+        #     combo = list(combo)
+        #     sorted_indices += [combo[0], combo[1], combo[2], combo[3]]
+
+        # if __name__ == "__main__": # TODO: Remove this before prod for speed
+        #     print(f" [filter_n_contours] Sorted and unpacked contour indices - Now removing duplicates")
+
+        #sorted_indices = list(dict.fromkeys(sorted_indices)) # This is the fastest way to remove duplicates while preserving order in Python.
+
+        #if __name__ == "__main__": # TODO: Remove this before prod for speed
+        #    print(f" [filter_n_contours] Duplicates removed: {sorted_indices}  - Now getting contours for each index.")
+
+        # Sorted contours
+        # return contours[sorted_indices[0]], contours[sorted_indices[1]], contours[sorted_indices[2]], contours[sorted_indices[3]]
+        # rtnlist = []
+        # iteration = 0
+        # for i in sorted_indices:
+        #     iteration +=1
+        #     rtnlist.append(contours[i])
+
+        #     if iteration==n: break
 
     assert len(rtnlist) <= n
     return rtnlist
@@ -334,12 +620,19 @@ def find_and_draw_contours(
     frame, frame_to_write_ontop_of, 
     save_output=False, do_draw_contours=True, 
     screensize=(1920,1024),
-    write_l_debug_circles=False,
-    save_intermediate=False
+    do_draw_cross=False,
+    do_draw_com_circles=False,
+    save_intermediate=False,
+    do_pose=False,
     ):
     """
     Finds and draws contours on an image, filtering for valid and virgin contours.
     Frames are BGR. 
+
+    do_draw_cross draws the green X with magenta circles for midpoints of the 
+    best estimated points.
+
+    do_draw_com_circles draws center of mass circles.
     """
     # Grayscale the image and find all the contours
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -348,39 +641,58 @@ def find_and_draw_contours(
     frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
 
     if save_intermediate:
-        cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_1_greyscale.png"), frame)
+        cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_1_greyscale.ignore.png"), frame)
 
     
-    #print "contours:",len(contours)
-    #print "largest contour has ",len(contours[0]),"points"
-
-    # Draw all contours
-    # a lot of this I got from https://stackoverflow.com/a/74620309/25598210
-    #if do_draw_contours: draw_contours(frame_to_write_ontop_of,contours_tree,color=(0,200,200)) # All contours - yellowish - RGB
+    if save_output:
+        print(f" Found {len(contours_tree)} total contours.")
+        raw_frame_to_write_ontop_of = frame_to_write_ontop_of.copy()
+        big_four_frame_write = frame_to_write_ontop_of.copy()
+        pose_frame_write = frame_to_write_ontop_of.copy()
     
-    #endregion oldcode
-
+    
+    # Get contours without children
     virgin_contours_list = virgin_contours(contours_tree, hierarchy_tree)
+    
+    if save_output:
+        print(f" Found {len(virgin_contours_list)} total virgin contours")
+
     virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize, filter_l=False)
+    
+    if save_output:
+        print(f" Filtered virgins, now {len(virgin_contours_list)} virgin contours")
 
     # Simplify the contours - see https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html
-    copy_ = []
-    for contour in virgin_contours_list:
-        # Simplify the contour
-        copy_.append(simplify_contour(contour, n_corners=6))
-        #TODO: also look into the Ramer–Douglas–Peucker algorithm for simplification
     
-    virgin_contours_list = copy_.copy()
-    del copy_
-
+    virgin_contours_list = [simplify_contour(contour, n_corners=6) for contour in virgin_contours_list]
+    #TODO: also look into the Ramer–Douglas–Peucker algorithm for simplification
+    
     # Filter contours once more, but with L-shape filtering
     #virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize, filter_l=True)
 
     # Filter out the four corners
-    big_four = filter_n_contours(virgin_contours_list, n=4)
+    big_four = filter_n_contours(virgin_contours_list.copy(), n=4, filter_by="drew algorithm")
 
+    #if __name__ == "__main__": print(f"Big four={big_four}") #DEBUG
+
+
+    if len(big_four)==4:
+        if save_output:
+            draw_cross(big_four_frame_write, big_four)
+            
+        
+        if do_pose and save_output:
+            draw_cross(pose_frame_write, big_four)
+            draw_pose(pose_frame_write, big_four)
+        
+        elif do_pose:
+            draw_pose(frame_to_write_ontop_of, big_four)
+        
+        if do_draw_cross:
+            draw_cross(frame_to_write_ontop_of, big_four)
+        
     # Filter out the four corners??
-    virgin_contours_list = filter_n_contours(virgin_contours_list, n=4)
+    #virgin_contours_list = filter_n_contours(virgin_contours_list, n=4)
 
     # Do some visualization stuff
     if do_draw_contours:
@@ -394,27 +706,27 @@ def find_and_draw_contours(
         # Draw contours
         draw_contours(frame_to_write_ontop_of, virgin_contours_list,color=(255,249,130))
 
-    draw_center_of_mass_circles(frame_to_write_ontop_of, virgin_contours_list)
+    if do_draw_com_circles:
+        draw_center_of_mass_circles(frame_to_write_ontop_of, virgin_contours_list)
 
     #if save_intermediate:
     #    cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_2_virgin_contours_before_l_filter.png"), frame_to_write_ontop_of)
     #    cv2.imwrite(os.path.join(LOCAL_PATH,"fadc_2_before_l_COM_Circles.png"), draw_center_of_mass_circles(frame.copy(), virgin_contours_list))
     
     if save_output:
-        print(f" Found {len(contours_tree)} total contours.")
-        print(f" Found {len(virgin_contours_list)} good contours.")
+        #print(f" Found {len(contours_tree)} total contours.")
+        #print(f" Found {len(virgin_contours_list)} virgin contours.")
         #print("largest contour has ",len(contours_tree[highest_instance[0]]),"points")
-        cv2.imwrite(os.path.join(LOCAL_PATH,"contours.png"), frame_to_write_ontop_of)
-        cv2.imwrite(os.path.join(LOCAL_PATH,"COM_Circles.png"), draw_center_of_mass_circles(frame.copy(), virgin_contours_list))
-        cv2.imwrite(os.path.join(LOCAL_PATH,"big_four.png"), draw_center_of_mass_circles(frame_to_write_ontop_of.copy(), big_four))
+        cv2.imwrite(os.path.join(LOCAL_PATH,"contours.ignore.png"), frame_to_write_ontop_of)
+        cv2.imwrite(os.path.join(LOCAL_PATH,"COM_Circles.ignore.png"), draw_center_of_mass_circles(frame.copy(), virgin_contours_list))
+        cv2.imwrite(os.path.join(LOCAL_PATH,"big_four.ignore.png"), draw_center_of_mass_circles(big_four_frame_write, big_four))
+        cv2.imwrite(os.path.join(LOCAL_PATH,"pose.ignore.png"), pose_frame_write)
 
-    if write_l_debug_circles:
-        draw_center_of_mass_circles(frame_to_write_ontop_of, virgin_contours_list)
 
 #endregion Contours Stuff
     
 
-def analyze_video(video_path, save_output=False,save_raw=False):
+def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, undistort=False):
     """ 
     Analyzes a given video at video_path, draws contours stuff,
     and saves it as output.mp4 and output_ontop.mp4
@@ -467,10 +779,21 @@ def analyze_video(video_path, save_output=False,save_raw=False):
             pos_frame = cap.get(1)
             print(f"Frame {pos_frame} ",end='\r')
             
+            if undistort:
+                frame = undistort(frame, save_output=save_output)
+
             new_frame = clean_image(filter_binarize(frame, save_output=save_output, save_raw=save_raw)[0])
             
-            find_and_draw_contours(new_frame, frame, save_output=False, screensize=(width, height))
-            
+            find_and_draw_contours(
+                new_frame, frame, save_output=False, screensize=(width, height), 
+                do_draw_contours=False, do_draw_cross=True, do_draw_com_circles=True, do_pose=do_pose
+            )
+
+            if undistort:
+                # If undistorted, resize so the video writer doesn't freak out
+                frame = cv2.resize(frame, (width, height))
+                new_frame = cv2.resize(new_frame, (width, height))
+
             writer_ontop.write(frame)
             writer.write(new_frame)
 
@@ -486,7 +809,7 @@ def analyze_video(video_path, save_output=False,save_raw=False):
 
 
 
-def analyze_frame(frame, save_output=False, save_raw=False, write_l_debug_circles=True):
+def analyze_frame(frame, save_output=False, save_raw=False, do_draw_cross=False, do_draw_com_circles=False, do_pose=False):
     """ Gets most likely pose of nugget from frame. """
 
     height, width, channels = frame.shape
@@ -494,7 +817,14 @@ def analyze_frame(frame, save_output=False, save_raw=False, write_l_debug_circle
     
     new_frame = clean_image(filter_binarize(frame, save_output=save_output, save_raw=save_raw)[0])
     
-    find_and_draw_contours(new_frame, new_frame, save_output=save_output, screensize=screensize, write_l_debug_circles=write_l_debug_circles, save_intermediate=save_raw)
+    find_and_draw_contours(
+        new_frame, new_frame, save_output=save_output, 
+        screensize=screensize,
+        save_intermediate=save_raw,
+        do_draw_com_circles=do_draw_com_circles,
+        do_draw_cross=do_draw_cross,
+        do_pose=do_pose,
+        )
 
     return new_frame
 
@@ -530,10 +860,39 @@ if __name__ == "__main__":
     #cap.release()
     DO_VIDEO = False
 
+    args = sys.argv[1:] # Take all arguments (first one is name of this script)
+
+    in_file_override = None
+    do_pose = False
+    do_undistort = False
+
+    for arg in args:
+        if "do_video" in arg.lower():
+            DO_VIDEO=True
+            print("Video Override set.")
+
+        if "infile" in arg.lower():
+            in_file_override = arg[arg.index("=")+1:]
+            print("Input file override set.")
+
+        if "do_pose" in arg.lower() and not(arg.lower().endswith("false")):
+            do_pose = True
+            print("do_pose overridden to True.")
+
+        if ("do_undistort" in arg.lower() or "undistort" in arg.lower()) and not(arg.lower.endswith("false")):
+            do_undistort = True
+            print("do_undistort overridden to True.")
+
+
     if DO_VIDEO:
         print("doing video now")
         time_start = time.time()
-        num_frames = analyze_video(os.path.join(LOCAL_PATH,"receptacle_example.mp4"))
+        if in_file_override==None:
+            num_frames = analyze_video(os.path.join(LOCAL_PATH,"receptacle_example.mp4"), do_pose=do_pose)
+        
+        else:
+            num_frames = analyze_video(in_file_override, do_pose=do_pose)
+
         time_end = time.time()
         time_taken = time_end - time_start
         print(f"That took {time_taken:.4f} seconds ({num_frames/time_taken:.2f} FPS)")
@@ -542,17 +901,12 @@ if __name__ == "__main__":
         print("Analyzing frame...")
         frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench.png"))
 
-        frametwo = frame.copy()
-        h,  w = frame.shape[:2]
-        newcameramtx, roi = cv2.getOptimalNewCameraMatrix(cam_mat, dist_coef, (w,h), 1, (w,h))
+        if in_file_override!=None:
+            frame = cv2.imread(in_file_override)
 
-        # undistort
-        dst = cv2.undistort(frametwo, cam_mat, dist_coef, None, newcameramtx)
-        # crop the image
-        x, y, w, h = roi
-        dst = dst[y:y+h, x:x+w]
-        cv2.imwrite(os.path.join(LOCAL_PATH,"undistorted.png"), dst)
-
+        
+        #frame = undistort(frame, save_output=True)
+        
         #frame = cv2.imread(os.path.join(LOCAL_PATH,"example_vid_30.png"))
         #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_3.png"))
         #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_cropped.PNG"))
@@ -574,6 +928,6 @@ if __name__ == "__main__":
 
         # cv2.imwrite(os.path.join(LOCAL_PATH,"canny_corners.png"), canny_corners)
 
-        analyze_frame(frame, save_output=True, save_raw=True, write_l_debug_circles=True)
+        analyze_frame(frame, save_output=True, save_raw=True, do_draw_com_circles=True, do_draw_cross=True, do_pose=do_pose)
 
 #endregion Procedural
