@@ -726,7 +726,7 @@ def find_and_draw_contours(
 #endregion Contours Stuff
     
 
-def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, undistort=False):
+def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, undistort=False, save_at_frame=False, frame_number=740):
     """ 
     Analyzes a given video at video_path, draws contours stuff,
     and saves it as output.mp4 and output_ontop.mp4
@@ -736,6 +736,8 @@ def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, u
     the video will be saved.
 
     Returns the number of frames. 
+
+    If save_at_frame is True, saves the nth frame of the video, where n is frame_number.
     """
 
     print("Now doing video...")
@@ -778,6 +780,12 @@ def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, u
             #cv2.imshow('video', frame)
             pos_frame = cap.get(1)
             print(f"Frame {pos_frame} ",end='\r')
+
+            if save_at_frame and num_frames>=frame_number:
+                 cv2.imwrite(os.path.join(LOCAL_PATH,str(int(frame_number))+".png"), frame)
+                 exit()
+            elif save_at_frame:
+                continue
             
             if undistort:
                 frame = undistort(frame, save_output=save_output)
