@@ -192,8 +192,8 @@ def clean_image(frame,save_output=False):
     return frame
 
 
-def draw_contours(frame, contours: list, color=(0,255,0)): #TODO: remove this - it's a oneliner
-    cv2.drawContours(frame, contours, -1, color, 2) 
+def draw_contours(frame, contours: list, color=(0,255,0), thickness=2): #TODO: remove this - it's a oneliner
+    cv2.drawContours(frame, contours, -1, color, thickness) 
 
 def draw_pose(img, corner_contours):
     """
@@ -319,6 +319,10 @@ def undistort(frame, save_output=False):
     dst = dst[y:y+h, x:x+w]
     if save_output: cv2.imwrite(os.path.join(LOCAL_PATH,"undistorted.ignore.png"), dst)
     return dst
+
+
+def image_debug_text(img, text):
+    cv2.putText(img,text, (0, int(img.shape[0]-10)), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,0,255),2,2)
 
 #endregion Image Stuff
 
@@ -636,7 +640,7 @@ def find_and_draw_contours(
     """
     # Grayscale the image and find all the contours
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    contours_tree, hierarchy_tree = cv2.findContours(frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours_tree, hierarchy_tree = cv2.findContours(frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) # see https://stackoverflow.com/a/71891581/25598210
     
     frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
 
@@ -656,16 +660,42 @@ def find_and_draw_contours(
     
     if save_output:
         print(f" Found {len(virgin_contours_list)} total virgin contours")
+    
+    if save_intermediate: # Save intermediate image for debug
+        print("    (saved as contours-virgins-0.ignore.png)")
+        contours_virgins_zero_frame = raw_frame_to_write_ontop_of.copy()
+        draw_contours(contours_virgins_zero_frame, virgin_contours_list)
+        contours_virgins_one_frame = contours_virgins_zero_frame.copy()
+        image_debug_text(contours_virgins_zero_frame, f"{len(virgin_contours_list)} virgin contours")
+        cv2.imwrite(os.path.join(LOCAL_PATH,"contours-virgins-0.ignore.png"), contours_virgins_zero_frame)
+        draw_contours(contours_virgins_one_frame, virgin_contours_list, color=(0,100,0)) # Dark green contours for filtered contours to be more prominent
+
 
     virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize, filter_l=False)
     
     if save_output:
         print(f" Filtered virgins, now {len(virgin_contours_list)} virgin contours")
+    
+    if save_intermediate: # Save intermediate image for debug
+        print("    (saved as contours-virgins-1.ignore.png)")
+        draw_contours(contours_virgins_one_frame, virgin_contours_list)
+        image_debug_text(contours_virgins_one_frame, f"{len(virgin_contours_list)} virgin contours")
+        cv2.imwrite(os.path.join(LOCAL_PATH,"contours-virgins-1.ignore.png"), contours_virgins_one_frame)
 
     # Simplify the contours - see https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html
-    
-    virgin_contours_list = [simplify_contour(contour, n_corners=6) for contour in virgin_contours_list]
-    #TODO: also look into the Ramer–Douglas–Peucker algorithm for simplification
+    SIMPLIFY = True # for debug
+    if SIMPLIFY:
+        virgin_contours_list = [simplify_contour(contour, n_corners=6) for contour in virgin_contours_list]
+        #TODO: also look into the Ramer–Douglas–Peucker algorithm for simplification
+
+        if save_intermediate: # Save intermediate image for debug
+            print("    (saved as contours-virgins-2-simple.ignore.png)")
+            contours_virgins_simple_frame = raw_frame_to_write_ontop_of.copy()
+            draw_contours(contours_virgins_simple_frame, virgin_contours_list)
+            for cnt in virgin_contours_list:
+                draw_contour_points(contours_virgins_simple_frame, cnt)
+            image_debug_text(contours_virgins_simple_frame, f"{len(virgin_contours_list)} virgin contours")
+            cv2.imwrite(os.path.join(LOCAL_PATH,"contours-virgins-2-simple.ignore.png"), contours_virgins_simple_frame)
     
     # Filter contours once more, but with L-shape filtering
     #virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize, filter_l=True)
@@ -680,7 +710,6 @@ def find_and_draw_contours(
         if save_output:
             draw_cross(big_four_frame_write, big_four)
             
-        
         if do_pose and save_output:
             draw_cross(pose_frame_write, big_four)
             draw_pose(pose_frame_write, big_four)
