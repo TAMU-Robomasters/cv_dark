@@ -71,7 +71,7 @@ message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
 def when_aiming_refreshes():
     global port
     capture_time =  getattr(video_stream, 'capture_time', 0)
-    capture_delay = min(int(time()*1E3 - capture_time), 255) / 1E3 # max 0.255s delay
+    capture_delay = min(int(time()*1E3 - capture_time), 255) # max 255 ms delay
 
     # Sending XYZ position (meters), velocity, acceleration, time since frame capture, and status of target relative to front of camera plane
     if runtime.aiming.target_3d is None:
@@ -80,7 +80,7 @@ def when_aiming_refreshes():
         
         # estimating where the target is currently at
         #! not sure if this works
-        target_kinematic_state = kf_3d.forward_predict(capture_delay)
+        target_kinematic_state = kf_3d.forward_predict(capture_delay / 1E3) # KF works with seconds for time
         message_to_embedded.X = target_kinematic_state[0]
         message_to_embedded.Y = target_kinematic_state[1]
         message_to_embedded.Z = target_kinematic_state[2]
