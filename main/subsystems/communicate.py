@@ -71,7 +71,7 @@ message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
 def when_aiming_refreshes():
     global port
     capture_time =  getattr(video_stream, 'capture_time', 0)
-    capture_delay = min(int(time()*1000 - capture_time), 255) # max 255 ms delay
+    capture_delay = min(int(time()*1E3 - capture_time), 255) / 1E3 # max 0.255s delay
 
     # Sending XYZ position (meters), velocity, acceleration, time since frame capture, and status of target relative to front of camera plane
     if runtime.aiming.target_3d is None:
