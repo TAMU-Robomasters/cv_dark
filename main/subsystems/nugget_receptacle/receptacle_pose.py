@@ -130,10 +130,7 @@ def filter_binarize(frame, save_output=False, save_raw=False):
 
     Takes in BGR frame, outputs the new frame (BGR) and mask (Greyscale) 
     """
-    # Convert to hsv
-    #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-    # Threshold of colors we want in HSV space 
+    # Threshold of colors we want in BGR space 
     bounds_lower = np.array([180, 150, 150]) # 50 120 85
     bounds_upper = np.array([255, 255, 255]) # 80 255 255
 
@@ -142,16 +139,12 @@ def filter_binarize(frame, save_output=False, save_raw=False):
 
     # Mask the frame
     result = cv2.bitwise_and(frame, frame, mask = mask) 
-    
-    # Convert the masked frame back to BGR
-    #result = cv2.cvtColor(result, cv2.COLOR_HSV2BGR)
 
     # Save output if respective arguments are true
     if save_output:
         cv2.imwrite(os.path.join(LOCAL_PATH,"binarized.ignore.png"), 
             result)
         if save_raw:
-            #frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
             cv2.imwrite(os.path.join(LOCAL_PATH,"raw.ignore.png"), frame)
             cv2.imwrite(os.path.join(LOCAL_PATH,"raw-gray.ignore.png"), cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY))
         cv2.imwrite(os.path.join(LOCAL_PATH,"mask.ignore.png"), mask)
