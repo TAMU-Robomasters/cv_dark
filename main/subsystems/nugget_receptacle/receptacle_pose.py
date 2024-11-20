@@ -131,10 +131,10 @@ def filter_binarize(frame, save_output=False, save_raw=False):
     Takes in BGR frame, outputs the new frame (BGR) and mask (Greyscale) 
     """
     # Convert to hsv
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # Threshold of colors we want in HSV space 
-    bounds_lower = np.array([0, 0, 200]) # 50 120 85
+    bounds_lower = np.array([180, 150, 150]) # 50 120 85
     bounds_upper = np.array([255, 255, 255]) # 80 255 255
 
     # Preparing the mask to overlay 
@@ -144,15 +144,16 @@ def filter_binarize(frame, save_output=False, save_raw=False):
     result = cv2.bitwise_and(frame, frame, mask = mask) 
     
     # Convert the masked frame back to BGR
-    result = cv2.cvtColor(result, cv2.COLOR_HSV2BGR)
+    #result = cv2.cvtColor(result, cv2.COLOR_HSV2BGR)
 
     # Save output if respective arguments are true
     if save_output:
         cv2.imwrite(os.path.join(LOCAL_PATH,"binarized.ignore.png"), 
             result)
         if save_raw:
-            frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
+            #frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
             cv2.imwrite(os.path.join(LOCAL_PATH,"raw.ignore.png"), frame)
+            cv2.imwrite(os.path.join(LOCAL_PATH,"raw-gray.ignore.png"), cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY))
         cv2.imwrite(os.path.join(LOCAL_PATH,"mask.ignore.png"), mask)
 
     # Return the result and the mask
@@ -166,25 +167,30 @@ def clean_image(frame,save_output=False):
     Returns a cleaned version of the given frame in BGR. 
     """
     # Convert to hsv
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-    # Use Morph Open to decrease noise
-    kernel = np.ones((4,4),np.uint8)
-    frame = cv2.morphologyEx(frame, cv2.MORPH_OPEN, kernel)
-    if save_output:
-        cv2.imwrite(os.path.join(LOCAL_PATH,"morph_open.ignore.png"), frame)
+    #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     
+
     # Use Morph Close to decrease noise
-    kernel = np.ones((4,4),np.uint8)
+    kernel = np.ones((3,10),np.uint8)
+    #frame = cv2.erode(frame, kernel, iterations=1)
     frame = cv2.morphologyEx(frame, cv2.MORPH_CLOSE, kernel)
     if save_output:
         cv2.imwrite(os.path.join(LOCAL_PATH,"morph_close.ignore.png"), frame)
+    
+    # Use Morph Open to decrease noise
+    kernel = np.ones((3,3),np.uint8)
+    frame = cv2.morphologyEx(frame, cv2.MORPH_OPEN, kernel)
+    if save_output:
+        cv2.imwrite(os.path.join(LOCAL_PATH,"morph_open.ignore.png"), frame)
+
+
+    
 
     # Sharpening (isn't tuned very well so I'm disabling it for now)
     #kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
     #frame = cv2.filter2D(frame, -1, kernel)
     #if save_output:
-    #    cv2.imwrite("/home/drewwingfield/TAMURobomasters/cv_dark.git/drew_detection/source/sharpen.ignore.png", frame)
+    #    cv2.imwrite(os.path.join(LOCAL_PATH,"sharpen.ignore.png"), frame)
     
     # Convert back to BGR
     frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
@@ -852,7 +858,7 @@ def analyze_frame(frame, save_output=False, save_raw=False, do_draw_cross=False,
     height, width, channels = frame.shape
     screensize = (width, height)
     
-    new_frame = clean_image(filter_binarize(frame, save_output=save_output, save_raw=save_raw)[0])
+    new_frame = clean_image(filter_binarize(frame, save_output=save_output, save_raw=save_raw)[0], save_output=save_output)
     
     find_and_draw_contours(
         new_frame, new_frame, save_output=save_output, 

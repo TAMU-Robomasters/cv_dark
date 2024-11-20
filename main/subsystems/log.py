@@ -163,8 +163,8 @@ def generate_image(fps=0):
     if depth_compatible:
         disp_target_3d = [round(x, 3) for x in target_3d] if target_3d else ["NAN, NAN, NAN"]
         image.add_text(text=f"target_3d: {    disp_target_3d         }", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"status: {           status.name            }", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"fps: {              fps                :.2f}", location=(x_location, y_location)); y_location += 50
+    #image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50
+    #image.add_text(text=f"status: {           status.name            }", location=(x_location, y_location)); y_location += 50
+    #image.add_text(text=f"fps: {              fps                :.2f}", location=(x_location, y_location)); y_location += 50
         
     return image
