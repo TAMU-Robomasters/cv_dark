@@ -317,7 +317,7 @@ def generate_image(fps=0):
         disp_target_3d = [round(x, 3) for x in target_3d] if target_3d else ["NAN, NAN, NAN"]
         image.add_text(text=f"target_3d: {    disp_target_3d         }", location=(x_location, y_location)); y_location += 50
         if display_kf_prediction:
-            if target_3d_kinematic_state != None:
+            if str(type(target_3d_kinematic_state)) != str(type(None)):
                 image.add_text(text=f"target_3d_state: P {target_3d_kinematic_state[0]}:2f, {target_3d_kinematic_state[1]}:2f, {target_3d_kinematic_state[2]}:2f",  location=(x_location, y_location)); y_location += 50
                 image.add_text(text=f"target_3d_state: V {target_3d_kinematic_state[3]}:2f, {target_3d_kinematic_state[4]}:2f, {target_3d_kinematic_state[5]}:2f",  location=(x_location, y_location)); y_location += 50
                 image.add_text(text=f"target_3d_state: p {target_3d_kinematic_state[6]}:2f, {target_3d_kinematic_state[7]}:2f, {target_3d_kinematic_state[8]}:2f",  location=(x_location, y_location)); y_location += 50
