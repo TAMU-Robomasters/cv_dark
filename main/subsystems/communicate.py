@@ -80,6 +80,7 @@ def when_aiming_refreshes():
         
         # estimating where the target is currently at
         #! not sure if this works
+        print(f"dt communicate.py: {capture_delay / 1E3}")
         target_kinematic_state = kf_3d.forward_predict(capture_delay / 1E3) # KF works with seconds for time
         message_to_embedded.X = target_kinematic_state[0]
         message_to_embedded.Y = target_kinematic_state[1]

@@ -61,6 +61,7 @@ def when_bounding_boxes_refresh():
     center_point            = Position((0, 0))
     center_point_prediction = Position((0, 0))
     target_3d_prediction    = Position((0, 0, 0))
+    target_kinematic_state  = None
 
     validBoxes          = []
     validConfidences    = []
@@ -121,7 +122,9 @@ def when_bounding_boxes_refresh():
             if frame_delay > 0.255:
                 print(f"Warming frame delay of {frame_delay} is really high")
             # this contains the prediction of all the state variables [x, vx, ax, y, vy, ay, z, vz, az]
-            forward_prediction = kf_3d.forward_predict(frame_delay) 
+            forward_prediction = kf_3d.forward_predict(frame_delay)
+            print(f"dt aim.py: {frame_delay}")
+            target_kinematic_state = forward_prediction
             target_3d_prediction = Position((forward_prediction[0], forward_prediction[3], forward_prediction[6]))
     else:
         # if camera is not depth capable, find best box
@@ -166,6 +169,7 @@ def when_bounding_boxes_refresh():
     runtime.aiming.best_bounding_box        = best_bounding_box
     runtime.aiming.current_confidence       = current_confidence
     runtime.aiming.target_3d_prediction     = target_3d_prediction
+    runtime.aiming.target_kinematic_state   = target_kinematic_state
 
 
 # 
