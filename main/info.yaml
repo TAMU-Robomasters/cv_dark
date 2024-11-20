@@ -196,7 +196,7 @@
             log:
                 display_live_frames: true
         
-        
+        j
         SHOWTIME:
             mode: production
             log:
@@ -214,7 +214,7 @@
         LOG:
             log:
                 disable_all_logging: false
-                display_live_frames: false
+                display_live_frames: true
                 save_rate: 1 # every frame (1 frame per frame)
                 save_frame_to_file: true
                 save_depth: false
