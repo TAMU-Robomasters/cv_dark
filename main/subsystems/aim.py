@@ -124,6 +124,7 @@ def when_bounding_boxes_refresh():
             # this contains the prediction of all the state variables [x, vx, ax, y, vy, ay, z, vz, az]
             forward_prediction = kf_3d.forward_predict(frame_delay)
             print(f"dt aim.py: {frame_delay}")
+            print(f"pos aim.py: {forward_prediction[0]}, {forward_prediction[3]}, {forward_prediction[6]}")
             target_kinematic_state = forward_prediction
             target_3d_prediction = Position((forward_prediction[0], forward_prediction[3], forward_prediction[6]))
     else:
