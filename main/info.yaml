@@ -196,7 +196,7 @@
             log:
                 display_live_frames: true
         
-        j
+        
         SHOWTIME:
             mode: production
             log:
