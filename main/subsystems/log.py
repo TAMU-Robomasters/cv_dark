@@ -158,7 +158,8 @@ def generate_image(fps=0):
     target_3d          = runtime.aiming.target_3d
     status             = runtime.aiming.target_status
     
-    target_positions.append(list(target_3d))
+    if str(type(target_positions )) != str(type(None)):
+        target_positions.append(list(target_3d))
 
     image = Image(runtime.color_image)
 
