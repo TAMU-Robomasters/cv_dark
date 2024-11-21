@@ -99,7 +99,7 @@ def when_iteration_stops():
         color_video_writer.save()
         # save target positions over time
         target_positions = np.array(target_positions)
-        plt.plot(target_positions, marker='o', linestyle='-', color='b')
+        plt.plot(target_positions[:,0], marker='o', linestyle='-', color='b')
         # Add labels and title
         plt.xlabel('Index')
         plt.ylabel('Value')
