@@ -1,6 +1,6 @@
 import json
 import numpy as np 
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from time import time as now
 from datetime import datetime as dt
 
