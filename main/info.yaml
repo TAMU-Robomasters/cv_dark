@@ -170,7 +170,7 @@
                 camera_has_pose: true
             aiming:
                 # zed stream width/height pulled from camera on initialization
-                stream_framerate: 10
+                stream_framerate: 30
                 min_depth: 0.3
                 max_depth: 10.0
         CAMERA=REALSENSE:
@@ -185,7 +185,7 @@
                 color_stream_height: 540
                 depth_stream_width: 848
                 depth_stream_height: 480
-                stream_framerate: 60
+                stream_framerate: 10
                 min_depth: 0.2
                 max_depth: 10.0
         CAMERA=NONE:
