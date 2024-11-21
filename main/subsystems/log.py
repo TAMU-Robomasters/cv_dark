@@ -100,6 +100,8 @@ def when_iteration_stops():
         color_video_writer.save()
         # save target positions over time
         target_positions = np.array(target_positions)
+        
+        
         plt.plot(target_positions[:,0], marker='o', linestyle='-', color='b')
         # Add labels and title
         plt.xlabel('Index')
@@ -109,6 +111,8 @@ def when_iteration_stops():
         # Show the plot
         plt.show()
 
+        # save date to csv
+        np.savetxt(f'{absolute_path_to.record_video_output_color}-{video_stamp}.positions.ignore.csv', target_positions, delimiter=',', header='X_Position', comments='')
 
         if save_depth and depth_video_writer:
             depth_video_writer.save()
