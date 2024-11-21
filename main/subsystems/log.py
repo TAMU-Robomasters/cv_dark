@@ -1,4 +1,6 @@
 import json
+import numpy as np 
+import matplotlib as plt
 from time import time as now
 from datetime import datetime as dt
 
@@ -6,6 +8,8 @@ from toolbox.globals import path_to, config, print, runtime, absolute_path_to
 from toolbox.video_tools import Video, VideoWriter
 from toolbox.image_tools import Image, rgb
 from toolbox.cold_storage import ColdStorage
+
+target_positions = []
 
 
 # 
@@ -93,8 +97,21 @@ def when_iteration_stops():
     print(f"\naverage FPS: {avg_fps:.2f}")
     if save_frame_to_file:
         color_video_writer.save()
+        # save target positions over time
+        target_positions = np.array(target_positions)
+        plt.plot(target_positions, marker='o', linestyle='-', color='b')
+        # Add labels and title
+        plt.xlabel('Index')
+        plt.ylabel('Value')
+        plt.title('Plot of 1D Array')
+
+        # Show the plot
+        plt.show()
+
+
         if save_depth and depth_video_writer:
             depth_video_writer.save()
+
 # 
 # disable log check
 # 
@@ -139,6 +156,8 @@ def generate_image(fps=0):
     target_3d          = runtime.aiming.target_3d
     status             = runtime.aiming.target_status
     
+    target_positions.append(list(target_3d))
+
     image = Image(runtime.color_image)
 
     if len(bounding_boxes) > 0:
