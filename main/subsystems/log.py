@@ -146,6 +146,7 @@ def visualize_depth_frame(depth_frame_array):
 
 
 def generate_image(fps=0):
+    global target_positions
     color_image        = runtime.color_image
     found_robot        = runtime.modeling.found_robot
     current_confidence = runtime.modeling.current_confidence
