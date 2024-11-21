@@ -92,6 +92,7 @@ def when_finished_processing_frame():
         exit()
 
 def when_iteration_stops():
+    global target_positions
     # NOTE: this function might get run a couple times at exit (main.py calls it)
     avg_fps = runtime.total_fps / runtime.get("frame_number", 1)
     print(f"\naverage FPS: {avg_fps:.2f}")
