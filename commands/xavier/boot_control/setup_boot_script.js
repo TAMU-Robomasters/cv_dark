@@ -239,6 +239,7 @@ const actionsThatNeedSudo = `
 `
 
 try {
+    // NOTE: the run() command automatically shell-escapes its arguments
     var { code: exitCode } = await run`sudo bash -c ${actionsThatNeedSudo}`
 } catch (error) {
     
