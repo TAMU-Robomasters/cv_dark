@@ -14,7 +14,7 @@ import { Console, clearAnsiStylesFrom, black, white, red, green, blue, yellow, c
 // 
     // 1. this script sets up a systemd service
     // 2. on-boot that service gets triggered
-    // 3. that service MUST a bash script
+    // 3. that service MUST run a shell (bash) script
         // so this file generates/checks/ensures that bash script exists
             // and it makes sure all the permissions are correct
             // and it makes sure the repo/main.py didn't move
