@@ -69,6 +69,9 @@ class KF3D:
 
 
     def predict(self, dt=None):
+        # check dt 
+        # if dt is bigger than 200ms (5 fps)
+            # reset state variable to 1111111111
         if dt:
             self.kalman.processNoiseCov = np.array(
             [
