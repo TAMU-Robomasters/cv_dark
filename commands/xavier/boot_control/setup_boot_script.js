@@ -29,6 +29,9 @@ const pathToMainPy                 = `${projectFolder}/main/main.py`
 const nameOfStartService           = "cv_dark_boot"
 const autobootIdFile               = FileSystem.makeAbsolutePath(`${FileSystem.thisFolder}/autoboot_id`)
 
+// 
+// this initialized one time (no overwrite)
+// 
 const defaultBootCommand = `#!/usr/bin/env bash
 
 # Edit me as needed
@@ -41,6 +44,9 @@ python3 ${shellEscape(pathToMainPy)} \
     autoboot_id:"$(${shellEscape(autobootIdFile)})"
 `
 
+// 
+// this overwrites every time setup is run
+// 
 const contentsOfInfiniteRunScript = `#!/usr/bin/env bash
 
 # 
@@ -106,9 +112,6 @@ sudo -u "$this_username" -E this_username="$this_username" this_home="$this_home
     if (!FileSystem.sync.info(pathToMainPy).isFile) {
         throw Error(`\n\n\nI expected the main.py file to exist here:\n    ${pathToMainPy}\nBut it doesn't.\nOpen up the setup_boot_script.js file and fix that path to point to the actual file.\n\n`)
     }
-    if (!FileSystem.sync.info(pathToActualInfinteRunScript).isFile) {
-        throw Error(`\n\n\nI was going to tell the system to run this file:\n    ${pathToActualInfinteRunScript}\nBut it doesn't exist.\nOpen up the setup_boot_script.js file and fix that path to point to the actual file.\n\n`)
-    }
     if (!nameOfStartService.match(/^[a-zA-Z_][a-zA-Z0-9_]+$/)) {
         throw Error(`\n\nInside of ${FileSystem.thisFile}.\nYou must have changed the nameOfStartService to something with invalid characters.\nIt needs to be a valid variable name\n`)
     }
@@ -123,8 +126,8 @@ sudo -u "$this_username" -E this_username="$this_username" this_home="$this_home
 
 // 
 // 
-// note: everything below runs right-now
-// (but everything above sets what to do on-boot)
+// note: everything below runs right-now (user manually running the setup command)
+// the strings-of-code like contentsOfInfiniteRunScript are what is actually run during boot-up
 // 
 // 
 
