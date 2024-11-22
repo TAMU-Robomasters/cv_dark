@@ -7,6 +7,21 @@ import { FileSystem, glob } from "https://deno.land/x/quickr@0.6.72/main/file_sy
 import run from "https://esm.sh/jsr/@david/dax@0.42.0"
 import { Console, clearAnsiStylesFrom, black, white, red, green, blue, yellow, cyan, magenta, lightBlack, lightWhite, lightRed, lightGreen, lightBlue, lightYellow, lightMagenta, lightCyan, blackBackground, whiteBackground, redBackground, greenBackground, blueBackground, yellowBackground, magentaBackground, cyanBackground, lightBlackBackground, lightRedBackground, lightGreenBackground, lightYellowBackground, lightBlueBackground, lightMagentaBackground, lightCyanBackground, lightWhiteBackground, bold, reset, dim, italic, underline, inverse, strikethrough, gray, grey, lightGray, lightGrey, grayBackground, greyBackground, lightGrayBackground, lightGreyBackground, } from "https://deno.land/x/quickr@0.6.72/main/console.js"
 
+// 
+// 
+// How does this work
+// 
+// 
+    // 1. this script sets up a systemd service
+    // 2. on-boot that service gets triggered
+    // 3. that service MUST a bash script
+        // so this file generates/checks/ensures that bash script exists
+            // and it makes sure all the permissions are correct
+            // and it makes sure the repo/main.py didn't move
+            // and it keeps all the code in one place (here) so if you edit a name, you only edit it once (here) and then run the setup script again
+        // that bash script (which is the contentsOfInfiniteRunScript variable) is basically a wrapper around the actual command we care about
+        // the actual command we care about (pathToOnBootCommand) is also a bash script
+
 // helpers
 const shellEscape = (arg)=>"'"+arg.replace(/'/g,`'"'"'`)+"'"
 const userName = Deno.env.get("USER")
