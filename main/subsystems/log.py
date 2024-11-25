@@ -1,16 +1,17 @@
-import json
+"""
+All logging for cv's auto-aim system is done here.
+"""
 from time import time as now
 from datetime import datetime as dt
-
-from toolbox.globals import path_to, config, print, runtime, absolute_path_to
-from toolbox.video_tools import Video, VideoWriter
+from toolbox.globals import config, print, runtime, absolute_path_to
+from toolbox.video_tools import VideoWriter
 from toolbox.image_tools import Image, rgb
-from toolbox.cold_storage import ColdStorage
 
 
-# 
+
+#
 # config
-# 
+#
 display_live_frames       = config.log.display_live_frames
 save_frame_to_file        = config.log.save_frame_to_file
 save_depth                = config.log.save_depth
