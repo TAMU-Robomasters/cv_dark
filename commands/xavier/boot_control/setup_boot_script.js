@@ -245,7 +245,7 @@ try {
     
 }
 var success = exitCode == 0
-if (!sucess) {
+if (!success) {
     throw Error(`\n\nFailed: See above for details. For some reason the setup failed.`)
 }
 
