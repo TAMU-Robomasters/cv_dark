@@ -97,8 +97,8 @@ def when_frame_arrives():
         vision_marker_3ds = use_vision_depth(marker_corners)
    
         # filter 3d coord
-        # ! only works for one marker
-        # TODO change or back to end and uncomment realsense stuff
+        # ! only works for detecting one marker
+        # TODO implement realsense depth and uncomment realsense stuff
         if realsense_marker_3ds or vision_marker_3ds:
             vision_measurement = np.array([vision_marker_3ds[0][0], vision_marker_3ds[0][1]])
             # realsense_measurement = np.array([realsense_marker_3ds[0][0], realsense_marker_3ds[0][1]]) 
@@ -197,6 +197,9 @@ def use_realsense_depth(marker_corners):
         marker_3d_coords = []
         marker_bboxes = get_bounding_boxes(marker_corners)
         for marker_bbox in marker_bboxes:
+            # TODO: make min and max range constants in config for marker detection
+            # instead of armor plate detection
+            
             # check all of the bounding boxes, remove invalid ones if outside ranges
             sampled_depth = get_dist_to_bbox(marker_bbox)
             if sampled_depth is None:

@@ -26,6 +26,7 @@ atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_itera
 
 # Run detection infinitely
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
+    # Temporary code that only runs marker detection
     if marker_detection:
         camera_position.when_frame_arrives()
         log.when_finished_processing_frame()
