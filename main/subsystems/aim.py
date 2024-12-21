@@ -68,7 +68,7 @@ def when_bounding_boxes_refresh():
     if DEPTH_COMPATIBLE:
         for box,confidence in zip(enemy_boxes,enemy_confidences):
             # check all of the boxes, remove invalid ones if outside ranges
-            sampled_depth = get_dist_to_bbox(box)
+            sampled_depth = get_dist_to_bbox(box) # use this function to find the distance
             if sampled_depth is None:
                 continue
             elif sampled_depth < MIN_RANGE:
