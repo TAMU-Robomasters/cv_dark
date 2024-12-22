@@ -1,0 +1,26 @@
+# box only has x and y
+
+# we r slicing to get whatever's in the boudning box
+
+#the whole image/current frame is the array which contains x y and three channels for r b g
+
+#in numpy you can index slice so you only lookat the part that's enclosed by the bounding box.
+
+
+#x, y, width, height for each sublist in the list "boxes"
+def icon_classification(frame: 3d array, boxes: list of box coordinates (list of lists)) {
+
+    retun list of classifications corresponding to the list of box coordinates
+}
+
+#everytime we loop in main, we store the frame in runtime.color_image
+
+#within aim, sinc eruntime is already imorted, 
+# #the function is un aim so you can either pass the fram as an 
+# #argument in the function we're defining or you could import runtime 
+# #inside the definition script.
+
+
+
+# we should make a big function called calssification(frame, boxes,)
+#outputs -> list of classificatons for each box
