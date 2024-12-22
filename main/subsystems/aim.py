@@ -10,6 +10,7 @@ from statistics import mean as average
 from toolbox.globals import path_to, config, print, runtime, time_synchronized
 from toolbox.geometry_tools import Position, BoundingBox
 from subsystems.video_stream import video_stream
+from toolbox.icon_classification import predict_icons
 
 class TargetStatus(Enum):
     TARGET_NONE = 0
@@ -65,9 +66,11 @@ def when_bounding_boxes_refresh():
     best_target_3d = (0,0,0)
 
     # if found_robot:
+
+    # Filter boxes by depth data
     if DEPTH_COMPATIBLE:
         for box,confidence in zip(enemy_boxes,enemy_confidences):
-            # check all of the boxes, remove invalid ones if outside ranges
+            # Check all of the boxes, remove invalid ones if outside ranges
             sampled_depth = get_dist_to_bbox(box)
             if sampled_depth is None:
                 continue
@@ -83,7 +86,7 @@ def when_bounding_boxes_refresh():
                     # target_status = TargetStatus.TARGET_NONE
                 else:
                     validBoxes.append(box)
-                    validConfidences.append(confidence)
+                    validConfidences.append(confidence)#
                     valid3dTargets.append(target_3d_test)
                 #     target_status = TargetStatus.TARGET_FOUND
         if (validBoxes == []):
@@ -91,7 +94,13 @@ def when_bounding_boxes_refresh():
         else:
             target_status = TargetStatus.TARGET_FOUND
     else:
+        # If not depth compatible (not running on the Jetson)
         target_status = TargetStatus.TARGET_FOUND
+
+        # Do icon detection - predict the icon
+        icons_predicted = predict_icons(runtime.color_image, enemy_boxes, DEBUG=False)
+
+
 
         # target_status = TargetStatus.TARGET_FOUND
     # now that we have the valid boxes lets compute the best ones as 3dtargets

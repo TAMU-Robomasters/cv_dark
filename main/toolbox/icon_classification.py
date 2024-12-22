@@ -1,36 +1,74 @@
-# box only has x and y
-# slice to get what's in the bounding box
-#whole image/current frame is array which contains x, y, and three channels for r b g
-#index slice via numpy to only look at the part enclosed by the bounding box
 
-# x, y, width, height for each sublist in the list "boxes"
+import cv2
+
+import numpy as np
+
+from toolbox.drew_tools.drew_image_tools import clean_image, filter_img, find_and_draw_contours
+
+def detect_numbers(frame, bounding_boxes, DEBUG:bool=False):
+
+    new_frame = clean_image(filter_img(frame, save_output=DEBUG, save_raw=DEBUG)[1], save_output=DEBUG, kernel=np.ones((1,1),np.uint8))
+    contoured_image = frame.copy()
+    find_and_draw_contours(new_frame, contoured_image, save_output=DEBUG)
+    # bounding_boxes is a list of box coordinates --> x, y, width, height
+    # valid_boxes from aim.py is the list of bounding boxes to run icon detection on
+    # frame is 3d array --> x, y, [r, g, b], (rows, columns, channels)
+    print(frame[0][0]) # x, y
 
 
-# return list of classifications corresponding to the list of box coordinates
 
-# frame is list r g b for each screenframe, every 3 items in frame is a screenframe. frame is ur entire 3D array.
-def icon_classification(frame, boxes):
-    print("the frame shape: ")
-    print(frame.shape)
-    print("the frame: ")
-    print(frame)
-    print("the size of boxes: ")
-    print(len(boxes))
-    print("the boxes: ")
-    print(boxes)
-    #for i in boxes:
-    #    print(i)
-    print('\n')
 
-    print(len(frame[0]))
-    print('\n')
+def get_cropped_image(frame, bounding_boxes, show_image:bool=True):
+    """ Gets cropped image of armor panel from frame. """
+    # list of cropped images
+    cropped_images = []
+    n = 0 # Current box
 
-#everytime we loop in main, we store the frame in runtime.color_image
-#within aim, since runtime is already imported
-# the function is in aim so you can either pass the frame as an
-# argument in the function we're defning or you could import runtime
-# inside the definition script
-# output -> list of classifications for each box
+    # we need to extract x, y, width, height from bounding box
+    for box in bounding_boxes:
+        x = int(box.x_top_left)
+        y = int(box.y_top_left)
+        width = int(box.width)
+        height = int(box.height)
 
-# I'm guessing enemy_boxes is the list of all boxes. Currently it cannot distinguish between enemy and team 
-# bots so enemy_boxes is just all detected boxes.
+        
+        # slice cropped image from frame
+        cropped_image = frame[y:y+height+1, x:x+width+1, :]
+
+        # insert into list
+        cropped_images.append(cropped_image)
+        
+        cv2.imwrite(f"toolbox/cropped/cropped_image_{n}.jpg", cropped_image) #DEBUG
+        n += 1
+
+        # show cropped image
+        if show_image:
+            cv2.imshow("Cropped image", cropped_image)
+            cv2.waitKey()
+
+        # testing to see shape of cropped image
+        #print(cropped_image.shape)
+    
+    if show_image:
+        cv2.destroyAllWindows()
+    
+    #raise Exception("This will stop the program for debug purposes.")
+
+    return cropped_images
+
+
+def predict_icons(frame, bounding_boxes, DEBUG:bool=False):
+
+    if DEBUG: print(f"[icon_classification.py][predict_icon] Cropping {len(bounding_boxes)} images")
+    cropped_imgs = get_cropped_image(frame, bounding_boxes, show_image=False)
+    if DEBUG: print("[icon_classification.py][predict_icon] Images cropped. Detecting numbers")
+    numbers = []
+    for cropped_icon in cropped_imgs[:1]:
+        numbers.append(detect_numbers(cropped_icon, bounding_boxes, DEBUG=DEBUG))
+    
+    # Stop the program if DEBUG is true before returning
+    if DEBUG:
+        if DEBUG: print(f"[icon_classification.py][predict_icon] Numbers detected ({numbers})")
+        raise Exception("DEBUG is True - Stopping program.")
+
+    return "placeholder icon name"
