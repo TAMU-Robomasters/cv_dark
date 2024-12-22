@@ -6,6 +6,9 @@ import sys
 import os
 import pyston_lite
 
+# run commmand: python3 main/main.py @CAMERA=REALSENSE @GUI
+# run command with embedded: python3 main/main.py @CAMERA=REALSENSE @GUI @BOARD=XAVIER 
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from toolbox.globals import config, runtime, time_synchronized, print
 from toolbox.autoboot_check import throw_if_autoboot_is_already_running
@@ -26,8 +29,8 @@ atexit.register(log.when_iteration_stops)
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
     if SYNCHRONIZED_DEBUG:
         t1 = time_synchronized()
-    model.when_frame_arrives()
-
+    model.when_frame_arrives() # TODO: change this to a function that detects a color piece of paper
+    # return bounding box of the color piece of paper
     if SYNCHRONIZED_DEBUG:
         t2 = time_synchronized()
     aim.when_bounding_boxes_refresh()
