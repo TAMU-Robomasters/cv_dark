@@ -779,7 +779,7 @@ def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, u
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     writer = cv2.VideoWriter(
-        os.path.join(LOCAL_PATH,"output.mp4"),
+        os.path.join(LOCAL_PATH,".ignore.output.mp4"),
         fourcc=fourcc,
         apiPreference=0,
         fps=fps, 
@@ -788,7 +788,7 @@ def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, u
 
     fourcc_ontop = cv2.VideoWriter_fourcc(*'mp4v')
     writer_ontop = cv2.VideoWriter(
-        os.path.join(LOCAL_PATH,"output_ontop.mp4"),
+        os.path.join(LOCAL_PATH,"output_ontop.ignore.mp4"),
         fourcc=fourcc_ontop,
         apiPreference=0,
         fps=fps, 
@@ -810,7 +810,7 @@ def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, u
             print(f"Frame {pos_frame} ",end='\r')
 
             if save_at_frame and num_frames>=frame_number:
-                 cv2.imwrite(os.path.join(LOCAL_PATH,str(int(frame_number))+".png"), frame)
+                 cv2.imwrite(os.path.join(LOCAL_PATH,str(int(frame_number))+".ignore.png"), frame)
                  exit()
             elif save_at_frame:
                 continue
@@ -935,7 +935,7 @@ if __name__ == "__main__":
 
     else:
         print("Analyzing frame...")
-        frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench.png"))
+        frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench.ignore.png"))
 
         if in_file_override!=None:
             frame = cv2.imread(in_file_override)
@@ -943,9 +943,9 @@ if __name__ == "__main__":
         
         #frame = undistort(frame, save_output=True)
         
-        #frame = cv2.imread(os.path.join(LOCAL_PATH,"example_vid_30.png"))
-        #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_3.png"))
-        #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_cropped.PNG"))
+        #frame = cv2.imread(os.path.join(LOCAL_PATH,"example_vid_30.ignore.png"))
+        #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_3.ignore.png"))
+        #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_cropped.ignore.PNG"))
 
         # minVal = 100
         # maxVal = 200
@@ -962,7 +962,7 @@ if __name__ == "__main__":
         #     cv2.circle(canny_corners,(int(x),int(y)), 3, (255,40,40), 3)
         #     #cv2.circle(frame, (x, y), radius, color, thickness)
 
-        # cv2.imwrite(os.path.join(LOCAL_PATH,"canny_corners.png"), canny_corners)
+        # cv2.imwrite(os.path.join(LOCAL_PATH,"canny_corners.ignore.png"), canny_corners)
 
         analyze_frame(frame, save_output=True, save_raw=True, do_draw_com_circles=True, do_draw_cross=True, do_pose=do_pose)
 
