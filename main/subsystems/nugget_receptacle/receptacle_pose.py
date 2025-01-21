@@ -72,7 +72,8 @@ def order_points(A, B, C, D, Ai, Bi, Ci, Di):
 def intersection_point(point_A:tuple, point_B:tuple, point_C:tuple, point_D:tuple)->tuple:
     """ 
     Returns a tuple of the intersection point coords between two lines from A-D and B-C. 
-    If lines are parallel, returns (-1, -1).
+    If lines are perpendicular, returns (-1, -1).
+    If lines are parallel, returns (-2, -2).
 
     With help from https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Given_two_line_equations
     """
@@ -86,7 +87,8 @@ def intersection_point(point_A:tuple, point_B:tuple, point_C:tuple, point_D:tupl
 
     #print(f"a slope={a:.4f}  b slope={b:.4f}") #DEBUG
 
-    if a==b: return (-1, -1)
+    if a==(-b): return (-1, -1)
+    if a==b: return (-2, -2)
 
     c = point_A[1] - a*point_A[0] # y-intercept of line A-D
     d = point_C[1] - b*point_C[0] # y-intercept of line B-C
@@ -119,7 +121,10 @@ def non_square_factor(Ax:int, Ay:int, Bx:int, By:int, Cx:int, Cy:int, Dx:int, Dy
     G = intersection_point((Ax,Ay),(Bx,By),(Cx,Cy),(Dx,Dy)) # Crossing point of AD and BC
     #print(f"G={G[0]:.2f}, {G[1]:.2f}  --  AD_center={AD_center[0]:.2f},{AD_center[1]:.2f}  --  BC_center={BC_center[0]:.2f},{BC_center[1]:.2f}") #DEBUG
 
-    if G==(-1,-1): # G returns -1,-1 if lines are parallel.
+    if G==(-2,-2): # G returns -2, -2 if lines are parallel.
+        return 1000 # If that's the case, return an arbitrarily large value
+
+    elif G==(-1,-1): # G returns -1,-1 if lines are perpendicular.
         return 0 # If this is the case, it's a perfect parallelogram so return 0.
 
     return math.sqrt((AD_center[0] - G[0])**2 + (AD_center[1] - G[1])**2) + math.sqrt((BC_center[0] - G[0])**2 + (BC_center[1] - G[1])**2)
@@ -132,8 +137,23 @@ def filter_binarize(frame, save_output=False, save_raw=False):
 
     Takes in BGR frame, outputs the new frame (BGR) and mask (Greyscale) 
     """
-    # Threshold of colors we want in BGR space 
+    # This code is kind of untested and needs tuning
+    # global WE_RED
+    # # Threshold of colors we want in BGR space 
+    # if WE_RED==True:
+    #     bounds_lower = np.array([1, 200, 240]) # 50 120 85
+
+    # elif WE_RED==False:
+    #     bounds_lower = np.array([240, 220, 1])
+    
+    # elif WE_RED==2:
+    #     bounds_lower = np.array([180, 150, 150])
+
+    # else:
+    #     raise Exception("WE_RED out of bounds!")
+
     bounds_lower = np.array([180, 150, 150]) # 50 120 85
+    
     bounds_upper = np.array([255, 255, 255]) # 80 255 255
 
     # Preparing the mask to overlay 
@@ -166,7 +186,7 @@ def clean_image(frame,save_output=False):
     
 
     # Use Morph Close to decrease noise
-    kernel = np.ones((3,10),np.uint8)
+    kernel = np.ones((5,10),np.uint8) # Used to be (3,10)
     #frame = cv2.erode(frame, kernel, iterations=1)
     frame = cv2.morphologyEx(frame, cv2.MORPH_CLOSE, kernel)
     if save_output:
@@ -350,8 +370,8 @@ def draw_center_of_mass_circles(frame, contours):
         center_y = y+(h//2)
 
         moments = cv2.moments(contour)
-        cx = int(moments['m10'] / moments['m00'])
-        cy = int(moments['m01'] / moments['m00'])
+        cx = moments['m10'] // moments['m00']
+        cy = moments['m01'] // moments['m00']
 
         cv2.circle(frame, (x, y),               5, (0,0,255),   1) # red
         cv2.circle(frame, (cx, cy),             8, (13,128,255), 2) # yellowish
@@ -377,8 +397,8 @@ def is_l_shape(contour, min_x_percent = 0.05, min_y_percent = 0.05, or_=False) -
 
     
     moments = cv2.moments(contour)
-    cx = int(moments['m10'] / moments['m00'])
-    cy = int(moments['m01'] / moments['m00'])
+    cx = moments['m10'] // moments['m00']
+    cy = moments['m01'] // moments['m00']
 
     percent_off_x = (cx - center_x)/w # TODO: Maybe figure out a way to do floor division (faster?)
     percent_off_y = (cy - center_y)/h
@@ -448,6 +468,9 @@ def virgin_contours(contours_tree, hierarchy_tree):
 
     Solution taken from https://stackoverflow.com/a/52398603/25598210 
     """
+    if type(hierarchy_tree)==type(None) or hierarchy_tree.shape[0]==0:
+        return []
+    
     ChildContour = hierarchy_tree[0, :,2]
 
     WithoutChildContour = (ChildContour==-1).nonzero()[0]
@@ -953,9 +976,8 @@ if __name__ == "__main__":
 
     #cap.release()
     DO_VIDEO = False
-
-    args = sys.argv[1:] # Take all arguments (first one is name of this script)
     
+    # Environment variable parsing with help from https://stackoverflow.com/a/65407083/25598210
     TRUE_VALUES = ["true", "t", "yes", "1"]
 
     in_file_override    = os.getenv("IN_FILE", None)
@@ -965,23 +987,13 @@ if __name__ == "__main__":
     save_raw            = os.getenv("SAVE_RAW",         False).lower() in TRUE_VALUES
     do_draw_com_circles = os.getenv("DRAW_COM_CIRCLES", False).lower() in TRUE_VALUES
     do_draw_cross       = os.getenv("DRAW_CROSS",       True ).lower() in TRUE_VALUES
+    save_at_frame       = os.getenv("SAVE_AT_FRAME",    None)
 
-    for arg in args:
-        if "infile" in arg.lower():
-            in_file_override = arg[arg.index("=")+1:]
-            print("Input file override set.")
-
-        if "do_pose" in arg.lower() and not(arg.lower().endswith("false")):
-            do_pose = True
-            print("do_pose overridden to True.")
-
-        if ("do_undistort" in arg.lower() or "undistort" in arg.lower()) and not(arg.lower.endswith("false")):
-            do_undistort = True
-            print("do_undistort overridden to True.")
-        
-        if "pose_type" in arg.lower():
-            DRAW_TYPE = arg[arg.index("=")+1:]
-            #simple or advanced, for just axes or 8-point cube, respectively
+    # If save_at_frame exists, make it an integer
+    try:
+        if save_at_frame is not None: save_at_frame = int(save_at_frame)
+    except TypeError as e:
+        raise TypeError("SAVE_AT_FRAME could not be turned into an integer. Check your configuration and .env file.") from e
 
     # Determine if it's a single frame or image sequence
     DO_VIDEO = None
