@@ -39,7 +39,8 @@ def order_points(A, B, C, D, Ai, Bi, Ci, Di):
     Orders points top-left, top-right, bottom-left, bottom-right using angles.
     With help from https://math.stackexchange.com/a/2587852
     """
-    average_point = (sum([A[0], B[0], C[0], D[0]])/4, sum([A[1], B[1], C[1], D[1]])/4)
+    average_point = (0.25*sum([A[0], B[0], C[0], D[0]]), 0.25*sum([A[1], B[1], C[1], D[1]]))
+    # Note that multiplying by 0.25 is faster than dividing by 4
 
     # Sort the points by angle from the "average point"
     angles = []
@@ -100,7 +101,7 @@ def non_square_factor(Ax:int, Ay:int, Bx:int, By:int, Cx:int, Cy:int, Dx:int, Dy
     The higher the number, the less of a square it is (curcumvents more division which is slow).
     If the four points form a perfect parallelogram, 0 is returned
 
-    This function and its algorithm is (c) 2024 Drew Wingfield, All Rights Reserved.
+    This function and its algorithm are (c) 2024 Drew Wingfield, All Rights Reserved.
     Used by the Texas A&M University Texas Aimbots RoboMasters robotics team with permission.
 
     Ax, Ay is top left
@@ -177,7 +178,8 @@ def clean_image(frame,save_output=False):
         cv2.imwrite(os.path.join(LOCAL_PATH,"morph_open.ignore.png"), frame)
 
 
-    
+    # print("Shape of morphed image:")
+    # print(frame.shape)
 
     # Sharpening (isn't tuned very well so I'm disabling it for now)
     #kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
@@ -186,7 +188,7 @@ def clean_image(frame,save_output=False):
     #    cv2.imwrite(os.path.join(LOCAL_PATH,"sharpen.ignore.png"), frame)
     
     # Convert back to BGR
-    frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
+    #frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
 
     return frame
 
@@ -200,11 +202,15 @@ def draw_pose(img, corner_contours):
     Draws the plane and points of the receptacle given the four corners and imgpts.
     Four corner contours should be in order of topleft, topright, bottomleft, bottomright
     This function modified from https://docs.opencv.org/4.x/d7/d53/tutorial_py_pose.html
+
+    Inputs:
+      - img - a frame in BGR colorspace
+      - corner_contours - the corner contours
     """
     OBJECT_HEIGHT = 2
-    OBJECT_WIDTH = 2
-    AXIS_LENGTH = 1
-    DRAW_TYPE = "simple" # simple or advanced, for just axes or 8-point cube, respectively
+    OBJECT_WIDTH  = 2
+    AXIS_LENGTH   = 1
+    #DRAW_TYPE = "simple" # simple or advanced, for just axes or 8-point cube, respectively
     
     if DRAW_TYPE=="simple":
         DRAW_POINTS = np.float32([[AXIS_LENGTH,0,0], [0,AXIS_LENGTH,0], [0,0,-AXIS_LENGTH]]).reshape(-1,3)
@@ -396,11 +402,16 @@ def is_l_shape(contour, min_x_percent = 0.05, min_y_percent = 0.05, or_=False) -
     return is_l, percent_off_x, percent_off_y
 
 
-def filter_contours(contours:list, screensize=(1920,1024), filter_l=False):
-    """ Filters a given list of contours by ones that are likely the receptacle. """
+def filter_contours(contours:list, screensize:tuple = (1920,1024), filter_l:bool = False):
+    """
+    Filters a given list of contours by ones that are likely the receptacle.
+    Filters by size and area
+    """
     # The below code was modified from https://stackoverflow.com/a/63934162/25598210
     contours_rtn = []
-    max_rect_area = screensize[0] * screensize[1] * 0.75
+    max_rect_area   = screensize[0] * screensize[1] * 0.75
+    #max_rect_width  = screensize[0] * 0.9
+    #max_rect_height = screensize[1] * 0.95
 
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
@@ -409,9 +420,18 @@ def filter_contours(contours:list, screensize=(1920,1024), filter_l=False):
         # If contour is certain shape
         # (both dimensions > 8px, at least one dimension > 10px)
         if (
+                # Min width and height
                 (w>8 and h>8) 
-            and (w>10 or h>10) 
-            and (rect_area < max_rect_area) 
+            and (w>10 or h>10)
+
+                # Max width and height
+            #and (w < max_rect_width)
+            #and (h < max_rect_height)
+
+                # Maximum Area
+            and (rect_area < max_rect_area)
+
+                # L-shape filtering if enabled
             and (is_l_shape(contour, or_=True)[0] or not(filter_l))
             ):
             contours_rtn.append(contour) # Add it to the return list
@@ -484,12 +504,14 @@ def draw_corners(img, corners, imgpts):
     return img
 
 
-def filter_n_contours(contours:list, n:int, filter_by:str, debug=False) -> list:
+def filter_n_contours(contours:list, n:int, filter_by:str, debug=False, screensize:tuple=(1920,1024)) -> list:
     """ 
     Filters out n number of contours for likely candidates of the four corners of the receptacle. 
     filter_by may be either 'drew algorithm' or 'size.'
 
     NOTE: Contours MUST be free of duplicates, or you risk many extra iterations and wasted time.
+    
+    Also filters out pairs that extend past 70% of screen width/height
     """
     assert filter_by in ["drew algorithm", "size"]
     if len(contours)==0: return [] # Prevent errors
@@ -537,6 +559,8 @@ def filter_n_contours(contours:list, n:int, filter_by:str, debug=False) -> list:
             print(f" [filter_n_counters] There will be a maximum number of {math.factorial(len(contours))/(24*math.factorial(len(contours)-4)):.0f} combinations of 4 points.")
 
         iteration=0
+        max_rect_width  = screensize[0] * 0.7
+        max_rect_height = screensize[1] * 0.7
         # Iterate over the indexes of every combination of four contours.
         for A, B, C, D in itertools.combinations(contours, r=4):
             iteration += 1
@@ -551,6 +575,7 @@ def filter_n_contours(contours:list, n:int, filter_by:str, debug=False) -> list:
             x, y, w, h = cv2.boundingRect(D)
             D_cord = ((x+(w//2), y+(h//2)))
 
+            # Order the points
             try: #TODO: Remove the try/except before prod because it takes up memory and time
                 A_cord, B_cord, C_cord, D_cord, A, B, C, D = order_points(A_cord, B_cord, C_cord, D_cord, A, B, C, D)
             except ValueError as e:
@@ -559,6 +584,17 @@ def filter_n_contours(contours:list, n:int, filter_by:str, debug=False) -> list:
                 print(f"Types of A, B, C, and D: {type(A), type(B), type(C), type(D)}")
                 raise e
 
+            # Reject combos that exceed the max size
+            if (
+                   max_rect_width  < (max(A_cord[0], B_cord[0], C_cord[0], D_cord[0])-min(A_cord[0], B_cord[0], C_cord[0], D_cord[0]))
+                or max_rect_height < (max(A_cord[1], B_cord[1], C_cord[1], D_cord[1])-min(A_cord[1], B_cord[1], C_cord[1], D_cord[1]))
+            ):
+                nsqf_list.append(1000)
+                coordinate_list.append([A_cord, B_cord, C_cord, D_cord])
+                combination_list.append([A, B, C, D])
+                continue
+
+            # Get the non square factor
             NSqF = non_square_factor(A_cord[0], A_cord[1], B_cord[0], B_cord[1], C_cord[0], C_cord[1], D_cord[0], D_cord[1])
             #print(f" [filter_n_contours] Iteration {iteration:4}, Ai={Ai:3}, Bi={Bi:3}, Ci={Ci:3}, Di={str(Di):3}, A={str(A):12}, B={str(B):12}, C={str(C):12}, D={str(D):12},  NSqF={NSqF:.3f}")
             nsqf_list.append(NSqF)
@@ -621,12 +657,13 @@ def filter_n_contours(contours:list, n:int, filter_by:str, debug=False) -> list:
 
 def find_and_draw_contours(
     frame, frame_to_write_ontop_of, 
-    save_output=False, do_draw_contours=True, 
-    screensize=(1920,1024),
-    do_draw_cross=False,
-    do_draw_com_circles=False,
-    save_intermediate=False,
-    do_pose=False,
+    save_output         = False, 
+    do_draw_contours    = True, 
+    screensize          = (1920,1024),
+    do_draw_cross       = False,
+    do_draw_com_circles = False,
+    save_intermediate   = False,
+    do_pose             = False,
     ):
     """
     Finds and draws contours on an image, filtering for valid and virgin contours.
@@ -665,7 +702,7 @@ def find_and_draw_contours(
         contours_virgins_zero_frame = raw_frame_to_write_ontop_of.copy()
         draw_contours(contours_virgins_zero_frame, virgin_contours_list)
         contours_virgins_one_frame = contours_virgins_zero_frame.copy()
-        image_debug_text(contours_virgins_zero_frame, f"{len(virgin_contours_list)} virgin contours")
+        image_debug_text(contours_virgins_zero_frame, f"{len(virgin_contours_list)} virgin contours (all virgin contours)")
         cv2.imwrite(os.path.join(LOCAL_PATH,"contours-virgins-0.ignore.png"), contours_virgins_zero_frame)
         draw_contours(contours_virgins_one_frame, virgin_contours_list, color=(0,100,0)) # Dark green contours for filtered contours to be more prominent
 
@@ -678,7 +715,7 @@ def find_and_draw_contours(
     if save_intermediate: # Save intermediate image for debug
         print("    (saved as contours-virgins-1.ignore.png)")
         draw_contours(contours_virgins_one_frame, virgin_contours_list)
-        image_debug_text(contours_virgins_one_frame, f"{len(virgin_contours_list)} virgin contours")
+        image_debug_text(contours_virgins_one_frame, f"{len(virgin_contours_list)} virgin contours (filtered out tiny contours)")
         cv2.imwrite(os.path.join(LOCAL_PATH,"contours-virgins-1.ignore.png"), contours_virgins_one_frame)
 
     # Simplify the contours - see https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html
@@ -693,14 +730,17 @@ def find_and_draw_contours(
             draw_contours(contours_virgins_simple_frame, virgin_contours_list)
             for cnt in virgin_contours_list:
                 draw_contour_points(contours_virgins_simple_frame, cnt)
-            image_debug_text(contours_virgins_simple_frame, f"{len(virgin_contours_list)} virgin contours")
+            image_debug_text(contours_virgins_simple_frame, f"{len(virgin_contours_list)} virgin contours (simplified)")
             cv2.imwrite(os.path.join(LOCAL_PATH,"contours-virgins-2-simple.ignore.png"), contours_virgins_simple_frame)
     
     # Filter contours once more, but with L-shape filtering
     #virgin_contours_list = filter_contours(virgin_contours_list, screensize=screensize, filter_l=True)
 
     # Filter out the four corners
-    big_four = filter_n_contours(virgin_contours_list.copy(), n=4, filter_by="drew algorithm")
+    big_four = filter_n_contours(
+        virgin_contours_list.copy(), n=4, filter_by="drew algorithm",
+        screensize=screensize
+        )
 
     #if __name__ == "__main__": print(f"Big four={big_four}") #DEBUG
 
@@ -918,6 +958,10 @@ if __name__ == "__main__":
         if ("do_undistort" in arg.lower() or "undistort" in arg.lower()) and not(arg.lower.endswith("false")):
             do_undistort = True
             print("do_undistort overridden to True.")
+        
+        if "pose_type" in arg.lower():
+            DRAW_TYPE = arg[arg.index("=")+1:]
+            #simple or advanced, for just axes or 8-point cube, respectively
 
 
     if DO_VIDEO:
@@ -964,6 +1008,12 @@ if __name__ == "__main__":
 
         # cv2.imwrite(os.path.join(LOCAL_PATH,"canny_corners.ignore.png"), canny_corners)
 
-        analyze_frame(frame, save_output=True, save_raw=True, do_draw_com_circles=True, do_draw_cross=True, do_pose=do_pose)
+        analyze_frame(
+            frame, save_output  = True, 
+            save_raw            = True, 
+            do_draw_com_circles = True, 
+            do_draw_cross       = True, 
+            do_pose             = do_pose
+            )
 
 #endregion Procedural
