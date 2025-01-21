@@ -20,6 +20,7 @@ import math
 import cv2
 import numpy as np
 import itertools
+from dotenv import load_dotenv
 
 #endregion setup
 
@@ -746,11 +747,11 @@ def find_and_draw_contours(
 
 
     if len(big_four)==4:
-        if save_output:
+        if save_output and do_draw_cross:
             draw_cross(big_four_frame_write, big_four)
             
         if do_pose and save_output:
-            draw_cross(pose_frame_write, big_four)
+            if do_draw_cross: draw_cross(pose_frame_write, big_four)
             draw_pose(pose_frame_write, big_four)
         
         elif do_pose:
@@ -762,7 +763,7 @@ def find_and_draw_contours(
     # Filter out the four corners??
     #virgin_contours_list = filter_n_contours(virgin_contours_list, n=4)
 
-    # Do some visualization stuff
+    # Draw lots of boxes on top of things
     if do_draw_contours:
         for contour in virgin_contours_list:
             # Thick red bounding boxes
@@ -794,7 +795,12 @@ def find_and_draw_contours(
 #endregion Contours Stuff
     
 
-def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, undistort=False, save_at_frame=False, frame_number=740):
+def analyze_video(
+        video_path, save_output=False,
+        save_raw=False, do_pose=False, 
+        undistort=False, save_at_frame=False, 
+        do_draw_cross=True,
+        frame_number=740):
     """ 
     Analyzes a given video at video_path, draws contours stuff,
     and saves it as output.mp4 and output_ontop.mp4
@@ -836,6 +842,7 @@ def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, u
     )
 
     pos_frame = cap.get(1) #cv2.CV_CAP_PROP_POS_FRAMES
+    total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
     #endregion setup
 
     num_frames=0
@@ -847,7 +854,7 @@ def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, u
             # The frame is ready and already captured
             #cv2.imshow('video', frame)
             pos_frame = cap.get(1)
-            print(f"Frame {pos_frame} ",end='\r')
+            print(f"Frame {pos_frame} / {total_frames}  ",end='\r')
 
             if save_at_frame and num_frames>=frame_number:
                  cv2.imwrite(os.path.join(LOCAL_PATH,str(int(frame_number))+".ignore.png"), frame)
@@ -862,7 +869,7 @@ def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, u
             
             find_and_draw_contours(
                 new_frame, frame, save_output=False, screensize=(width, height), 
-                do_draw_contours=False, do_draw_cross=True, do_draw_com_circles=True, do_pose=do_pose
+                do_draw_contours=False, do_draw_cross=do_draw_cross, do_draw_com_circles=True, do_pose=do_pose
             )
 
             if undistort:
@@ -885,21 +892,31 @@ def analyze_video(video_path, save_output=False,save_raw=False, do_pose=False, u
 
 
 
-def analyze_frame(frame, save_output=False, save_raw=False, do_draw_cross=False, do_draw_com_circles=False, do_pose=False):
+def analyze_frame(
+        frame, 
+        save_output   = False, 
+        save_raw      = False, 
+        do_draw_cross = False, 
+        do_draw_com_circles = False, 
+        do_pose       = False,
+        do_undistort  = False):
     """ Gets most likely pose of nugget from frame. """
 
     height, width, channels = frame.shape
     screensize = (width, height)
     
-    new_frame = clean_image(filter_binarize(frame, save_output=save_output, save_raw=save_raw)[0], save_output=save_output)
+    if do_undistort:
+        undistort(frame, save_output=save_raw)
     
+    new_frame = clean_image(filter_binarize(frame, save_output=save_output, save_raw=save_raw)[0], save_output=save_output)
+
     find_and_draw_contours(
         new_frame, new_frame, save_output=save_output, 
-        screensize=screensize,
-        save_intermediate=save_raw,
-        do_draw_com_circles=do_draw_com_circles,
-        do_draw_cross=do_draw_cross,
-        do_pose=do_pose,
+        screensize          = screensize,
+        save_intermediate   = save_raw,
+        do_draw_com_circles = do_draw_com_circles,
+        do_draw_cross       = do_draw_cross,
+        do_pose             = do_pose,
         )
 
     return new_frame
@@ -925,6 +942,7 @@ except FileNotFoundError as e:
 
 if __name__ == "__main__":
     print("receptacle_pose was called as main.")
+    load_dotenv() # Load environment vars from .env file
 
     # Create a VideoCapture object
     #cap = cv2.VideoCapture(os.path.join(LOCAL_PATH,"receptacle_example.mp4"))
@@ -937,16 +955,18 @@ if __name__ == "__main__":
     DO_VIDEO = False
 
     args = sys.argv[1:] # Take all arguments (first one is name of this script)
+    
+    TRUE_VALUES = ["true", "t", "yes", "1"]
 
-    in_file_override = None
-    do_pose = False
-    do_undistort = False
+    in_file_override    = os.getenv("IN_FILE", None)
+    do_pose             = os.getenv("DO_POSE",          False).lower() in TRUE_VALUES
+    do_undistort        = os.getenv("DO_UNDISTORT",     False).lower() in TRUE_VALUES
+    DRAW_TYPE           = os.getenv("POSE_TYPE", "simple")
+    save_raw            = os.getenv("SAVE_RAW",         False).lower() in TRUE_VALUES
+    do_draw_com_circles = os.getenv("DRAW_COM_CIRCLES", False).lower() in TRUE_VALUES
+    do_draw_cross       = os.getenv("DRAW_CROSS",       True ).lower() in TRUE_VALUES
 
     for arg in args:
-        if "do_video" in arg.lower():
-            DO_VIDEO=True
-            print("Video Override set.")
-
         if "infile" in arg.lower():
             in_file_override = arg[arg.index("=")+1:]
             print("Input file override set.")
@@ -963,15 +983,29 @@ if __name__ == "__main__":
             DRAW_TYPE = arg[arg.index("=")+1:]
             #simple or advanced, for just axes or 8-point cube, respectively
 
+    # Determine if it's a single frame or image sequence
+    DO_VIDEO = None
+    try:
+        # If it's a video
+        cap = cv2.VideoCapture(in_file_override)
+        if cap.isOpened() and cap.get(cv2.CAP_PROP_FRAME_COUNT)>1:
+            DO_VIDEO = True
+        else:
+            raise AssertionError
+    except:
+        # If it's not a video
+        img = cv2.imread(in_file_override)
+        if img is not None:
+            DO_VIDEO = False
+        else:
+            raise AssertionError("Provided file is neither a valid video nor image!")
 
     if DO_VIDEO:
         print("doing video now")
-        time_start = time.time()
-        if in_file_override==None:
-            num_frames = analyze_video(os.path.join(LOCAL_PATH,"receptacle_example.mp4"), do_pose=do_pose)
-        
-        else:
-            num_frames = analyze_video(in_file_override, do_pose=do_pose)
+        time_start = time.time()        
+        num_frames = analyze_video(
+            in_file_override, do_pose=do_pose, 
+            do_draw_cross=do_draw_cross, undistort=do_undistort)
 
         time_end = time.time()
         time_taken = time_end - time_start
@@ -983,13 +1017,8 @@ if __name__ == "__main__":
 
         if in_file_override!=None:
             frame = cv2.imread(in_file_override)
-
         
         #frame = undistort(frame, save_output=True)
-        
-        #frame = cv2.imread(os.path.join(LOCAL_PATH,"example_vid_30.ignore.png"))
-        #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_3.ignore.png"))
-        #frame = cv2.imread(os.path.join(LOCAL_PATH,"raw_testbench_cropped.ignore.PNG"))
 
         # minVal = 100
         # maxVal = 200
@@ -1010,10 +1039,11 @@ if __name__ == "__main__":
 
         analyze_frame(
             frame, save_output  = True, 
-            save_raw            = True, 
-            do_draw_com_circles = True, 
-            do_draw_cross       = True, 
-            do_pose             = do_pose
+            save_raw            = save_raw, 
+            do_draw_com_circles = do_draw_com_circles, 
+            do_draw_cross       = do_draw_cross, 
+            do_pose             = do_pose,
+            do_undistort        = do_undistort
             )
 
 #endregion Procedural

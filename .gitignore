@@ -23,6 +23,7 @@ opencv-4.5.0
 drewvenv/
 drew_detection/source/mask*
 drew_detection/source/yellow*
+main/subsystems/nugget_receptacle/*.env
 
 
 # 
