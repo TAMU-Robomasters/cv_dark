@@ -293,7 +293,7 @@ def draw_pose(img, corner_contours):
     # Negative denotes it is drawn towards the camera.
     if DRAW_TYPE=="simple":
         corner = list(corners2[0].ravel())
-        corner = tuple(int(x) for x in corner)
+        corner = tuple(int(x) for x in corner) #TODO: Speed
         # X axis
         img = cv2.line(img, corner, tuple(projected_points[0].ravel()), (255,0,0), 5)
         # Y axis, Green
@@ -348,7 +348,7 @@ def undistort(frame, save_output=False):
 
 
 def image_debug_text(img, text):
-    cv2.putText(img,text, (0, int(img.shape[0]-10)), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,0,255),2,2)
+    cv2.putText(img,text, (0, int(img.shape[0]-10)), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,0,255),2,2) #TODO: Speed
 
 #endregion Image Stuff
 
@@ -370,8 +370,8 @@ def draw_center_of_mass_circles(frame, contours):
         center_y = y+(h//2)
 
         moments = cv2.moments(contour)
-        cx = moments['m10'] // moments['m00']
-        cy = moments['m01'] // moments['m00']
+        cx = int(moments['m10'] // moments['m00'])
+        cy = int(moments['m01'] // moments['m00'])
 
         cv2.circle(frame, (x, y),               5, (0,0,255),   1) # red
         cv2.circle(frame, (cx, cy),             8, (13,128,255), 2) # yellowish
@@ -821,8 +821,10 @@ def find_and_draw_contours(
 def analyze_video(
         video_path, save_output=False,
         save_raw=False, do_pose=False, 
-        undistort=False, save_at_frame=False, 
+        do_undistort=False, save_at_frame=False, 
         do_draw_cross=True,
+        do_draw_com_circles=True,
+        do_draw_contours=False,
         frame_number=740):
     """ 
     Analyzes a given video at video_path, draws contours stuff,
@@ -885,19 +887,24 @@ def analyze_video(
             elif save_at_frame:
                 continue
             
-            if undistort:
+            if do_undistort:
                 frame = undistort(frame, save_output=save_output)
 
             new_frame = clean_image(filter_binarize(frame, save_output=save_output, save_raw=save_raw)[0])
             
             find_and_draw_contours(
-                new_frame, frame, save_output=False, screensize=(width, height), 
-                do_draw_contours=False, do_draw_cross=do_draw_cross, do_draw_com_circles=True, do_pose=do_pose
+                new_frame, frame, 
+                save_output         = False, 
+                screensize          = (width, height), 
+                do_draw_contours    = do_draw_contours, 
+                do_draw_cross       = do_draw_cross, 
+                do_draw_com_circles = do_draw_com_circles, 
+                do_pose             = do_pose
             )
 
-            if undistort:
+            if do_undistort:
                 # If undistorted, resize so the video writer doesn't freak out
-                frame = cv2.resize(frame, (width, height))
+                frame     = cv2.resize(frame, (width, height))
                 new_frame = cv2.resize(new_frame, (width, height))
 
             writer_ontop.write(frame)
@@ -1017,7 +1024,10 @@ if __name__ == "__main__":
         time_start = time.time()        
         num_frames = analyze_video(
             in_file_override, do_pose=do_pose, 
-            do_draw_cross=do_draw_cross, undistort=do_undistort)
+            do_draw_cross=do_draw_cross, 
+            do_undistort=do_undistort,
+            do_draw_com_circles=do_draw_com_circles,
+            do_draw_contours=True)
 
         time_end = time.time()
         time_taken = time_end - time_start
