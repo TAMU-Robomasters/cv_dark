@@ -15,7 +15,7 @@ import pyston_lite
 pyston_lite.enable()
 synchronized_debug = False
 atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_iteration_stops" (its not perfectly reliable, but better than nothing)
-
+log.init_log_plots()
 # Run detection infinitely
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
     if synchronized_debug: t1 = time_synchronized()
