@@ -54,6 +54,7 @@ runtime.aiming.best_bounding_box
 runtime.aiming.current_confidence
 runtime.aiming.center_point_prediction
 runtime.aiming.target_3d_prediction
+runtime.aiming.error_values
 
 runtime.modeling
 runtime.modeling.bounding_boxes

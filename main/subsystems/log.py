@@ -9,11 +9,13 @@ from toolbox.image_tools import Image, rgb
 from toolbox.cold_storage import ColdStorage
 from subsystems.aim import TargetStatus
 from subsystems.video_stream import video_stream
+from collections import deque
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation 
 import os
 import numpy as np
+
 
 
 # 
@@ -52,6 +54,9 @@ target_3d_points = []
 target_3d_predictions = []
 
 
+
+
+
 # 
 # 
 # main
@@ -61,17 +66,44 @@ runtime.prev_loop_time = int(now() * 1000) # init time value
 runtime.total_fps = 0
 
 
-
+# Not sure if we are to continue using this
 def init_log_plots():
-    runtime.fig, (runtime.ax1, runtime.ax2, runtime.ax3) =  plt.subplots(3, 1) 
-    runtime.ax1.set_title('Predicted error x')
+    plt.ion()
+    runtime.aiming.fig, runtime.aiming.ax = plt.subplots()
+    runtime.aiming.error_values = []
+    runtime.aiming.line_error, = runtime.aiming.ax.plot([],[],'r-', label="Prediction Error")
+    runtime.aiming.ax.set_ylim(0,10)
+    runtime.aiming.ax.set_xlabel("Frame Number") 
+    runtime.aiming.ax.set_ylabel("Error (Distance)")
+    runtime.aiming.ax.legend()
+    
+def plot_calculation():
+    center_point            = runtime.aiming.center_point
+    center_point_prediction = runtime.aiming.center_point_prediction
+    target_3d_point         = runtime.aiming.target_3d
+    target_3d_prediction    = runtime.aiming.target_3d_prediction
 
-    runtime.ax2.set_title('Predicted error y')
+    
+    error = np.sqrt(
+        (target_3d_prediction[0] - target_3d_point[0]) ** 2 +
+        (target_3d_prediction[1] - target_3d_point[1]) ** 2 +
+        (target_3d_prediction[2] - target_3d_point[2]) ** 2
+    )
+    
+    runtime.aiming.error_values.append(error)
+    
+    if len(runtime.aiming.error_values) > 100:
+        runtime.aiming.error_values.pop(0)
         
-    runtime.ax3.set_title('Predicted error z')
-    runtime.line, = runtime.ax1.plot([],[])
-    plt.ion()  # Enable interactive mode
-    plt.show()
+    runtime.aiming.line_error.set_xdata(range(len(runtime.aiming.error_values)))
+    runtime.aiming.line_error.set_ydata(runtime.aiming.error_values)
+    
+    plt.draw()
+    plt.pause(0.05)
+    
+    
+    
+    
 
 def when_finished_processing_frame():
     global color_video_writer
@@ -119,24 +151,7 @@ def when_finished_processing_frame():
         print("target_prediction:", target_3d_prediction)
         depth = show_depth_prediction(target_3d_point[1], target_3d_prediction[2])
 
-    
-        
-        # predicted_errors_3d_x = []
-        # predicted_errors_3d_y = []
-        # predicted_errors_3d_z = []
 
-        # predicted_errors_3d_x.append(abs((target_3d_predictions[i].x - target_3d_points[i+1][0])/ target_3d_points[i+1][0]) * 100)
-        # predicted_errors_3d_y.append(abs((target_3d_predictions[i].y - target_3d_points[i+1][0])/ target_3d_points[i+1][0]) * 100)
-        # predicted_errors_3d_z.append(abs((target_3d_predictions[i].z - target_3d_points[i+1][0])/ target_3d_points[i+1][0]) * 100)
-        
-        
-        plt.draw()
-    
-        plt.tight_layout()
-        
-        
-        plt.ioff()
-        plt.show()
         
     if display_live_frames:
             if depth_compatible:
@@ -165,89 +180,90 @@ def when_iteration_stops():
     # NOTE: this function might get run a couple times at exit (main.py calls it)
     avg_fps = runtime.total_fps / runtime.get("frame_number", 1)
     print(f"\naverage FPS: {avg_fps:.2f}")
-    
+    plt.ioff()
+    plt.show()
     # Find average error
     
     # account for divide by zero error, no target center point none
     # More than 4 index (do top first)
     
     # predict error using the error estimation formula
-    predicted_errors_x = []
-    for i in range(0,(len(center_points)-1)):
-        if(center_points[i+1].x != 0 and i >= 4):
-            predicted_error = abs((center_point_predictions[i].x - center_points[i+1].x)/ center_points[i+1].x) * 100
-            predicted_errors_x.append(predicted_error)
+    # predicted_errors_x = []
+    # for i in range(0,(len(center_points)-1)):
+    #     if(center_points[i+1].x != 0 and i >= 4):
+    #         predicted_error = abs((center_point_predictions[i].x - center_points[i+1].x)/ center_points[i+1].x) * 100
+    #         predicted_errors_x.append(predicted_error)
     
-    predicted_errors_y = []
-    for i in range(0,(len(center_points)-1)):
-        if(center_points[i+1].y != 0 and i >= 4):
-            predicted_error = abs((center_point_predictions[i].y - center_points[i+1].y)/ center_points[i+1].y) * 100
-            predicted_errors_y.append(predicted_error)
+    # predicted_errors_y = []
+    # for i in range(0,(len(center_points)-1)):
+    #     if(center_points[i+1].y != 0 and i >= 4):
+    #         predicted_error = abs((center_point_predictions[i].y - center_points[i+1].y)/ center_points[i+1].y) * 100
+    #         predicted_errors_y.append(predicted_error)
     
-    if not depth_compatible and display_kf_prediction:
-        # Convert to np array
-        predicted_errors_np_x = np.array(predicted_errors_x)
-        predicted_errors_np_y = np.array(predicted_errors_y)
+    # if not depth_compatible and display_kf_prediction:
+    #     # Convert to np array
+    #     # predicted_errors_np_x = np.array(predicted_errors_x)
+    #     # predicted_errors_np_y = np.array(predicted_errors_y)
 
-        # Plot functions for 2d
-        fig, (ax1, ax2) = plt.subplots(2, 1) 
-        index = np.arange(0, len(predicted_errors_np_x),1)
+    #     # # Plot functions for 2d
+    #     # fig, (ax1, ax2) = plt.subplots(2, 1) 
+    #     # index = np.arange(0, len(predicted_errors_np_x),1)
 
-        ax1.plot(index, predicted_errors_np_x)
-        ax1.set_title('Predicted error x')
+    #     # ax1.plot(index, predicted_errors_np_x)
+    #     # ax1.set_title('Predicted error x')
 
-        ax2.plot(index, predicted_errors_np_y)
-        ax2.set_title('Predicted error y')
+    #     # ax2.plot(index, predicted_errors_np_y)
+    #     # ax2.set_title('Predicted error y')
 
-        plt.tight_layout()
+    #     plt.tight_layout()
         
-        # git ignore will ignore files with *.ignore.*
-        kf_fig_2d_path = f'{kf_fig_dir}/2d/-{time_stamp}.ignore.jpg'
-        plt.savefig(kf_fig_2d_path)
+    #     # git ignore will ignore files with *.ignore.*
+    #     kf_fig_2d_path = f'{kf_fig_dir}/2d/-{time_stamp}.ignore.jpg'
+    #     plt.savefig(kf_fig_2d_path)
 
-    if depth_compatible and display_kf_prediction:
-        # 3d prediction error 
-        predicted_errors_3d_x = []
-        for i in range(0,(len(target_3d_points)-1)):
-            if(target_3d_points[i+1][0] != 0 and i >= 4):
-                predicted_error = abs((target_3d_predictions[i].x - target_3d_points[i+1][0])/ target_3d_points[i+1][0]) * 100
-                predicted_errors_3d_x.append(predicted_error)
+    # if depth_compatible and display_kf_prediction:
+    #     # 3d prediction error 
+    #     predicted_errors_3d_x = []
+    #     for i in range(0,(len(target_3d_points)-1)):
+    #         if(target_3d_points[i+1][0] != 0 and i >= 4):
+    #             predicted_error = abs((target_3d_predictions[i].x - target_3d_points[i+1][0])/ target_3d_points[i+1][0]) * 100
+    #             predicted_errors_3d_x.append(predicted_error)
                 
-        predicted_errors_3d_y = []
-        for i in range(0,(len(target_3d_points)-1)):
-            if(target_3d_points[i+1][1] != 0 and i >= 4):
-                predicted_error = abs((target_3d_predictions[i].y - target_3d_points[i+1][1])/ target_3d_points[i+1][1]) * 100
-                predicted_errors_3d_y.append(predicted_error)
+    #     predicted_errors_3d_y = []
+    #     for i in range(0,(len(target_3d_points)-1)):
+    #         if(target_3d_points[i+1][1] != 0 and i >= 4):
+    #             predicted_error = abs((target_3d_predictions[i].y - target_3d_points[i+1][1])/ target_3d_points[i+1][1]) * 100
+    #             predicted_errors_3d_y.append(predicted_error)
                 
-        predicted_errors_3d_z = []
-        for i in range(0,(len(target_3d_points)-1)):
-            if(target_3d_points[i+1][2] != 0 and i >= 4):
-                predicted_error = abs((target_3d_predictions[i].z - target_3d_points[i+1][2])/ target_3d_points[i+1][2]) * 100
-                predicted_errors_3d_z.append(predicted_error)
+    #     predicted_errors_3d_z = []
+    #     for i in range(0,(len(target_3d_points)-1)):
+    #         if(target_3d_points[i+1][2] != 0 and i >= 4):
+    #             predicted_error = abs((target_3d_predictions[i].z - target_3d_points[i+1][2])/ target_3d_points[i+1][2]) * 100
+    #             predicted_errors_3d_z.append(predicted_error)
         
         
-        predicted_errors_np_3d_x = np.array(predicted_errors_3d_x)
-        predicted_errors_np_3d_y = np.array(predicted_errors_3d_y)
-        predicted_errors_np_3d_z = np.array(predicted_errors_3d_z)
+    #     predicted_errors_np_3d_x = np.array(predicted_errors_3d_x)
+    #     predicted_errors_np_3d_y = np.array(predicted_errors_3d_y)
+    #     predicted_errors_np_3d_z = np.array(predicted_errors_3d_z)
   
-        # plot functions for 3d
-        fig, (ax1, ax2,ax3) = plt.subplots(3, 1) 
-        index = np.arange(0, len(predicted_errors_np_3d_x),1)
-        print(predicted_errors_np_3d_x)
+    #     # plot functions for 3d
+    #     fig, (ax1, ax2,ax3) = plt.subplots(3, 1) 
+    #     index = np.arange(0, len(predicted_errors_np_3d_x),1)
+    #     print(predicted_errors_np_3d_x)
 
-        ax1.plot(index, predicted_errors_np_3d_x)
-        ax1.set_title('Predicted error x')
+    #     ax1.plot(index, predicted_errors_np_3d_x)
+    #     ax1.set_title('Predicted error x')
 
-        ax2.plot(index, predicted_errors_np_3d_y)
-        ax2.set_title('Predicted error y')
+    #     ax2.plot(index, predicted_errors_np_3d_y)
+    #     ax2.set_title('Predicted error y')
         
-        ax3.plot(index, predicted_errors_np_3d_z)
-        ax3.set_title('Predicted error z')
+    #     ax3.plot(index, predicted_errors_np_3d_z)
+    #     ax3.set_title('Predicted error z')
 
-        plt.tight_layout()
+    #     plt.tight_layout()
         
-        kf_fig_3d_path = f'{kf_fig_dir}/3d/-{time_stamp}.ignore.jpg'
-        plt.savefig(kf_fig_3d_path)
+    #     kf_fig_3d_path = f'{kf_fig_dir}/3d/-{time_stamp}.ignore.jpg'
+    #     plt.savefig(kf_fig_3d_path)
         
     if save_frame_to_file:
         color_video_writer.save()

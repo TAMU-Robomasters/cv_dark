@@ -11,11 +11,14 @@ import subsystems.communicate  as communicate
 import subsystems.power_rune   as power_rune 
 import subsystems.log          as log
 import pyston_lite
+import matplotlib as plt
 
 pyston_lite.enable()
 synchronized_debug = False
 atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_iteration_stops" (its not perfectly reliable, but better than nothing)
 log.init_log_plots()
+
+
 # Run detection infinitely
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
     if synchronized_debug: t1 = time_synchronized()
@@ -30,6 +33,10 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
     if synchronized_debug: t4 = time_synchronized()
     log.when_finished_processing_frame()
     
+    
+    
+    log.plot_calculation()
+    
     if synchronized_debug: t5 = time_synchronized()
     if synchronized_debug: print(f'\nframe {runtime.frame_number} took {1000*(t5-t1):.3f}ms' 
                                 'model: {1000*(t2-t1):.3f}ms,' 
@@ -41,3 +48,5 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
 
 if synchronized_debug: print(runtime.frame_number)
 log.when_iteration_stops()
+
+
