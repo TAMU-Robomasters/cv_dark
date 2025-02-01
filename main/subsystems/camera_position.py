@@ -43,12 +43,15 @@ dist_coef = calib_data["distCoef"]
 
 MARKER_SIZE = 150 # mm
 
-parameters = aruco.DetectorParameters_create()
+
 # define an empty custom dictionary with
 aruco_dict = cv2.aruco_Dictionary.create(5, 5)
 
 # add empty bytesList array to fill with
 aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
+
+parameters = aruco.DetectorParameters_create()
+detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
 
 add_marker(aruco_dict, 0, a_pattern)
 add_marker(aruco_dict, 1, b_pattern)
@@ -90,7 +93,7 @@ def when_frame_arrives():
     if frame.size > 2:
         # detect markers
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        marker_corners, marker_IDs, rejects = aruco.detectMarkers(gray_frame, aruco_dict)
+        marker_corners, marker_IDs, rejects = detector.detectMarkers(gray_frame, aruco_dict)
 
         # get 3d raw coords
         realsense_marker_3ds = use_realsense_depth(marker_corners)
@@ -167,13 +170,36 @@ def when_frame_arrives():
 
 #TODO change this so that the if statement is outside the function
 def use_vision_depth(marker_corners):
+    def estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
+        '''
+        This will estimate the rvec and tvec for each of the marker corners detected by:
+           corners, ids, rejectedImgPoints = detector.detectMarkers(image)
+        corners - is an array of detected corners for each detected marker in the image
+        marker_size - is the size of the detected markers
+        mtx - is the camera matrix
+        distortion - is the camera distortion matrix
+        RETURN list of rvecs, tvecs, and trash (so that it corresponds to the old estimatePoseSingleMarkers())
+        '''
+        marker_points = np.array([[-marker_size / 2, marker_size / 2, 0],
+                                  [marker_size / 2, marker_size / 2, 0],
+                                  [marker_size / 2, -marker_size / 2, 0],
+                                  [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)
+        trash = []
+        rvecs = []
+        tvecs = []
+        for c in corners:
+            nada, R, t = cv2.solvePnP(marker_points, c, mtx, distortion, False, cv2.SOLVEPNP_IPPE_SQUARE)
+            rvecs.append(R)
+            tvecs.append(t)
+            trash.append(nada)
+        return rvecs, tvecs, trash
     if marker_corners:
         marker_3d_coords = []
         for marker_corner in marker_corners: 
-            rVec, tVec, _ = cv2.aruco.estimatePoseSingleMarkers(marker_corner, MARKER_SIZE, cam_mat, dist_coef)
+            rVec, tVec, _ = estimatePoseSingleMarkers(marker_corner, MARKER_SIZE, cam_mat, dist_coef)
 
-            rVec = rVec[0][0]
-            tVec = tVec[0][0]
+            rVec = rVec
+            tVec = tVec
 
             rVec_flipped = rVec * -1
             tVec_flipped = tVec * -1
