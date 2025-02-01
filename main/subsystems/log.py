@@ -76,7 +76,6 @@ def init_log_plots():
     runtime.aiming.ax.set_xlabel("Frame Number") 
     runtime.aiming.ax.set_ylabel("Error (Distance)")
     runtime.aiming.ax.legend()
-    plt.draw()
     
 def plot_calculation():
     center_point            = runtime.aiming.center_point
@@ -99,8 +98,9 @@ def plot_calculation():
     runtime.aiming.line_error.set_xdata(range(len(runtime.aiming.error_values)))
     runtime.aiming.line_error.set_ydata(runtime.aiming.error_values)
     
+    runtime.aiming.fig.canvas.draw()
+    runtime.aiming.fig.canvas.flush_events()
     
-    plt.pause(0.05)
     
     
     
