@@ -93,7 +93,7 @@ def when_frame_arrives():
     if frame.size > 2:
         # detect markers
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        marker_corners, marker_IDs, rejects = detector.detectMarkers(gray_frame, aruco_dict)
+        marker_corners, marker_IDs, rejects = detector.detectMarkers(gray_frame)
 
         # get 3d raw coords
         realsense_marker_3ds = use_realsense_depth(marker_corners)
