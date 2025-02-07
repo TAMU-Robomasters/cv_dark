@@ -34,6 +34,7 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
     
     
     x_data, y_data = log.plot_calculation()
+    line.set_data(x_data, y_data)
     plt.draw()
     
     
