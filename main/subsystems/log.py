@@ -9,7 +9,6 @@ from toolbox.image_tools import Image, rgb
 from toolbox.cold_storage import ColdStorage
 from subsystems.aim import TargetStatus
 from subsystems.video_stream import video_stream
-from collections import deqlue
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation 
