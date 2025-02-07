@@ -70,7 +70,7 @@ runtime.total_fps = 0
 def init_log_plots():
     fig, ax = plt.subplots()
     ax.set_xlim(0,100)
-    ax.set_xlimset_ylim(-10,10)
+    ax.set_ylim(-10,10)
     line, = ax.plot([],[],lw=2)
     return fig,ax, line
     
