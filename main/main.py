@@ -11,7 +11,7 @@ import subsystems.communicate  as communicate
 import subsystems.power_rune   as power_rune 
 import subsystems.log          as log
 import pyston_lite
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 pyston_lite.enable()
 synchronized_debug = False
