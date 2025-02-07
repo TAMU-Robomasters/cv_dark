@@ -75,6 +75,7 @@ def when_frame_arrives():
     global past_time
     # import current frame
     frame = runtime.color_image
+    print(frame)
 
     # reset runtime variable
     runtime.camera_position.marker_patterns = []
