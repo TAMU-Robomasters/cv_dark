@@ -50,7 +50,7 @@ aruco_dict = cv2.aruco.Dictionary(5, 5)
 # add empty bytesList array to fill with
 aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
 
-parameters = aruco.DetectorParameters_create()
+parameters = cv2.aruco.DetectorParameters_create()
 detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
 
 add_marker(aruco_dict, 0, a_pattern)
