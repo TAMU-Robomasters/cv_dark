@@ -87,7 +87,8 @@ def plot_calculation():
         (target_3d_prediction[2] - target_3d_point[2]) ** 2
     )
     elapsed_time = time.time()
-    return  elapsed_time,error
+    floaterr = float(error)
+    return  elapsed_time,floaterr
     
     
     
