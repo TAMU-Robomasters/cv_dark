@@ -16,9 +16,10 @@ import matplotlib as plt
 pyston_lite.enable()
 synchronized_debug = False
 atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_iteration_stops" (its not perfectly reliable, but better than nothing)
-log.init_log_plots()
 
 
+fig, ax,line = log.init_log_plots()
+plt.ion()
 
 # Run detection infinitely
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
@@ -30,6 +31,12 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
     
     if synchronized_debug: t3 = time_synchronized()
     communicate.when_aiming_refreshes()
+    
+    
+    x_data, y_data = log.plot_calculation()
+    plt.draw()
+    
+    
     
     if synchronized_debug: t4 = time_synchronized()
     log.when_finished_processing_frame()

@@ -9,12 +9,13 @@ from toolbox.image_tools import Image, rgb
 from toolbox.cold_storage import ColdStorage
 from subsystems.aim import TargetStatus
 from subsystems.video_stream import video_stream
-from collections import deque
+from collections import deqlue
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation 
 import os
 import numpy as np
+import time
 
 
 
@@ -68,14 +69,11 @@ runtime.total_fps = 0
 
 # Not sure if we are to continue using this
 def init_log_plots():
-    plt.ion()
-    runtime.aiming.fig, runtime.aiming.ax = plt.subplots()
-    runtime.aiming.error_values = []
-    runtime.aiming.line_error, = runtime.aiming.ax.plot([],[],'r-', label="Prediction Error")
-    runtime.aiming.ax.set_ylim(0,10)
-    runtime.aiming.ax.set_xlabel("Frame Number") 
-    runtime.aiming.ax.set_ylabel("Error (Distance)")
-    runtime.aiming.ax.legend()
+    fig, ax = plt.subplots()
+    ax.set_xlim(0,100)
+    ax.set_xlimset_ylim(-10,10)
+    line, = ax.plot([],[],lw=2)
+    return fig,ax, line
     
 def plot_calculation():
     center_point            = runtime.aiming.center_point
@@ -89,17 +87,9 @@ def plot_calculation():
         (target_3d_prediction[1] - target_3d_point[1]) ** 2 +
         (target_3d_prediction[2] - target_3d_point[2]) ** 2
     )
+    elapsed_time = time.time()
+    return  elapsed_time,error
     
-    runtime.aiming.error_values.append(error)
-    
-    if len(runtime.aiming.error_values) > 100:
-        runtime.aiming.error_values.pop(0)
-        
-    runtime.aiming.line_error.set_xdata(range(len(runtime.aiming.error_values)))
-    runtime.aiming.line_error.set_ydata(runtime.aiming.error_values)
-    
-    runtime.aiming.fig.canvas.draw()
-    runtime.aiming.fig.canvas.flush_events()
     
     
     
