@@ -93,7 +93,7 @@ def when_frame_arrives():
         marker_corners, marker_IDs, rejects = detector.detectMarkers(gray_frame)
         # get 3d raw coords
         realsense_marker_3ds = use_realsense_depth(marker_corners)
-        vision_marker_3ds = use_vision_depth(marker_corners)
+        #vision_marker_3ds = use_vision_depth(marker_corners)
    
         # filter 3d coord
         # ! only works for detecting one marker
