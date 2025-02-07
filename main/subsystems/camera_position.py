@@ -89,9 +89,10 @@ def when_frame_arrives():
     # ? is this necessary
     if frame is not None:
         # detect markers
+        print(detector)
+        print(aruco_dict)
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         marker_corners, marker_IDs, rejects = detector.detectMarkers(gray_frame)
-        print("I have passed detect")
         # get 3d raw coords
         realsense_marker_3ds = use_realsense_depth(marker_corners)
         vision_marker_3ds = use_vision_depth(marker_corners)
