@@ -2,7 +2,6 @@ import cv2
 import math
 import numpy as np
 from time import time_ns
-from cv2 import aruco
 
 from super_map import LazyDict
 from subsystems.vision_position_estimation import a_pattern, b_pattern, c_pattern, d_pattern, e_pattern, add_marker, \
@@ -45,14 +44,14 @@ MARKER_SIZE = 150 # mm
 
 
 # define an empty custom dictionary with
-aruco_dict = cv2.aruco.Dictionary(5, 5)
+aruco_dict = cv2.aruco.Dictionary(6, 5, 0)
 
 # add empty bytesList array to fill with
 aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
 
 parameters = cv2.aruco.DetectorParameters()
 detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
-
+print(a_pattern)
 add_marker(aruco_dict, 0, a_pattern)
 add_marker(aruco_dict, 1, b_pattern)
 add_marker(aruco_dict, 2, c_pattern)
