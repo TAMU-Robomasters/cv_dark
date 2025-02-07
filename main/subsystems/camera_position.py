@@ -89,7 +89,7 @@ def when_frame_arrives():
     vision_robot_coord = []
 
     # ? is this necessary
-    if frame.size > 2:
+    if not frame.empty():
         # detect markers
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         marker_corners, marker_IDs, rejects = detector.detectMarkers(gray_frame)
