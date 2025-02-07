@@ -75,8 +75,6 @@ def when_frame_arrives():
     global past_time
     # import current frame
     frame = runtime.color_image
-    print(frame)
-
     # reset runtime variable
     runtime.camera_position.marker_patterns = []
     runtime.camera_position.marker_colors = []
@@ -89,7 +87,7 @@ def when_frame_arrives():
     vision_robot_coord = []
 
     # ? is this necessary
-    if not frame.empty():
+    if frame is not None:
         # detect markers
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         marker_corners, marker_IDs, rejects = detector.detectMarkers(gray_frame)
