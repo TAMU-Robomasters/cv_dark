@@ -51,7 +51,6 @@ aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
 
 parameters = cv2.aruco.DetectorParameters()
 detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
-print(a_pattern)
 add_marker(aruco_dict, 0, a_pattern)
 add_marker(aruco_dict, 1, b_pattern)
 add_marker(aruco_dict, 2, c_pattern)
@@ -133,7 +132,7 @@ def when_frame_arrives():
                 cv2.polylines(frame, [corners.astype(np.int32)], True, (0, 255, 255), 4, cv2.LINE_AA)
                 corners = corners.reshape(4, 2).astype(np.int32)
                 top_right, top_left, bottom_right, bottom_left = corners[0], corners[1], corners[2], corners[3]
-
+                print(ids)
                 #TODO try changing this to just one set of marker corners
                 # Define the parallelogram region using the four corner points
                 parallelogram_points = np.array([top_right, top_left, bottom_left, bottom_right], dtype=np.int32)
