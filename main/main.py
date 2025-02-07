@@ -58,4 +58,5 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
 if synchronized_debug: print(runtime.frame_number)
 log.when_iteration_stops()
 
+plt.show(block=True)
 
