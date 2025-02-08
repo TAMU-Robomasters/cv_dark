@@ -145,13 +145,13 @@ def when_finished_processing_frame():
 
 
         
-    # if display_live_frames:
-    #         if depth_compatible:
-    #             cv2.imshow("depth", depth.img)
-    #             plt.show(block=False)
-    #             plt.close()
-    #         cv2.imshow("main", image.img)
-    #         cv2.waitKey(1) # doesn't actually wait  
+    if display_live_frames:
+            # if depth_compatible:
+                # cv2.imshow("depth", depth.img)
+                # plt.show(block=False)
+                # plt.close()
+            cv2.imshow("main", image.img)
+            cv2.waitKey(1) # doesn't actually wait  
     
     if should_save_frame:
         color_video_writer.add_frame(runtime.color_image)
