@@ -47,7 +47,7 @@ MARKER_SIZE = 150 # mm
 aruco_dict = cv2.aruco.Dictionary(6, 5, 0)
 
 # add empty bytesList array to fill with
-#aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
+aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
 #
 
 add_marker(aruco_dict, 0, a_pattern)
