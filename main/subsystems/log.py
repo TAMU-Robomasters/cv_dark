@@ -72,6 +72,8 @@ def init_log_plots():
     ax.set_xlim(0,100)
     ax.set_ylim(-10,10)
     line, = ax.plot([],[],lw=2)
+    
+    runtime.start_time = time.time()
     return fig,ax, line
     
 def plot_calculation():
@@ -86,8 +88,14 @@ def plot_calculation():
         (target_3d_prediction[1] - target_3d_point[1]) ** 2 +
         (target_3d_prediction[2] - target_3d_point[2]) ** 2
     )
-    elapsed_time = time.time()
+    elapsed_time = time.time() - runtime.start_time
     floaterr = float(error)
+    print("prediction 0",target_3d_prediction[0])
+    print("prediction 0",target_3d_prediction[1])
+    print("prediction 0",target_3d_prediction[2])
+    print("target 3d point 0", target_3d_point[0])
+    print("target 3d point 1", target_3d_point[1])
+    print("target 3d point 2", target_3d_point[2])
     print("FLOATERR",floaterr)
     print("Time",elapsed_time)
     return  elapsed_time,floaterr
