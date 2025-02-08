@@ -88,8 +88,8 @@ def plot_calculation():
     )
     elapsed_time = time.time()
     floaterr = float(error)
-    print(floaterr)
-    print(elapsed_time)
+    print("FLOATERR",floaterr)
+    print("Time",elapsed_time)
     return  elapsed_time,floaterr
     
     
