@@ -37,7 +37,7 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
     line.set_data(x_data, y_data)
     plt.draw()
     
-    
+    plt.pause(0.001)
     
     if synchronized_debug: t4 = time_synchronized()
     log.when_finished_processing_frame()
@@ -58,5 +58,5 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
 if synchronized_debug: print(runtime.frame_number)
 log.when_iteration_stops()
 
-plt.show()
+# plt.show()
 
