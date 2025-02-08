@@ -44,7 +44,7 @@ MARKER_SIZE = 150 # mm
 
 
 # define an empty custom dictionary with
-aruco_dict = cv2.aruco.Dictionary(5, 7)
+aruco_dict = cv2.aruco.Dictionary(5, 5)
 
 # add empty bytesList array to fill with
 aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
