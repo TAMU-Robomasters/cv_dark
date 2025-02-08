@@ -96,6 +96,8 @@ def plot_calculation():
     print("target 3d point 0", target_3d_point[0])
     print("target 3d point 1", target_3d_point[1])
     print("target 3d point 2", target_3d_point[2])
+    print("point runtime", runtime.aiming.target_3d)
+    print("prediction runtime", runtime.aiming.target)
     print("FLOATERR",floaterr)
     print("Time",elapsed_time)
     return  elapsed_time,floaterr
