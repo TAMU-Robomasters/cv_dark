@@ -92,20 +92,20 @@ def when_frame_arrives():
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         marker_corners, marker_IDs, rejects = detector.detectMarkers(gray_frame)
         # get 3d raw coords
-        realsense_marker_3ds = use_realsense_depth(marker_corners)
-        #vision_marker_3ds = use_vision_depth(marker_corners)
+        #realsense_marker_3ds = use_realsense_depth(marker_corners)
+        vision_marker_3ds = use_vision_depth(marker_corners)
    
         # filter 3d coord
         # ! only works for detecting one marker
         # TODO implement realsense depth and uncomment realsense stuff
-        if realsense_marker_3ds: #or vision_marker_3ds:
-            #vision_measurement = np.array([vision_marker_3ds[0][0], vision_marker_3ds[0][1]])
+        if vision_marker_3ds: #realsense_marker_3ds or
+            vision_measurement = np.array([vision_marker_3ds[0][0], vision_marker_3ds[0][1]])
             # realsense_measurement = np.array([realsense_marker_3ds[0][0], realsense_marker_3ds[0][1]]) 
             current_time = time_ns() / 1e9  # Get current time in seconds
             vision_kalman_filter.predict(dt=current_time - past_time)
             # realsense_kalman_filter.predict(dt=current_time - past_time)
             past_time = current_time
-            #vision_kalman_filter.update(vision_measurement)
+            vision_kalman_filter.update(vision_measurement)
             # realsense_kalman_filter.update(realsense_measurement)
 
             # ? filter after or before we get robot coords?
