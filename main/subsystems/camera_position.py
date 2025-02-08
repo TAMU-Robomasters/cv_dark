@@ -44,10 +44,10 @@ MARKER_SIZE = 150 # mm
 
 
 # define an empty custom dictionary with
-aruco_dict = cv2.aruco.Dictionary(np.empty(shape=(4, 4), dtype=np.uint8), 5)
+aruco_dict = cv2.aruco.Dictionary("gimme an error", 5)
 
 # add empty bytesList array to fill with
-#aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
+aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
 #
 
 a_pattern = np.array([
