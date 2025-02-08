@@ -49,13 +49,12 @@ aruco_dict = cv2.aruco.Dictionary(6, 5, 0)
 # add empty bytesList array to fill with
 aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
 #
-def add_marker(aruco_dict, marker_name, marker_pattern):
-    aruco_dict.bytesList[marker_name] = cv2.aruco.Dictionary_getByteListFromBits(marker_pattern)
-add_marker(aruco_dict, 0, a_pattern)
-add_marker(aruco_dict, 1, b_pattern)
-add_marker(aruco_dict, 2, c_pattern)
-add_marker(aruco_dict, 3, d_pattern)
-add_marker(aruco_dict, 4, e_pattern)
+aruco_dict.bytesList[0] = cv2.aruco.Dictionary_getByteListFromBits(a_pattern)
+# add_marker(aruco_dict, 0, a_pattern)
+# add_marker(aruco_dict, 1, b_pattern)
+# add_marker(aruco_dict, 2, c_pattern)
+# add_marker(aruco_dict, 3, d_pattern)
+# add_marker(aruco_dict, 4, e_pattern)
 
 parameters = cv2.aruco.DetectorParameters()
 detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
