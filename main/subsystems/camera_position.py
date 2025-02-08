@@ -4,7 +4,7 @@ import numpy as np
 from time import time_ns
 
 from super_map import LazyDict
-from subsystems.vision_position_estimation import a_pattern, b_pattern, c_pattern, d_pattern, e_pattern, add_marker, \
+from subsystems.vision_position_estimation import a_pattern, b_pattern, c_pattern, d_pattern, e_pattern, \
     rotation_matrix_to_euler_angles, id_to_letter
 #TODO rework this so that it's pulling from the main kalman filter script
 #NOTE should probably change how this structured 
@@ -49,7 +49,8 @@ aruco_dict = cv2.aruco.Dictionary(6, 5, 0)
 # add empty bytesList array to fill with
 aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
 #
-
+def add_marker(aruco_dict, marker_name, marker_pattern):
+    aruco_dict.bytesList[marker_name] = cv2.aruco.Dictionary_getByteListFromBits(marker_pattern)
 add_marker(aruco_dict, 0, a_pattern)
 add_marker(aruco_dict, 1, b_pattern)
 add_marker(aruco_dict, 2, c_pattern)
