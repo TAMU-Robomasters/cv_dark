@@ -93,6 +93,8 @@ aruco_dict.bytesList[4] = cv2.aruco.Dictionary_getByteListFromBits(e_pattern)
 
 parameters = cv2.aruco.DetectorParameters()
 detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
+
+print(cv2.aruco.Dictionary.readDictionary(aruco_dict))
 # Kalman filter init
 
 #TODO reformat this stuff
