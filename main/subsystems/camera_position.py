@@ -194,8 +194,10 @@ def use_vision_depth(marker_corners):
         for marker_corner in marker_corners: 
             rVec, tVec, _ = estimatePoseSingleMarkers(marker_corner, MARKER_SIZE, cam_mat, dist_coef)
 
-            rVec = rVec
-            tVec = tVec
+            print(tVec)
+
+            rVec = rVec[0]
+            tVec = tVec[0]
 
             rVec_flipped = rVec * -1
             tVec_flipped = tVec * -1
