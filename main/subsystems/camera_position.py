@@ -109,8 +109,8 @@ def when_frame_arrives():
             # realsense_kalman_filter.update(realsense_measurement)
 
             # ? filter after or before we get robot coords?
-            vision_filtered_x = int(vision_kalman_filter.state[0])
-            vision_filtered_y = int(vision_kalman_filter.state[1])  # Extract filtered x and y positions
+            vision_filtered_x = int(vision_marker_3ds[0][0])#vision_kalman_filter.state[0])
+            vision_filtered_y = int(vision_marker_3ds[0][1])#vision_kalman_filter.state[1])  # Extract filtered x and y positions
 
             # realsense_filtered_x = int(realsense_kalman_filter.state[0])
             # realsense_filtered_y = int(realsense_kalman_filter.state[1])
