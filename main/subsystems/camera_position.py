@@ -99,7 +99,7 @@ def when_frame_arrives():
         # ! only works for detecting one marker
         # TODO implement realsense depth and uncomment realsense stuff
         if vision_marker_3ds: #realsense_marker_3ds or
-            vision_measurement = np.array([vision_marker_3ds[0][0], vision_marker_3ds[0][1]])
+            vision_measurement = np.array([vision_marker_3ds[0], vision_marker_3ds[1]])
             # realsense_measurement = np.array([realsense_marker_3ds[0][0], realsense_marker_3ds[0][1]]) 
             current_time = time_ns() / 1e9  # Get current time in seconds
             vision_kalman_filter.predict(dt=current_time - past_time)
