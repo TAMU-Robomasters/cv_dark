@@ -94,7 +94,8 @@ aruco_dict.bytesList[4] = cv2.aruco.Dictionary_getByteListFromBits(e_pattern)
 parameters = cv2.aruco.DetectorParameters()
 detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
 
-# cv2.imshow("Aruco Tag A", cv2.generateImageMarker(aruco_dict, 0, 1000, 1))
+cv2.imshow("Aruco Tag A", cv2.aruco.generateImageMarker(aruco_dict, 0, 1000, 1))
+
 
 # Kalman filter init
 
