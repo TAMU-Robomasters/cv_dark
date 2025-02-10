@@ -4,7 +4,7 @@ import numpy as np
 from time import time_ns
 
 from super_map import LazyDict
-from subsystems.vision_position_estimation import \
+from subsystems.vision_position_estimation import a_pattern, b_pattern, c_pattern, d_pattern, e_pattern, add_marker, \
     rotation_matrix_to_euler_angles, id_to_letter
 #TODO rework this so that it's pulling from the main kalman filter script
 #NOTE should probably change how this structured 
@@ -43,73 +43,21 @@ dist_coef = calib_data["distCoef"]
 MARKER_SIZE = 150 # mm
 
 
+
 # define an empty custom dictionary with
 aruco_dict = cv2.aruco.Dictionary(0, 5)
 
 # add empty bytesList array to fill with
 aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
-#
 
-a_pattern = np.array([
-    [0, 0, 1, 0, 0],
-    [0, 1, 0, 1, 0],
-    [1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1],
-    [1, 0, 0, 0, 1]], dtype=np.uint8)
-
-b_pattern = np.array([
-    [1, 1, 1, 1, 0],
-    [1, 0, 0, 0, 1],
-    [1, 1, 1, 1, 0],
-    [1, 0, 0, 0, 1],
-    [1, 1, 1, 1, 0]], dtype=np.uint8)
-
-c_pattern = np.array([
-    [0, 1, 1, 1, 0],
-    [1, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0],
-    [1, 0, 0, 0, 1],
-    [0, 1, 1, 1, 0]], dtype=np.uint8)
-
-d_pattern = np.array([
-    [1, 1, 1, 1, 0],
-    [1, 0, 0, 0, 1],
-    [1, 0, 0, 0, 1],
-    [1, 0, 0, 0, 1],
-    [1, 1, 1, 1, 0]], dtype=np.uint8)
-
-e_pattern = np.array([
-    [1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 0],
-    [1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1]], dtype=np.uint8)
-
-aruco_dict.bytesList[0] = cv2.aruco.Dictionary_getByteListFromBits(a_pattern)
-aruco_dict.bytesList[1] = cv2.aruco.Dictionary_getByteListFromBits(b_pattern)
-aruco_dict.bytesList[2] = cv2.aruco.Dictionary_getByteListFromBits(c_pattern)
-aruco_dict.bytesList[3] = cv2.aruco.Dictionary_getByteListFromBits(d_pattern)
-aruco_dict.bytesList[4] = cv2.aruco.Dictionary_getByteListFromBits(e_pattern)
+add_marker(aruco_dict, 0, a_pattern)
+add_marker(aruco_dict, 1, b_pattern)
+add_marker(aruco_dict, 2, c_pattern)
+add_marker(aruco_dict, 3, d_pattern)
+add_marker(aruco_dict, 4, e_pattern)
 
 parameters = cv2.aruco.DetectorParameters()
 detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
-
-cv2.imshow("Aruco Tag A", cv2.aruco.generateImageMarker(aruco_dict, 0, 1000, 1))
-
-
-# Kalman filter init
-
-#TODO reformat this stuff
-# Define the Kalman filter parameters
-initial_state = np.array([0, 0, 0, 0, 0, 0])  # Initial position and velocity in x and y
-initial_covariance = np.eye(6) * 100000  # Initial covariance matrix
-process_noise = 1e-3  # Process noise
-measurement_noise = .01  # Measurement noise
-
-vision_kalman_filter = KalmanFilter2D(initial_state, initial_covariance, process_noise, measurement_noise)
-realsense_kalman_filter = KalmanFilter2D(initial_state, initial_covariance, process_noise, measurement_noise)
-past_time = time_ns() / 1e9  # Get current time in seconds
-current_time = 0
 
 def when_frame_arrives():
     global past_time
@@ -121,9 +69,6 @@ def when_frame_arrives():
     runtime.camera_position.marker_contours = []
     runtime.camera_position.realsense_robot_coord = []
     runtime.camera_position.vision_robot_coord = []
-
-    print(aruco_dict.bytesList[0])
-
     #? should we do it like about or reset it like this |
     #?                                                  v
     vision_robot_coord = []
@@ -141,31 +86,10 @@ def when_frame_arrives():
         # ! only works for detecting one marker
         # TODO implement realsense depth and uncomment realsense stuff
         if vision_marker_3ds: #realsense_marker_3ds or
-            vision_measurement = np.array([vision_marker_3ds[0][0], vision_marker_3ds[0][1]])
-            # realsense_measurement = np.array([realsense_marker_3ds[0][0], realsense_marker_3ds[0][1]]) 
-            current_time = time_ns() / 1e9  # Get current time in seconds
-            vision_kalman_filter.predict(dt=current_time - past_time)
-            # realsense_kalman_filter.predict(dt=current_time - past_time)
-            past_time = current_time
-            #vision_kalman_filter.update(vision_measurement)
-            # realsense_kalman_filter.update(realsense_measurement)
-
             # ? filter after or before we get robot coords?
             vision_filtered_x = int(vision_marker_3ds[0][0])#vision_kalman_filter.state[0])
             vision_filtered_y = int(vision_marker_3ds[0][1])#vision_kalman_filter.state[1])  # Extract filtered x and y positions
-
-            # realsense_filtered_x = int(realsense_kalman_filter.state[0])
-            # realsense_filtered_y = int(realsense_kalman_filter.state[1])
-     
-
-            # get robot coords
-            #! this may be wrong
-            #TODO add constants to config file
-            #TODO actually reference marker field location to calculate robot coords
-            vision_robot_coord = [int(490 - vision_filtered_y), int(800 - (305 + 100) + vision_filtered_x)]
-            # realsense_robot_coord = [int(490 - realsense_filtered_y), int(800 - (305 + 100) + realsense_filtered_x)] 
-
-            
+            print(vision_filtered_x, vision_filtered_y)
             # Detect marker colors
             detected_colors = [] 
             for ids, corners in zip(marker_IDs, marker_corners):
@@ -190,15 +114,13 @@ def when_frame_arrives():
                     detected_color = "Blue"
                 elif mean_color[2] > 125:
                     detected_color = "Red"
-
+                print(detected_color)
                 detected_colors.append(detected_color)
 
             # export all runtime variables
             #!!! new runtime variables
             runtime.camera_position.marker_patterns = [id_to_letter[id] for id in ids]
             runtime.camera_position.marker_colors = detected_colors
-            # runtime.camera_position.realsense_robot_coord = realsense_robot_coord
-            print(vision_robot_coord)
             runtime.camera_position.vision_robot_coord = vision_robot_coord
 
         #TODO decide on a name between marker_contours, marker_corners, or marker_outlines
@@ -258,30 +180,30 @@ def use_vision_depth(marker_corners):
         
         return marker_3d_coords
 
-def use_realsense_depth(marker_corners):
-      if DEPTH_COMPATIBLE and marker_corners:
-        marker_3d_coords = []
-        marker_bboxes = get_bounding_boxes(marker_corners)
-        for marker_bbox in marker_bboxes:
-            # TODO: make min and max range constants in config for marker detection
-            # instead of armor plate detection
-            
-            # check all of the bounding boxes, remove invalid ones if outside ranges
-            sampled_depth = get_dist_to_bbox(marker_bbox)
-            if sampled_depth is None:
-                continue
-            elif sampled_depth < MIN_RANGE:
-                continue
-            elif sampled_depth > MAX_RANGE:
-                continue
-            else:
-                # ! might need .item()
-                marker_3d_coord = get_xyz_at_color_coords([marker_bbox.center[0], marker_bbox.center[1]], sampled_depth)
-                if marker_3d_coord is None:
-                    continue
-                else:
-                    marker_3d_coords.append(marker_3d_coord)
-        return marker_3d_coords
+# def use_realsense_depth(marker_corners):
+#       if DEPTH_COMPATIBLE and marker_corners:
+#         marker_3d_coords = []
+#         marker_bboxes = get_bounding_boxes(marker_corners)
+#         for marker_bbox in marker_bboxes:
+#             # TODO: make min and max range constants in config for marker detection
+#             # instead of armor plate detection
+#
+#             # check all of the bounding boxes, remove invalid ones if outside ranges
+#             sampled_depth = get_dist_to_bbox(marker_bbox)
+#             if sampled_depth is None:
+#                 continue
+#             elif sampled_depth < MIN_RANGE:
+#                 continue
+#             elif sampled_depth > MAX_RANGE:
+#                 continue
+#             else:
+#                 # ! might need .item()
+#                 marker_3d_coord = get_xyz_at_color_coords([marker_bbox.center[0], marker_bbox.center[1]], sampled_depth)
+#                 if marker_3d_coord is None:
+#                     continue
+#                 else:
+#                     marker_3d_coords.append(marker_3d_coord)
+#         return marker_3d_coords
     
 def get_bounding_boxes(marker_corners):
     min_corners = np.min(marker_corners, axis=1)
