@@ -121,6 +121,8 @@ def when_frame_arrives():
     runtime.camera_position.realsense_robot_coord = []
     runtime.camera_position.vision_robot_coord = []
 
+    print(aruco_dict.bytesList[0])
+
     #? should we do it like about or reset it like this |
     #?                                                  v
     vision_robot_coord = []
