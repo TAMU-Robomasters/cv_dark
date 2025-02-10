@@ -44,7 +44,7 @@ MARKER_SIZE = 150 # mm
 
 
 # define an empty custom dictionary with
-aruco_dict = cv2.aruco.Dictionary(1, 5, 0)
+aruco_dict = cv2.aruco.Dictionary(0, 5, 0)
 
 # add empty bytesList array to fill with
 aruco_dict.bytesList = np.empty(shape=(5, 4, 4), dtype=np.uint8)
@@ -55,35 +55,35 @@ a_pattern = np.array([
     [0, 1, 0, 1, 0],
     [1, 1, 1, 1, 1],
     [1, 0, 0, 0, 1],
-    [1, 0, 0, 0, 1], ])
+    [1, 0, 0, 0, 1]])
 
 b_pattern = np.array([
     [1, 1, 1, 1, 0],
     [1, 0, 0, 0, 1],
     [1, 1, 1, 1, 0],
     [1, 0, 0, 0, 1],
-    [1, 1, 1, 1, 0], ], dtype=np.uint8)
+    [1, 1, 1, 1, 0]], dtype=np.uint8)
 
 c_pattern = np.array([
     [0, 1, 1, 1, 0],
     [1, 0, 0, 0, 1],
     [1, 0, 0, 0, 0],
     [1, 0, 0, 0, 1],
-    [0, 1, 1, 1, 0], ], dtype=np.uint8)
+    [0, 1, 1, 1, 0]], dtype=np.uint8)
 
 d_pattern = np.array([
     [1, 1, 1, 1, 0],
     [1, 0, 0, 0, 1],
     [1, 0, 0, 0, 1],
     [1, 0, 0, 0, 1],
-    [1, 1, 1, 1, 0], ], dtype=np.uint8)
+    [1, 1, 1, 1, 0]], dtype=np.uint8)
 
 e_pattern = np.array([
     [1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0],
     [1, 1, 1, 1, 0],
     [1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1], ], dtype=np.uint8)
+    [1, 1, 1, 1, 1]], dtype=np.uint8)
 
 aruco_dict.bytesList[0] = cv2.aruco.Dictionary_getByteListFromBits(a_pattern)
 aruco_dict.bytesList[1] = cv2.aruco.Dictionary_getByteListFromBits(b_pattern)
@@ -94,7 +94,7 @@ aruco_dict.bytesList[4] = cv2.aruco.Dictionary_getByteListFromBits(e_pattern)
 parameters = cv2.aruco.DetectorParameters()
 detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
 
-cv2.imshow("Aruco Tag A", cv2.aruco.drawMarker(aruco_dict, 0, 1000, 1))
+# cv2.imshow("Aruco Tag A", cv2.generateImageMarker(aruco_dict, 0, 1000, 1))
 
 # Kalman filter init
 
