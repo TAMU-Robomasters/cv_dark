@@ -56,9 +56,9 @@ def when_finished_processing_frame():
     marker_contours         = runtime.camera_position.marker_contours 
     realsense_robot_coord   = runtime.camera_position.realsense_robot_coord 
     vision_robot_coord      = runtime.camera_position.vision_robot_coord 
-    print("what's going on", vision_robot_coord)
-    print("sanity check", marker_contours)
-    
+    #print("what's going on", vision_robot_coord)
+    #print("sanity check", marker_contours)
+
     # 
     # compute loop time
     # 
