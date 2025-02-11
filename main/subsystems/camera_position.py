@@ -128,33 +128,10 @@ def when_frame_arrives():
 
 #TODO change this so that the if statement is outside the function
 def use_vision_depth(marker_corners):
-    def estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
-        '''
-        This will estimate the rvec and tvec for each of the marker corners detected by:
-           corners, ids, rejectedImgPoints = detector.detectMarkers(image)
-        corners - is an array of detected corners for each detected marker in the image
-        marker_size - is the size of the detected markers
-        mtx - is the camera matrix
-        distortion - is the camera distortion matrix
-        RETURN list of rvecs, tvecs, and trash (so that it corresponds to the old estimatePoseSingleMarkers())
-        '''
-        marker_points = np.array([[-marker_size / 2, marker_size / 2, 0],
-                                  [marker_size / 2, marker_size / 2, 0],
-                                  [marker_size / 2, -marker_size / 2, 0],
-                                  [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)
-        trash = []
-        rvecs = []
-        tvecs = []
-        for c in corners:
-            nada, R, t = cv2.solvePnP(marker_points, c, mtx, distortion, False, cv2.SOLVEPNP_IPPE_SQUARE)
-            rvecs.append(R)
-            tvecs.append(t)
-            trash.append(nada)
-        return rvecs, tvecs, trash
     if marker_corners:
         marker_3d_coords = []
         for marker_corner in marker_corners: 
-            rVec, tVec, _ = estimatePoseSingleMarkers(marker_corner, MARKER_SIZE, cam_mat, dist_coef)
+            rVec, tVec, _ = cv2.aruco.estimatePoseSingleMarkers(marker_corner, MARKER_SIZE, cam_mat, dist_coef)
 
             rVec = rVec[0]
             tVec = tVec[0]
@@ -166,7 +143,7 @@ def use_vision_depth(marker_corners):
             # ! this needs to be converter into meters somewhere
             proper_tVec = np.dot(rotation_matrix, tVec_flipped)
             # transforms 3d coords to agreed upon frame of reference for camera
-            # ! assuming tVec is in meters
+            # ! assuming tVec is in millimeters
             #TODO figure out how to see if we're using realsense
             #TODO add name attribute to video stream
             # marker_3d_coord = video_stream.retransform_3d_point_to_coordinate_system(proper_tVec)
