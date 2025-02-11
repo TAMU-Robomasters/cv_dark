@@ -8,7 +8,7 @@ from toolbox.autoboot_check import throw_if_autoboot_is_already_running
 if config.mode != "production": throw_if_autoboot_is_already_running()
 
 import subsystems.video_stream as video_stream
-# import subsystems.model        as model
+import subsystems.model        as model
 import subsystems.aim          as aim
 import subsystems.communicate  as communicate
 import subsystems.power_rune   as power_rune 

@@ -89,7 +89,7 @@ def when_frame_arrives():
             # ? filter after or before we get robot coords?
             vision_filtered_x = int(vision_marker_3ds[0][0])#vision_kalman_filter.state[0])
             vision_filtered_y = int(vision_marker_3ds[0][1])#vision_kalman_filter.state[1])  # Extract filtered x and y positions
-            print(vision_filtered_x, vision_filtered_y)
+            print(vision_marker_3ds)
             # Detect marker colors
             detected_colors = [] 
             for ids, corners in zip(marker_IDs, marker_corners):
