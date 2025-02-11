@@ -96,7 +96,6 @@ def when_frame_arrives():
                 cv2.polylines(frame, [corners.astype(np.int32)], True, (0, 255, 255), 4, cv2.LINE_AA)
                 corners = corners.reshape(4, 2).astype(np.int32)
                 top_right, top_left, bottom_right, bottom_left = corners[0], corners[1], corners[2], corners[3]
-                print(ids)
                 #TODO try changing this to just one set of marker corners
                 # Define the parallelogram region using the four corner points
                 parallelogram_points = np.array([top_right, top_left, bottom_left, bottom_right], dtype=np.int32)
@@ -114,7 +113,6 @@ def when_frame_arrives():
                     detected_color = "Blue"
                 elif mean_color[2] > 125:
                     detected_color = "Red"
-                print(detected_color)
                 detected_colors.append(detected_color)
 
             # export all runtime variables
@@ -157,8 +155,6 @@ def use_vision_depth(marker_corners):
         marker_3d_coords = []
         for marker_corner in marker_corners: 
             rVec, tVec, _ = estimatePoseSingleMarkers(marker_corner, MARKER_SIZE, cam_mat, dist_coef)
-
-            print(tVec)
 
             rVec = rVec[0]
             tVec = tVec[0]
