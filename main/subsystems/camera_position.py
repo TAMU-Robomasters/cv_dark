@@ -40,7 +40,7 @@ calib_data = np.load(calib_data_path)
 cam_mat = calib_data["camMatrix"]
 dist_coef = calib_data["distCoef"]
 
-MARKER_SIZE = 150 # mm
+MARKER_SIZE = 140 # mm
 
 
 
