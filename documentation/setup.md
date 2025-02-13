@@ -6,7 +6,7 @@
 - (Don't git clone)
 - If your github doesn't have any ssh keys then
     - open your termianl and run `ssh-keygen -t ed25519 -C "your_github_email@example.com"` and press enter a couple of times
-    - run `pbcopy < ~/.ssh/id_ed25519.pub`
+    - run `cat ~/.ssh/id_ed25519.pub`
     - go to github > profile pic > settings > SSH and GPG Keys > New SSH Key and press `ctrl + V` to paste the key
     - for more info [Generate Keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) [Add Keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
 - Run this: `repo=git@github.com:TAMU-Robomasters/cv_dark.git setup_or_copy=setup branch=master eval "$(curl -fsSL git.io/JE2Zm || wget -qO- git.io/JE2Zm)"`
