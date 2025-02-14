@@ -69,12 +69,12 @@ runtime.total_fps = 0
 # Not sure if we are to continue using this
 def init_log_plots():
     fig, ax = plt.subplots()
-    ax.set_xlim(0,100)
-    ax.set_ylim(-10,10)
-    line, = ax.plot([],[],lw=2)
-    
+    ax.set_xlim(0, 10)  # Initial x-range
+    ax.set_ylim(-10, 10)  # Initial y-range
+    line, = ax.plot([], [], lw=2)
+
     runtime.start_time = time.time()
-    return fig,ax, line
+    return fig, ax, line
     
 def plot_calculation():
     center_point            = runtime.aiming.center_point
