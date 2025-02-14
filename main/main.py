@@ -3,8 +3,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# added maplotlib thinker rendering
-plt.use('TkAgg')
+
 
 from toolbox.globals import config, print, runtime, time_synchronized
 import subsystems.video_stream as video_stream
@@ -16,6 +15,8 @@ import subsystems.log          as log
 import pyston_lite
 import matplotlib.pyplot as plt
 
+# added maplotlib thinker rendering
+plt.use('TkAgg')
 pyston_lite.enable()
 synchronized_debug = False
 atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_iteration_stops" (its not perfectly reliable, but better than nothing)
