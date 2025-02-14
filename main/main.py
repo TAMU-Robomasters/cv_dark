@@ -14,9 +14,11 @@ import subsystems.power_rune   as power_rune
 import subsystems.log          as log
 import pyston_lite
 import matplotlib.pyplot as plt
+import matplotlib
+
 
 # added maplotlib thinker rendering
-plt.use('TkAgg')
+matplotlib.use('TkAgg')
 pyston_lite.enable()
 synchronized_debug = False
 atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_iteration_stops" (its not perfectly reliable, but better than nothing)
