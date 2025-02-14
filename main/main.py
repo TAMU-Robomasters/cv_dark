@@ -3,6 +3,9 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# added maplotlib thinker rendering
+plt.use('TkAgg')
+
 from toolbox.globals import config, print, runtime, time_synchronized
 import subsystems.video_stream as video_stream
 import subsystems.model        as model
@@ -21,6 +24,12 @@ atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_itera
 fig, ax,line = log.init_log_plots()
 plt.ion()
 
+x_data = []
+y_data = []
+
+
+
+
 # Run detection infinitely
 for runtime.frame_number, runtime.color_image , runtime.depth_image in video_stream.frames():
     if synchronized_debug: t1 = time_synchronized()
@@ -33,11 +42,21 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
     communicate.when_aiming_refreshes()
     
     
-    x_data, y_data = log.plot_calculation()
-    line.set_data(x_data, y_data)
-    plt.draw()
+    new_x, new_y = log.plot_calculation()
+    if new_x and new_y:
+        x_data.append(new_x[0])
+        y_data.append(new_y[0])
+
+        line.set_xdata(x_data)
+        line.set_ydata(y_data)
+
+        ax.relim()
+        ax.autoscale_view()
+
+        plt.draw()
+        plt.pause(0.1)  # Prevent's freezing
     
-    plt.pause(0.1)
+   
     
     if synchronized_debug: t4 = time_synchronized()
     log.when_finished_processing_frame()

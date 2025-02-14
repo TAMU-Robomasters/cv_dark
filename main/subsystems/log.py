@@ -81,13 +81,13 @@ def plot_calculation():
     center_point_prediction = runtime.aiming.center_point_prediction
     target_3d_point         = runtime.aiming.target_3d
     target_3d_prediction    = runtime.aiming.target_3d_prediction
+    
+    if target_3d_point is None or target_3d_prediction is None:
+        return [], []
+
+    error = np.linalg.norm(np.array(target_3d_prediction) - np.array(target_3d_point))
 
     
-    error = np.sqrt(
-        (target_3d_prediction[0] - target_3d_point[0]) ** 2 +
-        (target_3d_prediction[1] - target_3d_point[1]) ** 2 +
-        (target_3d_prediction[2] - target_3d_point[2]) ** 2
-    )
     elapsed_time = time.time() - runtime.start_time
     floaterr = float(error)
     print("prediction 0",target_3d_prediction[0])
