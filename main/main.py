@@ -43,6 +43,9 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
     
     new_x, new_y = log.plot_calculation()
     if new_x and new_y:
+        width = max(new_x+10)
+        height = max(new_y+10)
+        plt.figure(figsize=(width,height))
         x_data.append(new_x[0])
         y_data.append(new_y[0])
 
