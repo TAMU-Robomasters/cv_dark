@@ -19,9 +19,14 @@ pyston_lite.enable()
 synchronized_debug = False
 atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_iteration_stops" (its not perfectly reliable, but better than nothing)
 
+i = 0 
 while True:
     communicate.test_communicate_read()
     log.when_finished_processing_frame()
+    runtime.frame_number = i
+    i += 1
+
+
 
 # Testing
 # # Run detection infinitely

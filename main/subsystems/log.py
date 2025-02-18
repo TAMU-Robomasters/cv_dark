@@ -45,10 +45,10 @@ def when_finished_processing_frame():
     
     # import data
     frame_number       = runtime.frame_number
-    color_image        = runtime.color_image
-    depth_image        = runtime.depth_image
+    # color_image        = runtime.color_image
+    # depth_image        = runtime.depth_image
     prev_loop_time     = runtime.prev_loop_time
-    bounding_boxes     = runtime.modeling.bounding_boxes
+    # bounding_boxes     = runtime.modeling.bounding_boxes
     
     # 
     # compute loop time
@@ -60,7 +60,7 @@ def when_finished_processing_frame():
     # 
     # print
     # 
-    print(f'\nframe#:{f"{frame_number}".rjust(5)},{f"{iteration_time}".rjust(4)}ms, FPS:{f"{1000//iteration_time}".rjust(3)}, targets={len(bounding_boxes)} ', sep='', end='', flush=True)
+    print(f'\nframe#:{f"{frame_number}".rjust(5)},{f"{iteration_time}".rjust(4)}ms, FPS:{f"{1000//iteration_time}".rjust(3)} ', sep='', end='', flush=True)
     
     # 
     # handle image
