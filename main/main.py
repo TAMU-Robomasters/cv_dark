@@ -20,10 +20,11 @@ synchronized_debug = False
 atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_iteration_stops" (its not perfectly reliable, but better than nothing)
 
 i = 0 
+
 while True:
-    communicate.test_communicate_read()
-    log.when_finished_processing_frame()
     runtime.frame_number = i
+    communicate.test_communicate_read()
+    log.when_finished_processing_frame() 
     i += 1
 
 
