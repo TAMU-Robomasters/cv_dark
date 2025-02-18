@@ -12,15 +12,16 @@ if config.mode != "production": throw_if_autoboot_is_already_running()
 # import subsystems.aim          as aim
 import subsystems.communicate  as communicate
 # import subsystems.power_rune   as power_rune 
-# import subsystems.log          as log
+import subsystems.log          as log
 import pyston_lite
 
 pyston_lite.enable()
 synchronized_debug = False
-# atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_iteration_stops" (its not perfectly reliable, but better than nothing)
+atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_iteration_stops" (its not perfectly reliable, but better than nothing)
 
 while True:
     communicate.test_communicate_read()
+    log.when_finished_processing_frame()
 
 # Testing
 # # Run detection infinitely
@@ -47,4 +48,4 @@ while True:
 #     if synchronized_debug: print(f'average fps: {average_fps:.2f}')
 
 # if synchronized_debug: print(runtime.frame_number)
-# log.when_iteration_stops()
+log.when_iteration_stops()
