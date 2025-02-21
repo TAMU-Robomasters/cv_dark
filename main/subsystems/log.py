@@ -86,7 +86,8 @@ def plot_calculation():
     if target_3d_point is None or target_3d_prediction is None:
         return [], []
 
-    error = np.linalg.norm(np.array(target_3d_prediction) - np.array(target_3d_point))
+    two_frames_before = runtime.aim.storedPrediction[-2]
+    error = np.linalg.norm(np.array(two_frames_before) - np.array(target_3d_point))
 
     
     elapsed_time = time.time() - runtime.start_time
@@ -94,6 +95,7 @@ def plot_calculation():
     print("prediction 0",target_3d_prediction[0])
     print("prediction 0",target_3d_prediction[1])
     print("prediction 0",target_3d_prediction[2])
+    print("two frames before", two_frames_before)
     print("target 3d point 0", target_3d_point[0])
     print("target 3d point 1", target_3d_point[1])
     print("target 3d point 2", target_3d_point[2])
