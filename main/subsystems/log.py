@@ -86,7 +86,7 @@ def plot_calculation():
     if target_3d_point is None or target_3d_prediction is None:
         return [], []
 
-    two_frames_before = runtime.aim.storedPrediction[-2]
+    two_frames_before = runtime.aiming.storedPrediction[-2]
     error = np.linalg.norm(np.array(two_frames_before) - np.array(target_3d_point))
 
     

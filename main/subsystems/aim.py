@@ -154,7 +154,7 @@ def when_bounding_boxes_refresh():
             # this contains the prediction of all the state variables [x, vx, ax, z, vz, az]
             forward_prediction = kf_2d.forward_predict(frame_delay)
             center_point_prediction = Position((forward_prediction[0], forward_prediction[3]))
-            runtime.storedPrediction.append(best_target_3d)
+            runtime.aiming.storedPrediction.append(best_target_3d)
    
    
     # update the shared data
