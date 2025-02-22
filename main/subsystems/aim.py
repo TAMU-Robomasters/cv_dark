@@ -41,7 +41,7 @@ runtime.aiming = LazyDict(
     center_point = Position((0, 0)),
     best_bounding_box=[],
     current_confidence=0,
-    storedPrediction = []
+    storedPrediction = [(0,0,0),(0,0,0)]
 )
 
 #TODO find a cleaner way of doing this
