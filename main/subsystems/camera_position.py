@@ -33,12 +33,28 @@ DEPTH_COMPATIBLE    = config.hardware.camera_has_depth
 
 #TODO figure out how to use realsense api to get intrinsics
 #TODO add get_instrinsics to videostream class
-calib_data_path = "./subsystems/Juan_Cal_Matrix.npz"
 
-calib_data = np.load(calib_data_path)
 
-cam_mat = calib_data["camMatrix"]
-dist_coef = calib_data["distCoef"]
+color_intrin, depth_intrin = video_stream.get_intrinsics()
+
+# calib_data_path = "./subsystems/Juan_Cal_Matrix.npz"
+#
+# calib_data = np.load(calib_data_path)
+#
+# cam_mat = calib_data["camMatrix"]
+# dist_coef = calib_data["distCoef"]
+
+fx = color_intrin.fx
+fy = color_intrin.fy
+cx = color_intrin.ppx
+cy = color_intrin.ppy
+
+k = np.array([[fx, 0, cx],
+              [0,fy, cy],
+              [0,0,1]])
+
+cam_mat = k
+dist_coef = np.array(color_intrin.coeffs)
 
 MARKER_SIZE = 150 # mm
 
@@ -87,7 +103,7 @@ def when_frame_arrives():
         # TODO implement realsense depth and uncomment realsense stuff
         if vision_marker_3ds: #realsense_marker_3ds or
             # ? filter after or before we get robot coords?
-            print("\n",vision_marker_3ds)
+            # print("\n",vision_marker_3ds)
             # Detect marker colors
             detected_colors = [] 
             for ids, corners in zip(marker_IDs, marker_corners):
@@ -117,10 +133,10 @@ def when_frame_arrives():
             #!!! new runtime variables
             runtime.camera_position.marker_patterns = [id_to_letter[id] for id in ids]
             runtime.camera_position.marker_colors = detected_colors
-            runtime.camera_position.vision_robot_coord = vision_robot_coord
+            runtime.camera_position.vision_robot_coord = vision_marker_3ds
 
         #TODO decide on a name between marker_contours, marker_corners, or marker_outlines
-        runtime.camera_position.marker_contours = marker_corners
+            runtime.camera_position.marker_contours = marker_corners[0]
 
 
 
@@ -131,8 +147,11 @@ def use_vision_depth(marker_corners):
         for marker_corner in marker_corners: 
             rVec, tVec, _ = cv2.aruco.estimatePoseSingleMarkers(marker_corner, MARKER_SIZE, cam_mat, dist_coef)
 
+
             rVec = rVec[0][0]
             tVec = tVec[0][0]
+
+
 
             rVec_flipped = rVec * -1
             tVec_flipped = tVec * -1

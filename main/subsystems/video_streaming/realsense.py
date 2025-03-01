@@ -93,6 +93,9 @@ class VideoStream:
                 continue
             # exit loop if successful
             break
+
+    def get_intrinsics(self):
+        return self.color_intrin, self.depth_intrin
     
     def frames(self):
         from numpy import array

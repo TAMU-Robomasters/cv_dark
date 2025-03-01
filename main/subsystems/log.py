@@ -174,10 +174,12 @@ def visualize_camera_position(realsense_robot_coord, vision_robot_coord):
     
     if vision_robot_coord:
         print("I'm here")
-        print(vision_robot_coord)
+        vision_robot_coord = vision_robot_coord[0]
+        print(490-(vision_robot_coord[2]/10))
+        scale = 10
         #TODO fix conversion stuff
-        field.add_point(x=vision_robot_coord[0], y=vision_robot_coord[1], color=(255, 20, 147), radius=5) # show camera position based on pure vision
-        field.add_line(start=(490, 800 - (305 + 100)), end=vision_robot_coord) # show line of sight
+        field.add_point(x=int(490-(vision_robot_coord[2]/scale)), y=int((800-405)-(vision_robot_coord[0]/scale)), color=(255, 20, 147), radius=5) # show camera position based on pure vision
+        field.add_line(start=(490, 800 - (305 + 100)), end=(int(490-(vision_robot_coord[2]/scale)), int((800-405)-(vision_robot_coord[0]/scale)))) # show line of sight
 
     return field
 
