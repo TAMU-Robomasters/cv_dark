@@ -88,6 +88,14 @@ const contentsOfInfiniteRunScript = `#!/usr/bin/env bash
 #       2. logs all output to $HOME/boot.log
 #       3. runs the following IN A LOOP: ${pathToOnBootCommand.replace(/\n/g,"")}
 
+echo "#"
+echo "#"
+echo "#"
+echo "# BOOTING UP XAVIER"
+echo "#"
+echo "#"
+echo "#"
+
 this_username=${shellEscape(userName)}
 this_home=${shellEscape(home)}
 boot_log=${shellEscape(pathToBootLogFile)}
