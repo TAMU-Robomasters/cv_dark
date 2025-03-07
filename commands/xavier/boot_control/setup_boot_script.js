@@ -110,6 +110,7 @@ then
 fi
 rm -f "$boot_log"
 
+export HOME="$this_home"
 sudo -u "$this_username" -E this_username="$this_username" this_home="$this_home" -- ${shellEscape(pathToZsh)} -c ${shellEscape(`
     while true
     do
