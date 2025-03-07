@@ -146,6 +146,7 @@ sudo -u "$this_username" -E this_username="$this_username" this_home="$this_home
         FileSystem.sync.write({
             path: pathToOnBootCommand,
             data: defaultBootCommand,
+            overwrite: true,
         })
         console.log(`Note: moving/renaming that file will break the boot script`)
     }
@@ -170,6 +171,7 @@ sudo -u "$this_username" -E this_username="$this_username" this_home="$this_home
     FileSystem.sync.write({
         path: pathToActualInfinteRunScript,
         data: contentsOfInfiniteRunScript,
+        overwrite: true,
     })
     // ensure those scripts are executable
     await FileSystem.addPermissions({
