@@ -62,6 +62,12 @@ python3 ${shellEscape(pathToMainPy)} \
 // 
 // this overwrites every time setup is run
 // 
+let pathToZsh
+try {
+    pathToZsh = await run`which zsh`.text()
+} catch (error) {
+    throw Error(`\n\nI couldn't find zsh. Previously the script had a hard time running using bash instead of zsh\n\n`)
+}
 const contentsOfInfiniteRunScript = `#!/usr/bin/env bash
 
 # 
@@ -96,7 +102,16 @@ then
 fi
 rm -f "$boot_log"
 
-sudo -u "$this_username" -E this_username="$this_username" this_home="$this_home" -- bash -c ${shellEscape(`
+export HOME="$this_home"
+sudo -u "$this_username" -E this_username="$this_username" this_home="$this_home" -- ${shellEscape(pathToZsh)} -c ${shellEscape(`
+    echo "#"
+    echo "#"
+    echo "#"
+    echo "# BOOTING UP XAVIER"
+    echo "#"
+    echo "#"
+    echo "#"
+    
     while true
     do
         . ${shellEscape(envVarsFile)}
@@ -182,6 +197,7 @@ sudo -u "$this_username" -E this_username="$this_username" this_home="$this_home
     FileSystem.sync.write({
         path: pathToActualInfinteRunScript,
         data: contentsOfInfiniteRunScript,
+        overwrite: true,
     })
     // ensure those scripts are executable
     await FileSystem.addPermissions({
