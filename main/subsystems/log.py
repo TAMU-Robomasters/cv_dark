@@ -55,7 +55,8 @@ def when_finished_processing_frame():
     bounding_boxes          = runtime.modeling.bounding_boxes
     marker_contours         = runtime.camera_position.marker_contours 
     realsense_robot_coord   = runtime.camera_position.realsense_robot_coord 
-    vision_robot_coord      = runtime.camera_position.vision_robot_coord 
+    vision_robot_coord      = runtime.camera_position.vision_robot_coord
+    vision_robot_coord_filtered = runtime.camera_position.vision_robot_coord_filtered
     #print("what's going on", vision_robot_coord)
     #print("sanity check", marker_contours)
 
@@ -85,10 +86,10 @@ def when_finished_processing_frame():
                 image.add_contours(np.array(marker_contours, dtype=np.int32))# outline contours
             #! Does not save 
             #TODO figure out how to save
-            field = visualize_camera_position(realsense_robot_coord, vision_robot_coord)
+            field = visualize_camera_position(realsense_robot_coord, vision_robot_coord, vision_robot_coord_filtered)
         
         if display_live_frames:
-            cv2.imshow("test1", field.img)
+            cv2.imshow("test1", field)
             cv2.imshow("test2", image.img)
             cv2.waitKey(1) # doesn't actually wait  
         
@@ -155,16 +156,16 @@ def visualize_depth_frame(depth_frame_array):
         cv2.destroyAllWindows()
 
 # TODO merge the realsense result and vision result or pick one
-def visualize_camera_position(realsense_robot_coord, vision_robot_coord):
+def visualize_camera_position(realsense_robot_coord, vision_robot_coord, filtered_vision_coords):
     """
     show a top down view of the field and the camera's distance from the marker
     """
     # TODO centralize field constants somewhere
-    field = Image(np.zeros((800, 1200, 3)))
+    field = np.zeros((800, 1200, 3))
 
-    field.add_rectangle((500, 800 - 305), (490, 800 - (305 + 295)), thickness=-1) # show wall
+    cv2.rectangle(field, (500, 800 - 305), (490, 800 - (305 + 295)), color=(255,255,255), thickness=-1) # show wall
 
-    field.add_point(x=490, y=800 - (305 + 100), color=(255, 0, 0)) # show where marker is at
+    cv2.circle(field, (490, 800 - (305 + 100)), color=(255, 0, 0), radius=3,  thickness=-1) # show where marker is at
 
     if realsense_robot_coord:
         #! currently converting m to cm this confusing code
@@ -173,13 +174,13 @@ def visualize_camera_position(realsense_robot_coord, vision_robot_coord):
         field.add_line(start=(400, 800 - (305 + 100)), end=realsense_robot_coord * 100) # show line of sight
     
     if vision_robot_coord:
-        print("I'm here")
         vision_robot_coord = vision_robot_coord[0]
-        print(490-(vision_robot_coord[2]/10))
+        filtered_coord = filtered_vision_coords[0]
         scale = 10
         #TODO fix conversion stuff
-        field.add_point(x=int(490-(vision_robot_coord[2]/scale)), y=int((800-405)-(vision_robot_coord[0]/scale)), color=(255, 20, 147), radius=5) # show camera position based on pure vision
-        field.add_line(start=(490, 800 - (305 + 100)), end=(int(490-(vision_robot_coord[2]/scale)), int((800-405)-(vision_robot_coord[0]/scale)))) # show line of sight
+        cv2.circle(field, (int(490 - (filtered_coord[2] / scale)), int((800 - 405) - (filtered_coord[0] / scale))), 5, (128,0,128), 2)
+        cv2.circle(field, center=(int(490-(vision_robot_coord[2]/scale)), int((800-405)-(vision_robot_coord[0]/scale))), color=(100, 100, 200), radius=3, thickness=-1) # show camera position based on pure vision
+        cv2.line(field, pt1=(490, 800 - (305 + 100)), pt2=(int(490-(vision_robot_coord[2]/scale)), int((800-405)-(vision_robot_coord[0]/scale))), color=(255,255,255)) # show line of sight
 
     return field
 

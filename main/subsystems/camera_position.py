@@ -59,6 +59,25 @@ dist_coef = np.array(color_intrin.coeffs)
 MARKER_SIZE = 150 # mm
 
 
+class lowPassFilter():
+    def __init__(self, alpha):
+        self.alpha = alpha
+        self.prevX = 0
+
+
+    def filter(self, x):
+        if runtime.frame_number <= 1:
+            self.prevX = x
+
+        self.xlpf = self.alpha * self.prevX + (1 - self.alpha) * x
+        self.prevX = self.xlpf
+
+        return self.xlpf
+
+alpha = 0.5
+xlpf = lowPassFilter(alpha)
+ylpf = lowPassFilter(alpha)
+zlpf = lowPassFilter(alpha)
 
 # define an empty custom dictionary with
 aruco_dict = cv2.aruco.Dictionary(0, 5, 0)
@@ -85,6 +104,7 @@ def when_frame_arrives():
     runtime.camera_position.marker_contours = []
     runtime.camera_position.realsense_robot_coord = []
     runtime.camera_position.vision_robot_coord = []
+    runtime.camera_position.vision_robot_coord_filtered = [np.array([0, 0, 0])]  # filtered_marker_3ds
     #? should we do it like about or reset it like this |
     #?                                                  v
     vision_robot_coord = []
@@ -96,8 +116,11 @@ def when_frame_arrives():
         marker_corners, marker_IDs, rejects = detector.detectMarkers(gray_frame)
         # get 3d raw coords
         #realsense_marker_3ds = use_realsense_depth(marker_corners)
+        vision_marker_3ds = None
+
         vision_marker_3ds = use_vision_depth(marker_corners)
-   
+
+
         # filter 3d coord
         # ! only works for detecting one marker
         # TODO implement realsense depth and uncomment realsense stuff
@@ -129,11 +152,18 @@ def when_frame_arrives():
                     detected_color = "Red"
                 detected_colors.append(detected_color)
 
+            filtered_marker_3ds = []
+            for coord in vision_marker_3ds:
+                output = np.array([xlpf.filter(coord[0]), ylpf.filter(coord[1]), zlpf.filter(coord[2])])
+                filtered_marker_3ds.append(output)
+
+
             # export all runtime variables
             #!!! new runtime variables
             runtime.camera_position.marker_patterns = [id_to_letter[id] for id in ids]
             runtime.camera_position.marker_colors = detected_colors
             runtime.camera_position.vision_robot_coord = vision_marker_3ds
+            runtime.camera_position.vision_robot_coord_filtered = filtered_marker_3ds
 
         #TODO decide on a name between marker_contours, marker_corners, or marker_outlines
             runtime.camera_position.marker_contours = marker_corners[0]
@@ -144,29 +174,24 @@ def when_frame_arrives():
 def use_vision_depth(marker_corners):
     if marker_corners:
         marker_3d_coords = []
+        marker_3d_coords_filtered = []
         for marker_corner in marker_corners: 
             rVec, tVec, _ = cv2.aruco.estimatePoseSingleMarkers(marker_corner, MARKER_SIZE, cam_mat, dist_coef)
 
-
             rVec = rVec[0][0]
             tVec = tVec[0][0]
-
-
 
             rVec_flipped = rVec * -1
             tVec_flipped = tVec * -1
 
             rotation_matrix, jacobian = cv2.Rodrigues(rVec_flipped)
-            # ! this needs to be converter into meters somewhere
+
             proper_tVec = np.dot(rotation_matrix, tVec_flipped)
             # transforms 3d coords to agreed upon frame of reference for camera
             # ! assuming tVec is in millimeters
-            #TODO figure out how to see if we're using realsense
-            #TODO add name attribute to video stream
-            # marker_3d_coord = video_stream.retransform_3d_point_to_coordinate_system(proper_tVec)
-            # marker_3d_coord = video_stream.offset_3d_point_to_camera_center(marker_3d_coord)
 
             marker_3d_coords.append(proper_tVec)
+
         
         return marker_3d_coords
 
@@ -202,5 +227,3 @@ def get_bounding_boxes(marker_corners):
     #!assuming that 0,0 is in the top left
     return [BoundingBox.from_points(top_left=min_corner, bottom_right=max_corner) \
         for min_corner, max_corner in zip(min_corners, max_corners)]
-        
-    
