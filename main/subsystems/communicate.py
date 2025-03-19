@@ -1,11 +1,23 @@
 from ctypes import Structure, c_uint8, c_float, c_bool
 import serial
 from time import time
+import os
+import sys
+import atexit
+sys.path.append(r'/home/xavier/repos/cv_dark/main')
+print(sys.path)
 
 from super_map import LazyDict
 
 from toolbox.globals import path_to, config, print, runtime
-from subsystems.video_stream import video_stream
+
+rxBuffer = []
+
+def print_buffer():
+	print(rxBuffer)
+	print(port.in_waiting)
+
+atexit.register(print_buffer)
 
 # 
 # config
@@ -86,7 +98,7 @@ def test_communicate_read():
     try:
         byte = port.read(1)
         if(byte):
-            print(f"there is a byte: {byte}")
+            rxBuffer.append(byte)
         else:
             print("no byte")
     except Exception as error:
@@ -99,3 +111,7 @@ if port is None:
         pass # do nothing intentionally
     def test_communicate_read():
         pass
+
+if __name__ == "__main__":
+	while True:
+		test_communicate_read()
