@@ -54,7 +54,8 @@ def when_finished_processing_frame():
     prev_loop_time          = runtime.prev_loop_time
     bounding_boxes          = runtime.modeling.bounding_boxes
     marker_contours         = runtime.camera_position.marker_contours 
-    realsense_robot_coord   = runtime.camera_position.realsense_robot_coord 
+    realsense_robot_coord   = runtime.camera_position.realsense_robot_coord
+    realsense_marker_pattern = runtime.camera_position.marker_patterns
     vision_robot_coord      = runtime.camera_position.vision_robot_coord
     vision_robot_coord_filtered = runtime.camera_position.vision_robot_coord_filtered
     #print("what's going on", vision_robot_coord)
@@ -86,7 +87,7 @@ def when_finished_processing_frame():
                 image.add_contours(np.array(marker_contours, dtype=np.int32))# outline contours
             #! Does not save 
             #TODO figure out how to save
-            field = visualize_camera_position(realsense_robot_coord, vision_robot_coord, vision_robot_coord_filtered)
+            field = visualize_camera_position(realsense_robot_coord, vision_robot_coord, vision_robot_coord_filtered, realsense_marker_pattern)
         
         if display_live_frames:
             cv2.imshow("test1", field)
@@ -156,7 +157,7 @@ def visualize_depth_frame(depth_frame_array):
         cv2.destroyAllWindows()
 
 # TODO merge the realsense result and vision result or pick one
-def visualize_camera_position(realsense_robot_coord, vision_robot_coord, filtered_vision_coords):
+def visualize_camera_position(realsense_robot_coord, vision_robot_coord, filtered_vision_coords, marker):
     """
     show a top down view of the field and the camera's distance from the marker
     """
@@ -174,6 +175,7 @@ def visualize_camera_position(realsense_robot_coord, vision_robot_coord, filtere
         field.add_line(start=(400, 800 - (305 + 100)), end=realsense_robot_coord * 100) # show line of sight
     
     if vision_robot_coord:
+        print(marker)
         vision_robot_coord = vision_robot_coord[0]
         filtered_coord = filtered_vision_coords[0]
         scale = 10

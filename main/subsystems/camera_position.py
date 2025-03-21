@@ -153,14 +153,27 @@ def when_frame_arrives():
                 detected_colors.append(detected_color)
 
             filtered_marker_3ds = []
+            average_coord = np.array([0.0,0.0,0.0])
+            x = 0
             for coord in vision_marker_3ds:
-                output = np.array([xlpf.filter(coord[0]), ylpf.filter(coord[1]), zlpf.filter(coord[2])])
-                filtered_marker_3ds.append(output)
+                print(coord)
+                average_coord += coord
+                x += 1
+            average_coord /= x
+            print(average_coord)
+            output = np.array([xlpf.filter(average_coord[0]), ylpf.filter(average_coord[1]), zlpf.filter(average_coord[2])])
+            filtered_marker_3ds.append(output)
 
 
             # export all runtime variables
-            #!!! new runtime variables
-            runtime.camera_position.marker_patterns = [id_to_letter[id] for id in ids]
+            #!!! new runtime variables\
+            letters = []
+            for id in ids:
+                letters.append(id_to_letter[id])
+
+
+            runtime.camera_position.marker_patterns = letters
+            print(runtime.camera_position.marker_patterns)
             runtime.camera_position.marker_colors = detected_colors
             runtime.camera_position.vision_robot_coord = vision_marker_3ds
             runtime.camera_position.vision_robot_coord_filtered = filtered_marker_3ds
