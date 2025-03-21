@@ -201,7 +201,7 @@
             mode: production
             log:
                 disable_all_logging: true
-                disable_print: true
+                disable_print: false
                 save_frame_to_file: false
                 display_live_frames: false
 
