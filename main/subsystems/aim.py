@@ -121,6 +121,7 @@ def when_bounding_boxes_refresh():
             # this contains the prediction of all the state variables [x, vx, ax, y, vy, ay, z, vz, az]
             forward_prediction = kf_3d.forward_predict(frame_delay) 
             target_3d_prediction = Position((forward_prediction[0], forward_prediction[3], forward_prediction[6]))
+            runtime.aiming.storedPrediction.append(best_target_3d)
     else:
         # if camera is not depth capable, find best box
         # mostly used for testing purposes
@@ -154,7 +155,7 @@ def when_bounding_boxes_refresh():
             # this contains the prediction of all the state variables [x, vx, ax, z, vz, az]
             forward_prediction = kf_2d.forward_predict(frame_delay)
             center_point_prediction = Position((forward_prediction[0], forward_prediction[3]))
-            runtime.aiming.storedPrediction.append(best_target_3d)
+            
    
    
     # update the shared data

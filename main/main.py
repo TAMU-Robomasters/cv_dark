@@ -14,19 +14,30 @@ import subsystems.power_rune   as power_rune
 import subsystems.log          as log
 import pyston_lite
 import matplotlib.pyplot as plt
+import time
 
 pyston_lite.enable()
 synchronized_debug = False
 atexit.register(log.when_iteration_stops) # e.g. ctrl+C will trigger "when_iteration_stops" (its not perfectly reliable, but better than nothing)
 
 
-fig, ax,line = log.init_log_plots()
+fig , ax = plt.subplots()
 plt.ion()
+runtime.start_time = time.time()
 
 x_data = []
-y_data = []
+x_error_data = []
+y_error_data = []
+z_error_data = []
 
+line_x = ax.plot(0,0, label="x error", color="red",lw=2)[0]
+line_y = ax.plot(0,0, label="y error" , color="green", lw=2)[0]
+line_z = ax.plot(0,0, label="z error" , color="blue", lw=2)[0]
 
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Error")
+ax.legend()
+ax.grid(True)
 
 
 # Run detection infinitely
@@ -41,16 +52,20 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
     communicate.when_aiming_refreshes()
     
     
-    new_x, new_y = log.plot_calculation()
-    if new_x and new_y:
+    new_time, error_x, error_y, error_z = log.plot_calculation()
+    if new_time and error_x and error_y and error_z:
         # width = max(new_x+10)
         # height = max(new_y+10)
         # plt.figure(figsize=(width,height))
-        x_data.append(new_x[0])
-        y_data.append(new_y[0])
+        x_data.append(new_time[0])
+        x_error_data.append(error_x[0])
+        y_error_data.append(error_y[0])
+        z_error_data.append(error_z[0])
 
-        line.set_xdata(x_data)
-        line.set_ydata(y_data)
+        line_x.set_data(x_data, x_error_data)
+        line_y.set_data(x_data, y_error_data)
+        line_z.set_data(x_data, z_error_data)
+
 
         ax.relim()
         ax.autoscale_view()

@@ -87,11 +87,10 @@ def plot_calculation():
         return [], []
 
     two_frames_before = runtime.aiming.storedPrediction[-2]
-    error = np.linalg.norm(np.array(two_frames_before) - np.array(target_3d_point))
-
+    
     
     elapsed_time = time.time() - runtime.start_time
-    floaterr = float(error)
+    
     print("prediction 0",target_3d_prediction[0])
     print("prediction 0",target_3d_prediction[1])
     print("prediction 0",target_3d_prediction[2])
@@ -102,11 +101,26 @@ def plot_calculation():
     print("point runtime", runtime.aiming.target_3d)
     print("prediction runtime", runtime.aiming.target_3d_prediction)
     
-    x_data = [elapsed_time]
-    y_data = [floaterr]
-    print("FLOATERR",y_data)
-    print("Time",x_data)
-    return  x_data,y_data
+    if target_3d_point[0] == 0:
+        error_x = 0
+    else:
+        error_x = abs((two_frames_before[0] - target_3d_point[0]))  
+    
+    if target_3d_point[1] == 0:
+        error_y = 0
+    else:
+        error_y = abs((two_frames_before[1] - target_3d_point[1])) 
+
+    if target_3d_point[2] == 0:
+        error_z = 0
+    else:
+        error_z = abs((two_frames_before[2] - target_3d_point[2])) 
+    
+    print(error_x)
+    print(error_y)
+    print(error_z)
+    
+    return  [elapsed_time], [error_x],[error_y],[error_z]
     
     
     
