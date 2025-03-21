@@ -52,6 +52,11 @@ class DFTHelper:
         self.spin_magnitude_filter = 0.0
         self.spin_filter_alpha = 0.2  # Filter coefficient
         
+        # Track dominant frequency and phase for better prediction
+        self.dominant_frequency_idx = 0
+        self.dominant_phase = 0.0
+        self.amplitude = 0.0
+        
     def update(self, new_value):
         """
         Update the DFT with a new position value
@@ -71,8 +76,15 @@ class DFTHelper:
         # Calculate DFT
         self.dft = np.fft.fft(self.buffer)
         
+        # Find dominant frequency (excluding DC)
+        magnitudes = np.abs(self.dft[1:self.buffer_size//2])
+        if len(magnitudes) > 0 and np.max(magnitudes) > 0:
+            self.dominant_frequency_idx = np.argmax(magnitudes) + 1
+            self.dominant_phase = np.angle(self.dft[self.dominant_frequency_idx])
+            self.amplitude = magnitudes[self.dominant_frequency_idx - 1]
+        
         # DFT is valid after buffer is filled
-        if not self.is_valid and np.count_nonzero(self.buffer) >= self.buffer_size:
+        if not self.is_valid and np.count_nonzero(self.buffer) >= self.buffer_size//2:
             self.is_valid = True
             
         return self.is_valid
@@ -119,7 +131,259 @@ class DFTHelper:
                                      (1 - self.spin_filter_alpha) * self.spin_magnitude_filter)
         
         return self.spin_magnitude_filter
+    
+    def get_dominant_frequency(self):
+        """
+        Get the dominant frequency index from the DFT
+        
+        Returns:
+            int: Index of dominant frequency
+        """
+        return self.dominant_frequency_idx
+    
+    def get_phase(self):
+        """
+        Get the phase of the dominant frequency
+        
+        Returns:
+            float: Phase in radians
+        """
+        return self.dominant_phase
+    
+    def get_amplitude(self):
+        """
+        Get the amplitude of the dominant frequency
+        
+        Returns:
+            float: Amplitude
+        """
+        return self.amplitude
 
+
+# Position filter for removing spin (heavy filtering)
+# This is used when spin is detected to get a more stable position
+class SpinRemovalFilter:
+    def __init__(self, alpha=0.05):
+        """
+        Simple exponential filter for removing spin from position data
+        
+        Args:
+            alpha: Filter coefficient (0.0-1.0)
+                  Lower values provide more filtering (smoother output)
+                  Higher values respond faster to changes
+        """
+        self.filtered_value = 0.0
+        self.alpha = alpha
+        self.initialized = False
+        
+    def update(self, new_value):
+        """
+        Update the filter with a new position value
+        
+        Args:
+            new_value: New position value
+            
+        Returns:
+            float: Filtered position value
+        """
+        if not self.initialized:
+            self.filtered_value = new_value
+            self.initialized = True
+            return self.filtered_value
+            
+        # Apply exponential filter: y[n] = α*x[n] + (1-α)*y[n-1]
+        self.filtered_value = self.alpha * new_value + (1 - self.alpha) * self.filtered_value
+        return self.filtered_value
+    
+    def set_alpha(self, alpha):
+        """
+        Dynamically adjust the filter coefficient
+        
+        Args:
+            alpha: New filter coefficient (0.0-1.0)
+        """
+        self.alpha = max(0.01, min(0.5, alpha))
+
+# Class for handling multi-dimensional spin detection
+class SpinDetector:
+    def __init__(self, buffer_size=30, damping_factor=0.999):
+        """
+        Initialize spin detector with support for multiple dimensions
+        
+        Args:
+            buffer_size: Size of the buffer for DFT calculation
+            damping_factor: Damping factor for DFT
+        """
+        # Initialize DFT for each dimension
+        self.x_dft = DFTHelper(buffer_size=buffer_size, damping_factor=damping_factor)
+        self.y_dft = DFTHelper(buffer_size=buffer_size, damping_factor=damping_factor)
+        self.z_dft = DFTHelper(buffer_size=buffer_size, damping_factor=damping_factor)
+        
+        # Initialize filters for each dimension
+        self.x_filter = SpinRemovalFilter(alpha=0.05)
+        self.y_filter = SpinRemovalFilter(alpha=0.05)
+        self.z_filter = SpinRemovalFilter(alpha=0.05)
+        
+        # Combined spin magnitude
+        self.combined_magnitude = 0.0
+        
+        # Adaptive threshold based on target properties
+        self.adaptive_threshold = SPIN_MAGNITUDE_THRESHOLD
+        
+        # Store information about spinning pattern
+        self.is_spinning = False
+        self.spin_plane = "unknown"  # xy, xz, yz, or 3d
+        self.spin_rate = 0.0  # cycles per second
+        
+    def update(self, position, target_size=None, target_distance=None):
+        """
+        Update spin detector with new position measurements
+        
+        Args:
+            position: Position vector (x, y, z)
+            target_size: Optional size of target for adaptive thresholding
+            target_distance: Optional distance to target for adaptive thresholding
+            
+        Returns:
+            bool: True if spinning is detected
+        """
+        # Extract components
+        x, y, z = position
+        
+        # Update DFTs for each dimension
+        x_valid = self.x_dft.update(x)
+        y_valid = self.y_dft.update(y)
+        z_valid = self.z_dft.update(z) if z is not None else False
+        
+        # Only proceed if we have enough data
+        if not (x_valid and y_valid):
+            return False
+        
+        # Get spin magnitudes for each axis
+        x_magnitude = self.x_dft.get_spin_magnitude()
+        y_magnitude = self.y_dft.get_spin_magnitude()
+        z_magnitude = self.z_dft.get_spin_magnitude() if z_valid else 0.0
+        
+        # Combined spin magnitude (using root sum of squares)
+        self.combined_magnitude = np.sqrt(x_magnitude**2 + y_magnitude**2 + z_magnitude**2)
+        
+        # Adjust threshold based on target properties if available
+        if target_distance is not None:
+            # Targets further away need higher threshold (harder to detect small movements)
+            distance_factor = min(1.5, max(0.8, target_distance / 3.0))
+            self.adaptive_threshold = SPIN_MAGNITUDE_THRESHOLD * distance_factor
+        
+        if target_size is not None:
+            # Smaller targets need lower threshold (potentially more jitter)
+            size_factor = min(1.2, max(0.8, 1.0 / target_size))
+            self.adaptive_threshold = self.adaptive_threshold * size_factor
+        
+        # Determine spin plane based on relative magnitudes
+        if z_valid:
+            max_mag = max(x_magnitude, y_magnitude, z_magnitude)
+            if max_mag > 0:
+                x_ratio = x_magnitude / max_mag
+                y_ratio = y_magnitude / max_mag
+                z_ratio = z_magnitude / max_mag
+                
+                if x_ratio > 0.7 and y_ratio > 0.7:
+                    self.spin_plane = "xy"
+                elif x_ratio > 0.7 and z_ratio > 0.7:
+                    self.spin_plane = "xz"
+                elif y_ratio > 0.7 and z_ratio > 0.7:
+                    self.spin_plane = "yz"
+                else:
+                    self.spin_plane = "3d"
+        else:
+            self.spin_plane = "xy"
+        
+        # Calculate spin rate
+        dom_freq_idx = self.x_dft.get_dominant_frequency()
+        if dom_freq_idx > 0:
+            self.spin_rate = dom_freq_idx / buffer_size
+        
+        # Detect if spinning
+        self.is_spinning = self.combined_magnitude > self.adaptive_threshold
+        
+        # Adjust filter parameters based on spin characteristics
+        if self.is_spinning:
+            # Faster spins need more aggressive filtering
+            filter_alpha = max(0.01, min(0.1, 0.05 / (self.combined_magnitude)))
+            self.x_filter.set_alpha(filter_alpha)
+            self.y_filter.set_alpha(filter_alpha)
+            self.z_filter.set_alpha(filter_alpha)
+        
+        return self.is_spinning
+    
+    def get_filtered_position(self, position):
+        """
+        Get filtered position that removes spin oscillations
+        
+        Args:
+            position: Original position (x, y, z)
+            
+        Returns:
+            tuple: Filtered position
+        """
+        x, y, z = position
+        
+        # Apply filters only if spinning detected
+        if self.is_spinning:
+            x_filtered = self.x_filter.update(x)
+            y_filtered = self.y_filter.update(y)
+            z_filtered = self.z_filter.update(z) if z is not None else None
+            
+            return (x_filtered, y_filtered, z_filtered)
+        else:
+            # If not spinning, just return original position
+            return position
+    
+    def predict_position(self, position, time_delta):
+        """
+        Predict position accounting for spin pattern
+        
+        Args:
+            position: Current position
+            time_delta: Time to predict ahead
+            
+        Returns:
+            tuple: Predicted position accounting for spin
+        """
+        if not self.is_spinning or self.combined_magnitude < self.adaptive_threshold:
+            return position
+        
+        x, y, z = position
+        
+        # Get filtered position (center of spin)
+        x_center, y_center, z_center = self.get_filtered_position(position)
+        
+        # Get spin characteristics
+        x_freq = self.x_dft.get_dominant_frequency()
+        y_freq = self.y_dft.get_dominant_frequency()
+        x_phase = self.x_dft.get_phase()
+        y_phase = self.y_dft.get_phase()
+        x_amp = self.x_dft.get_amplitude()
+        y_amp = self.y_dft.get_amplitude()
+        
+        # Only apply predictive adjustment if we have valid dominant frequencies
+        if x_freq > 0 and y_freq > 0:
+            # Calculate phase advance for the time delta
+            phase_advance = 2 * np.pi * (x_freq / self.x_dft.buffer_size) * time_delta
+            
+            # Predict future position by adding predicted spin oscillation to filtered center
+            if self.spin_plane == "xy" or self.spin_plane == "3d":
+                adjustment_factor = SPIN_ADJUSTMENT_FACTOR * min(1.0, self.combined_magnitude / 0.3)
+                x_pred = x_center + adjustment_factor * x_amp * np.cos(x_phase + phase_advance)
+                y_pred = y_center + adjustment_factor * y_amp * np.cos(y_phase + phase_advance)
+                z_pred = z_center if z_center is not None else None
+                
+                return (x_pred, y_pred, z_pred)
+        
+        # If we can't make a good prediction, just return filtered position
+        return (x_center, y_center, z_center)
+
+# Initialize spin detector with configurable parameters
+spin_detector = SpinDetector(buffer_size=SPIN_BUFFER_SIZE, damping_factor=SPIN_DAMPING_FACTOR)
 
 # 
 # config
@@ -221,6 +485,11 @@ def when_bounding_boxes_refresh():
     best_bounding_box   = None
     current_confidence  = 0
     best_target_3d      = Position((0,0,0))
+    
+    # Store spin information
+    spin_magnitude = 0.0
+    spin_is_detected = False
+    spin_prediction = None
 
     # 
     # update core aiming data
@@ -261,44 +530,36 @@ def when_bounding_boxes_refresh():
             time_since_last_measurement = curr_time - past_time # in seconds
 
             measurement = np.array(best_target_3d, dtype=np.float32)
+            
+            # Enhanced Spin Detection (3D version)
+            if SPIN_DETECTION_ENABLED:
+                # Get target size for adaptive thresholding
+                target_size = best_bounding_box.width * best_bounding_box.height / (runtime.color_image.shape[0] * runtime.color_image.shape[1])
+                
+                # Update spin detector with current 3D position
+                spin_is_detected = spin_detector.update(
+                    position=best_target_3d,
+                    target_size=target_size,
+                    target_distance=measurement[1]  # Y is depth
+                )
+                
+                # Store spin magnitude for logging
+                spin_magnitude = spin_detector.combined_magnitude
+                
+                # If spin detected, use filtered position for Kalman update
+                if spin_is_detected:
+                    filtered_position = spin_detector.get_filtered_position(best_target_3d)
+                    print(f"3D Spin detected! Magnitude: {spin_magnitude:.4f}")
+                    print(f"Spin plane: {spin_detector.spin_plane}, Rate: {spin_detector.spin_rate:.2f} Hz")
+                    print(f"Using filtered position: {filtered_position}")
+                    
+                    # Update measurement with filtered position
+                    measurement = np.array(filtered_position, dtype=np.float32)
+            
+            # Kalman filter prediction
             kf_3d.predict(time_since_last_measurement)
             kf_3d.correct(measurement) 
             past_time = time.time()
-
-            # Update DFT with unfiltered X position for spin detection
-            if SPIN_DETECTION_ENABLED:
-                # Get the unfiltered X position (exactly as in comp/spin-detection)
-                x_position = measurement[0]
-                
-                # Update DFT with unfiltered position
-                x_dft.update(x_position)
-                x_dft_valid = x_dft.is_data_valid()
-                
-                # Process DFT results if valid
-                global spin_magnitude, x_position_spin_removed
-                if x_dft_valid:
-                    # Get spin magnitude (filtered average of middle frequency components)
-                    spin_magnitude = x_dft.get_spin_magnitude()
-                    
-                    # Debug output
-                    print(f"Spin magnitude: {spin_magnitude}")
-                    
-                    # Check if spin magnitude exceeds threshold (exactly as in comp/spin-detection)
-                    if spin_magnitude > SPIN_MAGNITUDE_THRESHOLD:
-                        # If spinning is detected, use heavily filtered position to remove spin
-                        x_position_spin_removed = x_spin_removal_filter.update(x_position)
-                        print(f"Spin detected! Using filtered position: {x_position_spin_removed}")
-                        
-                        # Use the spin-removed position for the Kalman filter update
-                        measurement[0] = x_position_spin_removed
-                    else:
-                        # If no spinning detected, use the original position
-                        # This matches the logic in comp/spin-detection
-                        pass
-                else:
-                    # If DFT not valid yet, just use the original position
-                    # This matches the logic in comp/spin-detection
-                    pass
 
             try:
                 frame_delay = (time.time() - video_stream.capture_time / 1E3) # seconds
@@ -314,18 +575,20 @@ def when_bounding_boxes_refresh():
             target_kinematic_state = forward_prediction
             target_3d_prediction = Position((forward_prediction[0], forward_prediction[3], forward_prediction[6]))
             
-            # Adjust prediction based on spin detection
-            # This step modifies our aim point to compensate for spinning targets
-            if SPIN_DETECTION_ENABLED and x_dft_valid and spin_magnitude > 0:
-                # The Kalman filter prediction assumes linear motion, but spinning targets
-                # follow circular or oscillating paths. This adjustment compensates for that.
-                target_3d_prediction = adjust_prediction_for_spin(
-                    target_3d_prediction, 
-                    spin_magnitude, 
-                    x_position_spin_removed
+            # Apply enhanced spin prediction if spinning
+            if SPIN_DETECTION_ENABLED and spin_is_detected:
+                # Convert Position to tuple for spin prediction
+                position_tuple = (target_3d_prediction.x, target_3d_prediction.y, target_3d_prediction.z)
+                
+                # Get spin-adjusted prediction
+                spin_adjusted_prediction = spin_detector.predict_position(
+                    position=position_tuple,
+                    time_delta=frame_delay
                 )
-                # After this adjustment, our aim point should better anticipate
-                # where the spinning target will be when our projectile arrives
+                
+                # Update prediction with spin compensation
+                target_3d_prediction = Position(spin_adjusted_prediction)
+                print(f"Applied spin prediction adjustment: {spin_adjusted_prediction}")
     else:
         # if camera is not depth capable, find best box
         # mostly used for testing purposes
@@ -345,44 +608,35 @@ def when_bounding_boxes_refresh():
             center_point.x = int(center_point.x.cpu())
             center_point.y = int(center_point.y.cpu())
             measurement = np.array([center_point.x, center_point.y], dtype=np.float32)
+            
+            # Enhanced Spin Detection (2D version)
+            if SPIN_DETECTION_ENABLED:
+                # Get target size for adaptive thresholding
+                target_size = best_bounding_box.width * best_bounding_box.height / (runtime.color_image.shape[0] * runtime.color_image.shape[1])
+                
+                # For 2D detection, use special position format (x, y, None)
+                spin_is_detected = spin_detector.update(
+                    position=(center_point.x, center_point.y, None),
+                    target_size=target_size,
+                    target_distance=None  # No depth in 2D mode
+                )
+                
+                # Store spin magnitude for logging
+                spin_magnitude = spin_detector.combined_magnitude
+                
+                # If spin detected, use filtered position for Kalman update
+                if spin_is_detected:
+                    filtered_position = spin_detector.get_filtered_position((center_point.x, center_point.y, None))
+                    print(f"2D Spin detected! Magnitude: {spin_magnitude:.4f}")
+                    print(f"Using filtered position: {filtered_position[0]}, {filtered_position[1]}")
+                    
+                    # Update measurement with filtered position
+                    measurement = np.array([filtered_position[0], filtered_position[1]], dtype=np.float32)
+            
+            # Kalman filter prediction
             kf_2d.predict(time_since_last_measurement)
             kf_2d.correct(measurement) 
             past_time = time.time()
-
-            # Update DFT with unfiltered X position for spin detection (2D case)
-            if SPIN_DETECTION_ENABLED:
-                # Get the unfiltered X position
-                x_position = center_point.x
-                
-                # Update DFT with unfiltered position
-                x_dft.update(x_position)
-                x_dft_valid = x_dft.is_data_valid()
-                
-                # Process DFT results if valid
-                global spin_magnitude, x_position_spin_removed
-                if x_dft_valid:
-                    # Get spin magnitude (filtered average of middle frequency components)
-                    spin_magnitude = x_dft.get_spin_magnitude()
-                    
-                    # Debug output
-                    print(f"Spin magnitude (2D): {spin_magnitude}")
-                    
-                    # Check if spin magnitude exceeds threshold (exactly as in comp/spin-detection)
-                    if spin_magnitude > SPIN_MAGNITUDE_THRESHOLD:
-                        # If spinning is detected, use heavily filtered position to remove spin
-                        x_position_spin_removed = x_spin_removal_filter.update(x_position)
-                        print(f"Spin detected (2D)! Using filtered position: {x_position_spin_removed}")
-                        
-                        # Use the spin-removed position for the Kalman filter update
-                        measurement[0] = x_position_spin_removed
-                    else:
-                        # If no spinning detected, use the original position
-                        # This matches the logic in comp/spin-detection
-                        pass
-                else:
-                    # If DFT not valid yet, just use the original position
-                    # This matches the logic in comp/spin-detection
-                    pass
 
             try:
                 frame_delay = (time.time() - video_stream.capture_time / 1E3) # seconds
@@ -395,18 +649,20 @@ def when_bounding_boxes_refresh():
             forward_prediction = kf_2d.forward_predict(frame_delay)
             center_point_prediction = Position((forward_prediction[0], forward_prediction[3]))
             
-            # Adjust prediction based on spin detection
-            # For 2D tracking, we apply a simpler adjustment than in the 3D case
-            if SPIN_DETECTION_ENABLED and x_dft_valid and spin_magnitude > 0:
-                # The adjustment primarily shifts the aim point horizontally
-                # to compensate for oscillating or circular motion
-                center_point_prediction = adjust_prediction_for_spin(
-                    center_point_prediction, 
-                    spin_magnitude, 
-                    x_position_spin_removed
+            # Apply enhanced spin prediction if spinning
+            if SPIN_DETECTION_ENABLED and spin_is_detected:
+                # Convert Position to tuple for spin prediction
+                position_tuple = (center_point_prediction.x, center_point_prediction.y, None)
+                
+                # Get spin-adjusted prediction
+                spin_adjusted_prediction = spin_detector.predict_position(
+                    position=position_tuple,
+                    time_delta=frame_delay
                 )
-                # This adjustment helps hit targets that are moving in patterns
-                # that the linear Kalman filter doesn't model well
+                
+                # Update prediction with spin compensation
+                center_point_prediction = Position((spin_adjusted_prediction[0], spin_adjusted_prediction[1]))
+                print(f"Applied 2D spin prediction adjustment")
    
    
     # update the shared data
@@ -419,6 +675,10 @@ def when_bounding_boxes_refresh():
     runtime.aiming.spin_magnitude           = spin_magnitude
     runtime.aiming.target_3d_prediction     = target_3d_prediction
     runtime.aiming.target_kinematic_state   = target_kinematic_state
+    runtime.aiming.is_spinning              = spin_is_detected if SPIN_DETECTION_ENABLED else False
+    if SPIN_DETECTION_ENABLED and spin_is_detected:
+        runtime.aiming.spin_plane           = spin_detector.spin_plane
+        runtime.aiming.spin_rate            = spin_detector.spin_rate
 
 
 # 
@@ -608,12 +868,8 @@ def adjust_prediction_for_spin(target_position, spin_magnitude, x_position_spin_
     """
     Adjust target prediction based on detected spin pattern
     
-    In comp/spin-detection, the main spin handling is done by using a heavily filtered
-    position for the Kalman filter update when spin is detected. This happens before
-    this function is called, so we don't need to make additional adjustments here.
-    
-    This function is kept for compatibility but doesn't apply additional adjustments
-    since the spin handling is already done during the Kalman filter update.
+    This function is kept for backward compatibility but is now deprecated.
+    The new SpinDetector class handles all spin prediction adjustments.
     
     Args:
         target_position: Current predicted target position (Position object)
@@ -623,8 +879,5 @@ def adjust_prediction_for_spin(target_position, spin_magnitude, x_position_spin_
     Returns:
         Position: The same target position (no additional adjustment)
     """
-    # In comp/spin-detection, all spin handling is done during the Kalman filter update
-    # by using a heavily filtered position when spin is detected.
-    # No additional adjustment is needed here.
-    
+    print("Warning: Using deprecated adjust_prediction_for_spin function. Spin handling is now done by SpinDetector.")
     return target_position
