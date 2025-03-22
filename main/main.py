@@ -67,7 +67,7 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
         line_z.set_data(x_data, z_error_data)
 
 
-        ax.relim()
+        #ax.relim()
         ax.autoscale_view()
 
         plt.draw()
