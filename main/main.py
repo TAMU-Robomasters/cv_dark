@@ -71,7 +71,7 @@ for runtime.frame_number, runtime.color_image , runtime.depth_image in video_str
         ax.autoscale_view()
 
         plt.draw()
-        #plt.pause(0.1)  # Prevent's freezing
+        plt.pause(0.001)  # Prevent's freezing
     
    
     
