@@ -382,9 +382,6 @@ class SpinDetector:
         # If we can't make a good prediction, just return filtered position
         return (x_center, y_center, z_center)
 
-# Initialize spin detector with configurable parameters
-spin_detector = SpinDetector(buffer_size=SPIN_BUFFER_SIZE, damping_factor=SPIN_DAMPING_FACTOR)
-
 # 
 # config
 # 
@@ -404,6 +401,9 @@ SPIN_ADJUSTMENT_FACTOR = 1.0     # Global multiplier for all spin adjustments
                                  # Increase (1.5-2.0) to make adjustments more aggressive
                                  # Decrease (0.5-0.8) if adjustments are overshooting
                                  # This is the easiest parameter to tune for overall system performance
+
+# Initialize spin detector with configurable parameters
+spin_detector = SpinDetector(buffer_size=SPIN_BUFFER_SIZE, damping_factor=SPIN_DAMPING_FACTOR)
 
 # Position filter for removing spin (heavy filtering)
 # This is used when spin is detected to get a more stable position
