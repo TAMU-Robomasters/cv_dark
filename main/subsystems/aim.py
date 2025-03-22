@@ -19,7 +19,7 @@ class TargetStatus(Enum):
     TARGET_FOUND = 1
 
 kf_2d = KF2D(np.ones((6,1), dtype=np.float32), 0.1, 0.1, 0.05, 0.05)
-kf_3d = KF3D(np.ones((9,1), dtype=np.float32), 100.0, 0.0, 0.01, 0.05, 0.2)
+kf_3d = KF3D(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, 0.05, 0.2)
 
 
 # 
