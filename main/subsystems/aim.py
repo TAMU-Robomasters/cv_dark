@@ -19,7 +19,7 @@ class TargetStatus(Enum):
     TARGET_FOUND = 1
 
 kf_2d = KF2D(np.ones((6,1), dtype=np.float32), 0.1, 0.1, 0.05, 0.05)
-kf_3d = KF3D(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, 0.05, 0.2)
+kf_3d = KF3D(np.ones((9,1), dtype=np.float32), 0.03, 0.03, 0.03, 0.05, 0.2)
 
 
 # 
@@ -108,7 +108,8 @@ def when_bounding_boxes_refresh():
 
             measurement = np.array(best_target_3d, dtype=np.float32)
             kf_3d.predict(time_since_last_measurement)
-            kf_3d.correct(measurement) 
+            kf_3d.correct(measurement)  
+            print(kf_3d.kalman.statePost[2], kf_3d.kalman.statePost[5], kf_3d.kalman.statePost[8])  
             past_time = time.time()
 
             try:
