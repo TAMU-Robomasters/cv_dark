@@ -109,7 +109,7 @@ def when_bounding_boxes_refresh():
             measurement = np.array(best_target_3d, dtype=np.float32)
             kf_3d.predict(time_since_last_measurement)
             kf_3d.correct(measurement)  
-            print(kf_3d.kalman.statePost[2], kf_3d.kalman.statePost[5], kf_3d.kalman.statePost[8])  
+            print(np.linalg.norm(np.array(kf_3d.kalman.statePost[2][0], kf_3d.kalman.statePost[5][0], kf_3d.kalman.statePost[8][0])))  
             past_time = time.time()
 
             try:
