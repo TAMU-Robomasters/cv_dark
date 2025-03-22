@@ -83,13 +83,13 @@ def plot_calculation():
     target_3d_point         = runtime.aiming.target_3d
     target_3d_prediction    = runtime.aiming.target_3d_prediction
     
+    elapsed_time = time.time() - runtime.start_time    
+    
     if target_3d_point is None or target_3d_prediction is None:
-        return [], []
+        print("yo")
+        return [elapsed_time], [0], [0]
 
-    two_frames_before = runtime.aiming.storedPrediction[-2]
-    
-    
-    elapsed_time = time.time() - runtime.start_time
+    two_frames_before = runtime.aiming.storedPrediction[-2]    
     
     print("prediction 0",target_3d_prediction[0])
     print("prediction 0",target_3d_prediction[1])
@@ -101,20 +101,14 @@ def plot_calculation():
     print("point runtime", runtime.aiming.target_3d)
     print("prediction runtime", runtime.aiming.target_3d_prediction)
     
-    if target_3d_point[0] == 0:
-        error_x = 0
-    else:
-        error_x = abs((two_frames_before[0] - target_3d_point[0]))  
+   
+    error_x = abs((two_frames_before[0] - target_3d_point[0]))  
     
-    if target_3d_point[1] == 0:
-        error_y = 0
-    else:
-        error_y = abs((two_frames_before[1] - target_3d_point[1])) 
+    
+    error_y = abs((two_frames_before[1] - target_3d_point[1])) 
 
-    if target_3d_point[2] == 0:
-        error_z = 0
-    else:
-        error_z = abs((two_frames_before[2] - target_3d_point[2])) 
+    
+    error_z = abs((two_frames_before[2] - target_3d_point[2])) 
     
     print(error_x)
     print(error_y)
