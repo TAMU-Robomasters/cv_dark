@@ -61,8 +61,8 @@ runtime.modeling.found_robot
 
 runtime.camera
 runtime.camera.frame
-runtime.camera.acceleration
-runtime.camera.gyro
+runtime.camera.acceleration # only availiable for the D435i
+runtime.camera.gyro # only availiable for the D435i
 
 runtime.color_image
 runtime.depth_image

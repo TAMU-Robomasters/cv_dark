@@ -66,8 +66,9 @@ class VideoStream:
         conf = rs.config()
         conf.enable_stream(rs.stream.depth, depth_stream_width, depth_stream_height, rs.format.z16, framerate)  # this starts the depth stream and sets the size and format
         conf.enable_stream(rs.stream.color, color_stream_width, color_stream_height, rs.format.bgr8, framerate) # this starts the color stream and set the size and format
-        conf.enable_stream(rs.stream.accel)
-        conf.enable_stream(rs.stream.gyro)
+        # Only works for the D435i
+        # conf.enable_stream(rs.stream.accel)
+        # conf.enable_stream(rs.stream.gyro)
         # config.enable_stream(rs.stream.pose,rs.format.motion_xyz32f,200)
         
         while True:
@@ -104,8 +105,9 @@ class VideoStream:
             for frame_number in count(1): # starting at 1
                 try:
                     frame = runtime.camera.frame = self.pipeline.wait_for_frames()
-                    runtime.camera.acceleration = frame[2].as_motion_frame().get_motion_data()
-                    runtime.camera.gyro         = frame[3].as_motion_frame().get_motion_data()
+                    # Only works for the D435i
+                    # runtime.camera.acceleration = frame[2].as_motion_frame().get_motion_data()
+                    # runtime.camera.gyro         = frame[3].as_motion_frame().get_motion_data()
 
                     align_start = perf_counter()
                     # Frame Alignment
