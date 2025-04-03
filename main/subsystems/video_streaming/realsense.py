@@ -14,7 +14,8 @@ videostream     = config.videostream
 aiming          = config.aiming
 record_interval = videostream.testing.record_interval
 
-MICRO_SECONDS_TO_MILLISECONDS = 1000
+MICRO_SECONDS_TO_SECONDS = 1E-6
+MICRO_SECONDS_TO_MILLISECONDS = 1E-3
 
 align = rs.align(rs.stream.color)
 
@@ -54,6 +55,9 @@ class VideoStream:
 
         self.depth_min = aiming.min_depth
         self.depth_max = aiming.max_depth
+        
+        self.past_sensor_timestamp = 0
+        self.current_sensor_timestamp = 0
         
         self.video_output = None
         if record_interval > 0:
@@ -120,9 +124,13 @@ class VideoStream:
                     # self.color_frame = frame.get_color_frame()
                     # self.depth_frame = frame.get_depth_frame()
 
-                    capture_time = frame.get_frame_metadata(rs.frame_metadata_value.sensor_timestamp)
-                    frame_time = frame.get_frame_metadata(rs.frame_metadata_value.frame_timestamp)
-                    self.capture_time = (time()*1000) - ((frame_time - capture_time) / MICRO_SECONDS_TO_MILLISECONDS)
+                    self.past_sensor_timestamp = self.current_sensor_timestamp
+                    sensor_timestamp = frame.get_frame_metadata(rs.frame_metadata_value.sensor_timestamp)
+                    self.current_sensor_timestamp = sensor_timestamp * MICRO_SECONDS_TO_SECONDS
+                    frame_timestamp = frame.get_frame_metadata(rs.frame_metadata_value.frame_timestamp)
+                    
+                    # convert camera's sensor timestamp to a time on the system's clock. Not percise 
+                    self.capture_time = (time()*1000) - ((frame_timestamp - sensor_timestamp) * MICRO_SECONDS_TO_MILLISECONDS)
                     # print("frame_number:", frame_number, "capture_time:", self.capture_time)
                     align_end = perf_counter()
                     align_elapsed = (align_end - align_start) * 1000

@@ -21,8 +21,8 @@ class TargetStatus(Enum):
 
 # NOTE initial kinematic state is set to all ones. This might effect convergence time
 # TODO find better uncertainty for x, y, z
-kf_2d = KF2D(np.ones((6,1), dtype=np.float32), 0.1, 0.1, 0.05, 0.05)
-kf_3d = KF3D(np.ones((9,1), dtype=np.float32), 0.1, 0.1, 0.1, 0.05, 0.2)
+kf_2d = KF2D(np.ones((6,1), dtype=np.float32), 0.01, 0.01, 0.05, 4)
+kf_3d = KF3D(np.ones((9,1), dtype=np.float32), 0.01, 0.01, 0.01, 0.05, 4)
 
 
 # 
@@ -46,14 +46,10 @@ runtime.aiming = LazyDict(
     current_confidence=0
 )
 
-#TODO find a cleaner way of doing this
-past_time = time.time()  # get time in seconds
-
 # 
 # main
 # 
 def when_bounding_boxes_refresh():
-    global past_time #? is there a better way
     enemy_boxes             = runtime.modeling.enemy_boxes 
     enemy_confidences       = runtime.modeling.confidences 
     screen_center           = runtime.screen_center
@@ -102,17 +98,15 @@ def when_bounding_boxes_refresh():
             )
         if (best_bounding_box != None):
             center_point = Position(best_bounding_box.center) # for logging/displays
-
-            curr_time = time.time()
+            
             """!TODO Fix bug: during the first iteration of the kalman filter the 
             velocity and acceleration could be really high if there's no target found
             with a short period of time."""
-            time_since_last_measurement = curr_time - past_time # in seconds
+            time_since_last_measurement = video_stream.current_sensor_timestamp - video_stream.past_sensor_timestamp # in seconds
 
             measurement = np.array(best_target_3d, dtype=np.float32)
             kf_3d.predict(time_since_last_measurement)
             kf_3d.correct(measurement) 
-            past_time = time.time()
 
             try:
                 frame_delay = (time.time() - video_stream.capture_time / 1E3) # seconds
@@ -138,17 +132,14 @@ def when_bounding_boxes_refresh():
         if (best_bounding_box != None):
             center_point = Position(best_bounding_box.center) # for logging/displays
 
-            # Predict position using Kalman filters4
-            curr_time = time.time()
-            time_since_last_measurement = curr_time - past_time # in seconds
+            time_since_last_measurement = video_stream.current_sensor_timestamp - video_stream.past_sensor_timestamp # in seconds
 
-            # pulling out from GPU only drops the fps by ~3
+            # pulling out from GPU
             center_point.x = int(center_point.x.cpu())
             center_point.y = int(center_point.y.cpu())
             measurement = np.array([center_point.x, center_point.y], dtype=np.float32)
             kf_2d.predict(time_since_last_measurement)
             kf_2d.correct(measurement) 
-            past_time = time.time()
 
             try:
                 frame_delay = (time.time() - video_stream.capture_time / 1E3) # seconds
