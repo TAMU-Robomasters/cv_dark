@@ -65,8 +65,18 @@ class MessageToEmbedded(Structure):
         ("status"          , c_uint8   ),
     ]
 
-message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
 
+
+
+message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
+class OdometryDataFromEmbedded(Structure):
+    _pack = 1
+    _fields_ = [
+        ("x_field", c_float),
+        ("y_field", c_float),
+        ("yaw_angle", c_float)
+    ]
+#odo_data = OdometryDataFromEmbedded(0.0,0.0,0.0)
 # 
 # main
 # 
@@ -91,6 +101,56 @@ def when_aiming_refreshes():
     except Exception as error:
         print(f"\n[Communication]: error when writing over UART: {error}")
         port = setup_serial_port() # attempt re-setup
+
+
+
+ROBO_DATA = (b'r')       # Command code for robot data
+ODO = (b'o')             # Command code for odometry
+TRANSFORM = (b't')       # Command code for transform
+
+def communicate_read():
+    global port
+    try:
+        byte = port.read(1)
+        if byte == b'b':  # Sync/start byte
+            byte = port.read(1)
+            if not byte:
+                return
+
+            command = byte
+
+            if command == ROBO_DATA:
+                data_byte = port.read(1)
+                if not data_byte:
+                    return
+                data = data_byte[0]
+                team_color = data & 0b0001              # bit 0
+                robot_ID = (data & 0b1110) >> 1         # bits 1-3
+                # TODO: change model.py based on team_color
+                return
+
+            elif command == ODO:
+                data_bytes = port.read(12)
+                if len(data_bytes) != 12:
+                    return
+                odo_data = OdometryDataFromEmbedded.from_buffer_copy(data_bytes)
+                rxBuffer.append(odo_data)
+                return
+
+            elif command == TRANSFORM:
+                # TODO: Handle TRANSFORM logic
+                return
+
+            else:
+                # Unknown command
+                return
+
+        else:
+            return
+
+    except Exception as error:
+        print(f"\n[Communication]: error when read over UART: {error}")
+        port = setup_serial_port()  # Reinitialize the port
 
 
 def test_communicate_read():
