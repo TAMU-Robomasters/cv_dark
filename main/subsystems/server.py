@@ -1,3 +1,55 @@
 #todo add server codea
 import sys
 sys.path.append(r'/home/xavier/repos/cv_dark/main')
+
+# communicate.py reads over data from UART from embedded (the devboard)
+# and then sends it to the server
+# and then server sends it to aim
+
+# then aim will do some math, send the server ummm what would it be, 9 numbers, and then the
+# server will send those 9 numbers to communicate.py
+# then communicate.py will send that to the devboard over UART
+
+# the two clients will be communicate.py and aim.py (auto aim)
+
+
+
+# Receive and decode byte (byte is in ascii)
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
+
+
+stored_number = 0
+
+class NumberHandler(BaseHTTPRequestHandler):
+    # Handle a GET request to send the stored number
+    def do_GET(self):
+        global stored_number
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
+        self.end_headers()
+        response = {"number": stored_number}
+        self.wfile.write(json.dumps(response).encode())
+
+    # Handle POST request to receive a number and store it
+    def do_POST(self):
+        global stored_number
+        content_length = int(self.headers["Content-Length"])
+        post_data = self.rfile.read(content_length)
+        received_data = json.loads(post_data)
+
+        if "number" in received_data:
+            stored_number = received_data["number"]
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"Number stored successfully!")
+        else:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b"Invalid data format")
+
+if __name__ == "__main__":
+    server_address = ("", 8000)
+    httpd = HTTPServer(server_address, NumberHandler)
+    print("Server running in port 8000")
+    httpd.serve_forever()
