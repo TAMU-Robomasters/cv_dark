@@ -69,7 +69,7 @@ def when_aiming_refreshes():
 
     # Sending XYZ position (meters), velocity, acceleration, time since frame capture, and status of target relative to front of camera plane
     if runtime.aiming.target_3d is None:
-        message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = message_to_embedded.VX = message_to_embedded.VY = message_to_embedded.VZ = message_to_embedded.AX = message_to_embedded.AY = message_to_embedded.AZ = 0.0
+        message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = 0.0
     else:
         target_kinematic_state = runtime.aiming.target_kinematic_state
         # estimating where the target is currently at
