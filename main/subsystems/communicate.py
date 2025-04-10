@@ -213,8 +213,8 @@ def test_communicate_read():
             rxBuffer.append(byte)
             number = byte.decode('ascii')
 
-            # TODO: send this byte to server.py
-            send_number(number)
+            # TODO: send this byte to server.py eventually
+            print(number)
 
         else:
             print("no byte")
