@@ -116,11 +116,11 @@ def when_bounding_boxes_refresh():
             if frame_delay > 0.255:
                 print(f"Warming frame delay of {frame_delay} is really high")
             # this contains the prediction of all the state variables [x, vx, ax, y, vy, ay, z, vz, az]
-            forward_prediction = kf_3d.forward_predict(frame_delay)
+            target_3d = kf_3d.kalman.statePost
             print(f"dt aim.py: {frame_delay}")
-            print(f"pos aim.py: {forward_prediction[0]}, {forward_prediction[3]}, {forward_prediction[6]}")
-            target_kinematic_state = forward_prediction
-            target_3d_prediction = Position((forward_prediction[0], forward_prediction[3], forward_prediction[6]))
+            print(f"pos aim.py: {target_3d[0]}, {target_3d[3]}, {target_3d[6]}")
+            target_kinematic_state = target_3d
+            target_3d_prediction = Position((target_3d[0], target_3d[3], target_3d[6]))
     else:
         # if camera is not depth capable, find best box
         # mostly used for testing purposes
@@ -149,8 +149,8 @@ def when_bounding_boxes_refresh():
             if frame_delay > 0.255:
                 print(f"Warming frame delay of {frame_delay} is really high")
             # this contains the prediction of all the state variables [x, vx, ax, z, vz, az]
-            forward_prediction = kf_2d.forward_predict(frame_delay)
-            center_point_prediction = Position((forward_prediction[0], forward_prediction[3]))
+            target_3d = kf_2d.forward_predict(frame_delay)
+            center_point_prediction = Position((target_3d[0], target_3d[3]))
    
    
     # update the shared data
