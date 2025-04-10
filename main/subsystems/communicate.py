@@ -53,17 +53,11 @@ class MessageToEmbedded(Structure):
         ("X"               , c_float   ),
         ("Y"               , c_float   ),
         ("Z"               , c_float   ),
-        ("VX"               , c_float   ),
-        ("VY"               , c_float   ),
-        ("VZ"               , c_float   ),
-        ("AX"               , c_float   ),
-        ("AY"               , c_float   ),
-        ("AZ"               , c_float   ),
         ("capture_delay"   , c_uint8   ),
         ("status"          , c_uint8   ),
     ]
 
-message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0)
+message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
 
 # 
 # main
@@ -77,7 +71,7 @@ def when_aiming_refreshes():
     if runtime.aiming.target_3d is None:
         message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = message_to_embedded.VX = message_to_embedded.VY = message_to_embedded.VZ = message_to_embedded.AX = message_to_embedded.AY = message_to_embedded.AZ = 0.0
     else:
-        target_kinematic_state = runtime.target_kinematic_state
+        target_kinematic_state = runtime.aiming.target_kinematic_state
         # estimating where the target is currently at
         #! not sure if this works
         print(f"dt communicate.py: {capture_delay / 1E3}")
