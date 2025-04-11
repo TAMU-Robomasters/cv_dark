@@ -43,7 +43,7 @@ runtime.aiming = LazyDict(
     target_3d = Position((0, 0, 0)),
     center_point = Position((0, 0)),
     best_bounding_box=[],
-    current_confidence=0
+    current_confidence=0,
     target_kinematic_state=np.zeros(9)
 )
 
