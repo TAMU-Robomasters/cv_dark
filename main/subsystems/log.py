@@ -261,7 +261,7 @@ def show_depth_prediction(depth, depth_prediction):
     norm_depth = (depth - MIN_RANGE) / total_range
     norm_depth_prediction =  (depth_prediction - MIN_RANGE) / total_range
 
-    depth = Image(np.zeros((848, 100, 3)))
+    depth = Image(np.zeros((848, 100, 3),dtype=np.uint8))
 
     depth.add_point(x=50, y=norm_depth * 848, color=rgb(130, 170, 255), radius=10)
     depth.add_point(x=50, y=norm_depth_prediction * 848, color=rgb(195, 232, 141), radius=10)
