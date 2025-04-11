@@ -111,7 +111,6 @@ def when_bounding_boxes_refresh():
            
             # this contains the prediction of all the state variables [x, vx, ax, y, vy, ay, z, vz, az]
             target_3d = kf_3d.kalman.statePost
-            print(f"dt aim.py: {frame_delay}")
             print(f"pos aim.py: {target_3d[0]}, {target_3d[3]}, {target_3d[6]}")
             target_kinematic_state = target_3d
             target_3d_prediction = Position((target_3d[0], target_3d[3], target_3d[6]))
