@@ -323,7 +323,7 @@ def generate_image(fps=0):
                 image.add_text(text="target_3d_state: NAN",  location=(x_location, y_location)); y_location += 50
 
     image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"status: {           status.name        git    }", location=(x_location, y_location)); y_location += 50
+    image.add_text(text=f"status: {           status.name           }", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"fps: {              fps                :.2f}", location=(x_location, y_location)); y_location += 50
         
     return image
