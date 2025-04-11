@@ -318,12 +318,12 @@ def generate_image(fps=0):
         image.add_text(text=f"target_3d: {    disp_target_3d         }", location=(x_location, y_location)); y_location += 50
         if display_kf_prediction:
             if str(type(target_3d_kinematic_state)) != str(type(None)):
-                image.add_text(text=f"target_3d_state: P {target_3d_kinematic_state[0]:.2f}, {target_3d_kinematic_state[3]:.2f}, {target_3d_kinematic_state[6]:.2f}",  location=(x_location, y_location)); y_location += 50
+                image.add_text(text=f"target_3d_state: P {target_3d_kinematic_state[0]}, {target_3d_kinematic_state[3]}, {target_3d_kinematic_state[6]}",  location=(x_location, y_location)); y_location += 50
             else:
                 image.add_text(text="target_3d_state: NAN",  location=(x_location, y_location)); y_location += 50
 
     image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"status: {           status.name            }", location=(x_location, y_location)); y_location += 50
+    image.add_text(text=f"status: {           status.name        git    }", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"fps: {              fps                :.2f}", location=(x_location, y_location)); y_location += 50
         
     return image
