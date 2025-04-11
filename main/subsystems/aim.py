@@ -44,6 +44,7 @@ runtime.aiming = LazyDict(
     center_point = Position((0, 0)),
     best_bounding_box=[],
     current_confidence=0
+    target_kinematic_state=np.zeros(9)
 )
 
 # 
@@ -108,13 +109,7 @@ def when_bounding_boxes_refresh():
             kf_3d.predict(time_since_last_measurement)
             kf_3d.correct(measurement) 
 
-            try:
-                frame_delay = (time.time() - video_stream.capture_time / 1E3) # seconds
-            except AttributeError:
-                print(f"Warning current camera:{CAMERA} does not have capture time attribute in its VideoStream class")
-                frame_delay = time_since_last_measurement
-            if frame_delay > 0.255:
-                print(f"Warming frame delay of {frame_delay} is really high")
+           
             # this contains the prediction of all the state variables [x, vx, ax, y, vy, ay, z, vz, az]
             target_3d = kf_3d.kalman.statePost
             print(f"dt aim.py: {frame_delay}")
