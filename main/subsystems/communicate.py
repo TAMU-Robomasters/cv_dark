@@ -1,4 +1,5 @@
-from ctypes import Structure, c_uint8, c_float, c_bool
+from ctypes import Structure, c_uint8, c_float, c_bool, Array
+import struct
 import serial
 from time import time
 import os
@@ -12,6 +13,10 @@ from super_map import LazyDict
 from toolbox.globals import path_to, config, print, runtime
 
 
+Float32Array16 = c_float * 16
+def receive_message_from_embedded(byte_string):
+    floats = struct.unpack('f' * 16, byte_string)
+    return Float32Array16(*floats)
 
 import requests
 import json
