@@ -1,24 +1,87 @@
-from ctypes import Structure, c_uint8, c_float, c_bool
-import serial
-from time import time
-import os
-import sys
-import atexit
-sys.path.append(r'/home/xavier/repos/cv_dark/main')
-print(sys.path)
-
-from super_map import LazyDict
-
-from toolbox.globals import path_to, config, print, runtime
-
-
-
 import requests
 import json
 import time
+import serial
+import os
+import sys
+import atexit
+from ctypes import Structure, c_uint8, c_float, c_bool
 
+# Local imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from super_map import LazyDict
+from toolbox.globals import path_to, config, print, runtime
+
+# Config
+serial_port = config.communication.serial_port
+baudrate = config.communication.serial_baudrate
 SERVER_URL = "http://localhost:8000"
 
+# Command codes for communication protocol
+ROBO_DATA = (b'r')       # Command code for robot data
+ODO = (b'o')             # Command code for odometry  
+TRANSFORM = (b't')       # Command code for transform
+
+# Message Structures
+class MessageToEmbedded(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ("magic_number"    , c_uint8   ),
+        ("X"               , c_float   ),
+        ("Y"               , c_float   ),
+        ("Z"               , c_float   ),
+        ("capture_delay"   , c_uint8   ),
+        ("status"          , c_uint8   ),
+    ]
+
+class OdometryDataFromEmbedded(Structure):
+    _pack = 1
+    _fields_ = [
+        ("x_field", c_float),
+        ("y_field", c_float),
+        ("yaw_angle", c_float)
+    ]
+
+
+# For Debugging
+rxBuffer = []
+def print_buffer():
+	print(rxBuffer)
+	print(port.in_waiting)
+
+atexit.register(print_buffer)
+
+
+# Serial port setup and initialization
+def setup_serial_port():
+    print('') # spacer
+    if not serial_port:
+        print('[Communication]: Port=None so no communication')
+        return None # disable port
+    else:
+        print(f'[Communication]: Port={serial_port}')
+        try:
+            return serial.Serial(
+                serial_port,
+                baudrate=baudrate,
+                timeout=config.communication.timeout,
+                bytesize=serial.EIGHTBITS,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE
+            )
+        except Exception as error:
+            import subprocess
+            # very bad hack but it works
+            # FIXME
+            subprocess.run([ "bash", "-c", f"sudo -S chmod 777 '{serial_port}' <<<  \"$(cat \"$HOME/.pass\")\" ",])
+            return setup_serial_port() # recursion until it works
+
+port = setup_serial_port()
+message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
+# odo_data = OdometryDataFromEmbedded(0.0,0.0,0.0)
+
+
+# Server communication functions
 def send_number(number):
     # Send a number to server
     data = json.dumps({"number": number})
@@ -43,99 +106,11 @@ def get_number():
         print("Error retrieving number.")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-rxBuffer = []
-
-def print_buffer():
-	print(rxBuffer)
-	print(port.in_waiting)
-
-atexit.register(print_buffer)
-
-# 
-# config
-# 
-serial_port  = config.communication.serial_port
-baudrate     = config.communication.serial_baudrate
-
-def setup_serial_port():
-    print('') # spacer
-    if not serial_port:
-        print('[Communication]: Port=None so no communication')
-        return None # disable port
-    else:
-        print(f'[Communication]: Port={serial_port}')
-        try:
-            return serial.Serial(
-                serial_port,
-                baudrate=baudrate,
-                timeout=config.communication.timeout,
-                bytesize=serial.EIGHTBITS,
-                parity=serial.PARITY_NONE,
-                stopbits=serial.STOPBITS_ONE
-            )
-        except Exception as error:
-            import subprocess
-            # very bad hack but it works
-            # FIXME
-            subprocess.run([ "bash", "-c", f"sudo -S chmod 777 '{serial_port}' <<<  \"$(cat \"$HOME/.pass\")\" ",])
-            return setup_serial_port() # recursion until it works
-
-# 
-# initialize
-# 
-port = setup_serial_port()
-
-# C++ struct
-class MessageToEmbedded(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("magic_number"    , c_uint8   ),
-        ("X"               , c_float   ),
-        ("Y"               , c_float   ),
-        ("Z"               , c_float   ),
-        ("capture_delay"   , c_uint8   ),
-        ("status"          , c_uint8   ),
-    ]
-
-
-
-
-message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
-class OdometryDataFromEmbedded(Structure):
-    _pack = 1
-    _fields_ = [
-        ("x_field", c_float),
-        ("y_field", c_float),
-        ("yaw_angle", c_float)
-    ]
-#odo_data = OdometryDataFromEmbedded(0.0,0.0,0.0)
-# 
-# main
-# 
+# Main communication functions
 def when_aiming_refreshes():
     global port
     capture_time =  getattr(video_stream, 'capture_time', 0)
-    capture_delay = min(int(time()*1000 - capture_time), 255) # max 255 ms delay
+    capture_delay = min(int(time.time()*1000 - capture_time), 255) # max 255 ms delay
 
     # Sending XYZ position (meters), time since frame capture, and status of target relative to front of camera plane
     if runtime.aiming.target_3d is None:
@@ -153,12 +128,6 @@ def when_aiming_refreshes():
     except Exception as error:
         print(f"\n[Communication]: error when writing over UART: {error}")
         port = setup_serial_port() # attempt re-setup
-
-
-
-ROBO_DATA = (b'r')       # Command code for robot data
-ODO = (b'o')             # Command code for odometry
-TRANSFORM = (b't')       # Command code for transform
 
 def communicate_read():
     global port
@@ -204,7 +173,6 @@ def communicate_read():
         print(f"\n[Communication]: error when read over UART: {error}")
         port = setup_serial_port()  # Reinitialize the port
 
-
 def test_communicate_read():
     global port
     try:
@@ -222,13 +190,15 @@ def test_communicate_read():
         print(f"\n[Communication]: error when read over UART: {error}")
         port = setup_serial_port()  # attempt re-setup
 
-# overwrite function if port is None
+
+# Handle case when port is not available
 if port is None:
     def when_aiming_refreshes():
         pass # do nothing intentionally
     def test_communicate_read():
         pass
 
+# Main execution
 if __name__ == "__main__":
 	while True:
 		test_communicate_read()
