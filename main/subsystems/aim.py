@@ -140,6 +140,7 @@ def when_bounding_boxes_refresh():
             screen_center = screen_center
         )
         if (best_bounding_box != None):
+            video_stream.update_measurement_timestamp()
             center_point = Position(best_bounding_box.center) # for logging/displays
 
             time_since_last_measurement = video_stream.current_sensor_timestamp - video_stream.past_sensor_timestamp # in seconds

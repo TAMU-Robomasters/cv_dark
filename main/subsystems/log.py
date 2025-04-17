@@ -7,7 +7,7 @@ from toolbox.globals import path_to, config, print, runtime, absolute_path_to
 from toolbox.video_tools import Video, VideoWriter
 from toolbox.image_tools import Image, rgb
 from toolbox.cold_storage import ColdStorage
-from subsystems.aim import TargetStatus
+from subsystems.aim import TargetStatus, kf_2d, kf_3d
 from subsystems.video_stream import video_stream
 
 import matplotlib.pyplot as plt
@@ -323,6 +323,8 @@ def generate_image(fps=0):
                 image.add_text(text=f"target_3d_state: A {float(target_3d_kinematic_state[2]):.2f}, {float(target_3d_kinematic_state[5]):.2f}, {float(target_3d_kinematic_state[8]):.2f}",  location=(x_location, y_location)); y_location += 50
             else:
                 image.add_text(text="target_3d_state: NAN",  location=(x_location, y_location)); y_location += 50
+                
+        image.add_text(text=f"reset_count: {kf_3d.reset_count}", location=(x_location, y_location)); y_location += 50
 
     image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"status: {           target_status.name            }", location=(x_location, y_location)); y_location += 50
