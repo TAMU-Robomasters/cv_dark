@@ -126,7 +126,7 @@ class KF3D(cv2.KalmanFilter):
             ], dtype=np.float32)
         return transition_mat @ self.statePost
 
-class KF2D:
+class KF2D(cv2.KalmanFilter):
     def __init__(self, init_kinematic_state, x_error, y_error, dt, acceleration_error: float):
         # no control parameters. Assuming the target is moving with a constant acceleration
         super().__init__(6, 2)
