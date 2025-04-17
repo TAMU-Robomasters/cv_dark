@@ -97,6 +97,7 @@ def when_bounding_boxes_refresh():
                 valid3dTargets = valid3dTargets,
             )
         if (best_bounding_box != None):
+            video_stream.update_measurement_timestamp()
             center_point = Position(best_bounding_box.center) # for logging/displays
             
             """!TODO Fix bug: during the first iteration of the kalman filter the 

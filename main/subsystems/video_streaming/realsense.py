@@ -58,6 +58,7 @@ class VideoStream:
         
         self.past_sensor_timestamp = 0
         self.current_sensor_timestamp = 0
+        self.temp_sensor_timestamp = 0
         
         self.video_output = None
         if record_interval > 0:
@@ -98,6 +99,11 @@ class VideoStream:
             # exit loop if successful
             break
     
+    def update_measurement_timestamp(self):
+        self.past_sensor_timestamp = self.temp_sensor_timestamp
+        self.temp_sensor_timestamp = self.current_sensor_timestamp
+        
+    
     def frames(self):
         from numpy import array
         from itertools import count
@@ -124,7 +130,6 @@ class VideoStream:
                     # self.color_frame = frame.get_color_frame()
                     # self.depth_frame = frame.get_depth_frame()
 
-                    self.past_sensor_timestamp = self.current_sensor_timestamp
                     sensor_timestamp = frame.get_frame_metadata(rs.frame_metadata_value.sensor_timestamp)
                     self.current_sensor_timestamp = sensor_timestamp * MICRO_SECONDS_TO_SECONDS
                     frame_timestamp = frame.get_frame_metadata(rs.frame_metadata_value.frame_timestamp)

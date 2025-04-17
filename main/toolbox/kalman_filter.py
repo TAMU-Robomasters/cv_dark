@@ -12,6 +12,7 @@ class KF3D(cv2.KalmanFilter):
         self.acceleration_error = acceleration_error
         self.init_kinematic_state = init_kinematic_state
         self.past_measurement = None
+        self.is_reset = True
         
         # Define the initial values of the state variables ([x, y, z, vx, vy, vz, ax, ay, az])
         # ? Would initiating based on finite difference help us converge faster
@@ -70,6 +71,9 @@ class KF3D(cv2.KalmanFilter):
 
 
     def predict(self, dt) -> bool:
+        if self.is_reset:
+            dt = 0.60
+            self.is_reset = False
         self.processNoiseCov = np.array(
         [
             [(dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2, 0, 0, 0, 0, 0, 0],
@@ -107,6 +111,7 @@ class KF3D(cv2.KalmanFilter):
         self.statePost = self.init_kinematic_state
         self.errorCovPost = np.eye(9, dtype=np.float32)
         self.past_measurement = None
+        self.is_reset = True
     
 
     # This function won't affect any of the member variables
@@ -134,6 +139,7 @@ class KF2D(cv2.KalmanFilter):
         self.acceleration_error = acceleration_error
         self.init_kinematic_state = init_kinematic_state  # Store initial state
         self.past_measurement = None  # Track past measurement
+        self.is_reset = True
         
         # Define the initial values of the state variables (x = [x, y, vx, vy, ax, ay])
          # ? Would initiating based on finite difference help us converge faster
@@ -187,6 +193,10 @@ class KF2D(cv2.KalmanFilter):
     
 
     def predict(self, dt):
+        if self.is_reset:
+            dt = 0.60
+            self.is_reset = False
+            
         self.processNoiseCov = np.array(
         [
             [(dt ** 4) / 4, (dt ** 3) / 2,  (dt ** 2) / 2, 0, 0, 0],
@@ -219,6 +229,7 @@ class KF2D(cv2.KalmanFilter):
         self.statePost = self.init_kinematic_state
         self.errorCovPost = np.eye(6, dtype=np.float32)
         self.past_measurement = None
+        self.is_reset = True
     
     # This function won't affect any of the member variables
     # This is used to predict where the target will be given the target's current kinematic state (i.e. statePost)
