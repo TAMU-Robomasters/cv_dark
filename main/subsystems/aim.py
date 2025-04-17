@@ -103,10 +103,18 @@ def when_bounding_boxes_refresh():
             velocity and acceleration could be really high if there's no target found
             with a short period of time."""
             time_since_last_measurement = video_stream.current_sensor_timestamp - video_stream.past_sensor_timestamp # in seconds
-
             measurement = np.array(best_target_3d, dtype=np.float32)
-            kf_3d.predict(time_since_last_measurement)
-            kf_3d.correct(measurement) 
+            
+            if time_since_last_measurement > 0.200: # Target has been lost for 200ms
+                kf_3d.reset() 
+                runtime.aiming.target_status = TargetStatus.TARGET_NONE
+            else:
+                kf_3d.predict(time_since_last_measurement)
+            if  kf_3d.past_measurement is not None and np.linalg.norm(measurement - kf_3d.past_measurement) > 1: # Target is moving too fast
+                kf_3d.reset() 
+                runtime.aiming.target_status = TargetStatus.TARGET_NONE
+            else:
+                kf_3d.correct(measurement)
 
             try:
                 frame_delay = (time.time() - video_stream.capture_time / 1E3) # seconds
@@ -138,8 +146,17 @@ def when_bounding_boxes_refresh():
             center_point.x = int(center_point.x.cpu())
             center_point.y = int(center_point.y.cpu())
             measurement = np.array([center_point.x, center_point.y], dtype=np.float32)
-            kf_2d.predict(time_since_last_measurement)
-            kf_2d.correct(measurement) 
+            if time_since_last_measurement > 0.200:  # Target has been lost for 200ms
+                kf_2d.reset()
+                runtime.aiming.target_status = TargetStatus.TARGET_NONE
+            else:
+                kf_2d.predict(time_since_last_measurement)
+            
+            if kf_2d.past_measurement is not None and np.linalg.norm(measurement - kf_2d.past_measurement) > 1:  # Target is moving too fast
+                kf_2d.reset()
+                runtime.aiming.target_status = TargetStatus.TARGET_NONE
+            else:
+                kf_2d.correct(measurement)
 
             try:
                 frame_delay = (time.time() - video_stream.capture_time / 1E3) # seconds

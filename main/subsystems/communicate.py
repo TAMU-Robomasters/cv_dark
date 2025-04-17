@@ -8,7 +8,7 @@ from super_map import LazyDict
 from toolbox.globals import path_to, config, print, runtime
 from subsystems.aim import kf_3d
 from subsystems.video_stream import video_stream
-
+from subsystems.aim import TargetStatus
 
 # 
 # config
@@ -74,7 +74,7 @@ def when_aiming_refreshes():
     capture_delay = min(int(time()*1E3 - capture_time), 255) # max 255 ms delay
 
     # Sending XYZ position (meters), velocity, acceleration, time since frame capture, and status of target relative to front of camera plane
-    if runtime.aiming.target_3d is None:
+    if runtime.target_status == TargetStatus.TARGET_NONE:
         message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = message_to_embedded.VX = message_to_embedded.VY = message_to_embedded.VZ = message_to_embedded.AX = message_to_embedded.AY = message_to_embedded.AZ = 0.0
     else:
         

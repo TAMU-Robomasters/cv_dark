@@ -282,7 +282,7 @@ def generate_image(fps=0):
     target_3d               = runtime.aiming.target_3d
     target_3d_prediction    = runtime.aiming.target_3d_prediction
     target_3d_kinematic_state = runtime.aiming.target_kinematic_state
-    status                  = runtime.aiming.target_status
+    target_status                  = runtime.aiming.target_status
     
     image = Image(runtime.color_image)
 
@@ -300,14 +300,14 @@ def generate_image(fps=0):
             image.add_bounding_box(each, color=white)
         for each in enemy_boxes:
             image.add_bounding_box(each, color=light_orange)
-        if status == TargetStatus.TARGET_FOUND:
+        if target_status == TargetStatus.TARGET_FOUND:
             image.add_bounding_box(best_bounding_box, color=red)
             image.add_point(x=center_point.x     , y=center_point.y     , color=blue, radius=10)
         if display_kf_prediction:
-            if depth_compatible:
+            if depth_compatible and target_status != TargetStatus.TARGET_NONE:
                 target_3d_pixel = video_stream.point_3d_to_pixel(target_3d_prediction)
                 image.add_point(x=target_3d_pixel[0]    , y=target_3d_pixel[1]     , color=green, radius=10)
-            else:
+            elif not depth_compatible and target_status != TargetStatus.TARGET_NONE:
                 image.add_point(x=center_point_prediction.x     , y=center_point_prediction.y     , color=green, radius=10)
     
 
@@ -316,7 +316,7 @@ def generate_image(fps=0):
     if depth_compatible:
         disp_target_3d = [round(x, 3) for x in target_3d] if target_3d else ["NAN, NAN, NAN"]
         image.add_text(text=f"target_3d: {    disp_target_3d         }", location=(x_location, y_location)); y_location += 50
-        if display_kf_prediction:
+        if display_kf_prediction and target_status != TargetStatus.TARGET_NONE:
             if str(type(target_3d_kinematic_state)) != str(type(None)):
                 image.add_text(text=f"target_3d_state: P {target_3d_kinematic_state[0]:.2f}, {target_3d_kinematic_state[3]}:2f, {target_3d_kinematic_state[6]}:2f",  location=(x_location, y_location)); y_location += 50
                 image.add_text(text=f"target_3d_state: V {target_3d_kinematic_state[1]:.2f}, {target_3d_kinematic_state[4]}:2f, {target_3d_kinematic_state[7]}:2f",  location=(x_location, y_location)); y_location += 50
@@ -325,7 +325,7 @@ def generate_image(fps=0):
                 image.add_text(text="target_3d_state: NAN",  location=(x_location, y_location)); y_location += 50
 
     image.add_text(text=f"confidence: {       current_confidence :.2f}", location=(x_location, y_location)); y_location += 50
-    image.add_text(text=f"status: {           status.name            }", location=(x_location, y_location)); y_location += 50
+    image.add_text(text=f"status: {           target_status.name            }", location=(x_location, y_location)); y_location += 50
     image.add_text(text=f"fps: {              fps                :.2f}", location=(x_location, y_location)); y_location += 50
         
     return image
