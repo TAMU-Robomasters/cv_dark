@@ -3,6 +3,7 @@ import collections
 import numpy as np
 import time
 from time import perf_counter
+import socket
 from enum import Enum
 
 import numpy as np
@@ -21,7 +22,14 @@ class TargetStatus(Enum):
 kf_2d = KF2D(np.ones((6,1), dtype=np.float32), 0.1, 0.1, 0.05, 0.05)
 kf_3d = KF3D(np.ones((9,1), dtype=np.float32), 100.0, 0.0, 0.01, 0.05, 0.2)
 
+UDP_IP = "127.0.0.1"
+UDP_PORT = 9876
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
+def send_data_ascii(data):
+    data_str = str(data.tolist())
+    sock.sendto(data_str.encode('utf-8'), (UDP_IP, UDP_PORT))
+    print(f"Sent ASCII data: {data_str}")
 # 
 # config
 # 
@@ -119,9 +127,24 @@ def when_bounding_boxes_refresh():
             if frame_delay > 0.255:
                 print(f"Warming frame delay of {frame_delay} is really high")
             # this contains the prediction of all the state variables [x, vx, ax, y, vy, ay, z, vz, az]
-            forward_prediction = kf_3d.forward_predict(frame_delay) 
+            forward_prediction = kf_3d.forward_predict(frame_delay) # the good stuff
             target_3d_prediction = Position((forward_prediction[0], forward_prediction[3], forward_prediction[6]))
             runtime.aiming.storedPrediction.append(target_3d_prediction)
+
+            print(f"{UDP_IP}:{UDP_PORT}")
+            send_method = send_data_ascii
+            t = 0 
+            try:
+                while True:
+                    send_method(target_3d_prediction)
+                    time.sleep(0.1)
+                    t += 1
+                    if t > 5:
+                        break
+            except KeyboardInterrupt:
+                print("Stopping sending data")
+
+
     else:
         # if camera is not depth capable, find best box
         # mostly used for testing purposes
