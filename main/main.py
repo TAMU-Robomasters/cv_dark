@@ -7,9 +7,9 @@ import os
 import pyston_lite
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from toolbox.globals import config, runtime, time_synchronized, print
+from toolbox.globals        import config, runtime, time_synchronized, print
 from toolbox.autoboot_check import throw_if_autoboot_is_already_running
-from subsystems import video_stream, model, aim, communicate, log
+from subsystems             import video_stream, model, aim, communicate, log
 
 
 if config.mode != "production":
