@@ -124,6 +124,7 @@ class KF3D(cv2.KalmanFilter):
                 [0, 0, 0, 0, 0, 0, 0, 1, dt],
                 [0, 0, 0, 0, 0, 0, 0, 0, 1]
             ], dtype=np.float32)
+        print(f"statePost: {self.statePost}")
         return transition_mat @ self.statePost
 
 class KF2D(cv2.KalmanFilter):
