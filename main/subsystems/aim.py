@@ -21,6 +21,8 @@ class TargetStatus(Enum):
 
 # NOTE initial kinematic state is set to all ones. This might effect convergence time
 # TODO find better uncertainty for x, y, z
+# TODO Fix feature breaking bug. During the first 20 seconds the kalman filter estimations will become really noisy
+# and inaccurate. Resetting the KF doesn't seem to fix the noisy estimations which is really weird
 kf_2d = KF2D(np.ones((6,1), dtype=np.float32), 0.01, 0.01, 0.05, 4)
 kf_3d = KF3D(np.ones((9,1), dtype=np.float32), 0.01, 0.01, 0.01, 0.05, 4)
 
