@@ -1,11 +1,75 @@
 from ctypes import Structure, c_uint8, c_float, c_bool
 import serial
 from time import time
+import os
+import sys
+import atexit
+sys.path.append(r'/home/xavier/repos/cv_dark/main')
+print(sys.path)
 
 from super_map import LazyDict
 
 from toolbox.globals import path_to, config, print, runtime
-from subsystems.video_stream import video_stream
+
+
+
+import requests
+import json
+import time
+
+SERVER_URL = "http://localhost:8000"
+
+def send_number(number):
+    # Send a number to server
+    data = json.dumps({"number": number})
+
+    start_time = time.time()
+    response = requests.post(SERVER_URL, data=data)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    print(f"Server response: {response.text} (Processed in {elapsed_time:.4f} seconds)")
+
+def get_number():
+    "# Request stored number from server"
+    start_time = time.time()
+    response = requests.get(SERVER_URL)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Stored number: {data['number']} (Processed in {elapsed_time:.4f} seconds)")
+    else:
+        print("Error retrieving number.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+rxBuffer = []
+
+def print_buffer():
+	print(rxBuffer)
+	print(port.in_waiting)
+
+atexit.register(print_buffer)
 
 # 
 # config
@@ -53,8 +117,18 @@ class MessageToEmbedded(Structure):
         ("status"          , c_uint8   ),
     ]
 
-message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
 
+
+
+message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
+class OdometryDataFromEmbedded(Structure):
+    _pack = 1
+    _fields_ = [
+        ("x_field", c_float),
+        ("y_field", c_float),
+        ("yaw_angle", c_float)
+    ]
+#odo_data = OdometryDataFromEmbedded(0.0,0.0,0.0)
 # 
 # main
 # 
@@ -80,7 +154,81 @@ def when_aiming_refreshes():
         print(f"\n[Communication]: error when writing over UART: {error}")
         port = setup_serial_port() # attempt re-setup
 
+
+
+ROBO_DATA = (b'r')       # Command code for robot data
+ODO = (b'o')             # Command code for odometry
+TRANSFORM = (b't')       # Command code for transform
+
+def communicate_read():
+    global port
+    try:
+        byte = port.read(1)
+        if byte == b'b':  # Sync/start byte
+            byte = port.read(1)
+            if not byte:
+                return
+
+            command = byte
+
+            if command == ROBO_DATA:
+                data_byte = port.read(1)
+                if not data_byte:
+                    return
+                data = data_byte[0]
+                team_color = data & 0b0001              # bit 0
+                robot_ID = (data & 0b1110) >> 1         # bits 1-3
+                # TODO: change model.py based on team_color
+                return
+
+            elif command == ODO:
+                data_bytes = port.read(12)
+                if len(data_bytes) != 12:
+                    return
+                odo_data = OdometryDataFromEmbedded.from_buffer_copy(data_bytes)
+                rxBuffer.append(odo_data)
+                return
+
+            elif command == TRANSFORM:
+                # TODO: Handle TRANSFORM logic
+                return
+
+            else:
+                # Unknown command
+                return
+
+        else:
+            return
+
+    except Exception as error:
+        print(f"\n[Communication]: error when read over UART: {error}")
+        port = setup_serial_port()  # Reinitialize the port
+
+
+def test_communicate_read():
+    global port
+    try:
+        byte = port.read(1)
+        if(byte):
+            rxBuffer.append(byte)
+            number = byte.decode('ascii')
+
+            # TODO: send this byte to server.py
+            send_number(number)
+
+        else:
+            print("no byte")
+    except Exception as error:
+        print(f"\n[Communication]: error when read over UART: {error}")
+        port = setup_serial_port()  # attempt re-setup
+
 # overwrite function if port is None
 if port is None:
     def when_aiming_refreshes():
         pass # do nothing intentionally
+    def test_communicate_read():
+        pass
+
+if __name__ == "__main__":
+	while True:
+		test_communicate_read()
