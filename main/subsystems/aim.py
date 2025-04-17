@@ -105,6 +105,7 @@ def when_bounding_boxes_refresh():
             time_since_last_measurement = video_stream.current_sensor_timestamp - video_stream.past_sensor_timestamp # in seconds
             measurement = np.array(best_target_3d, dtype=np.float32)
             
+            print(f"time_since_last_measurement: {time_since_last_measurement}")
             if time_since_last_measurement > 0.200: # Target has been lost for 200ms
                 kf_3d.reset() 
                 runtime.aiming.target_status = TargetStatus.TARGET_NONE
