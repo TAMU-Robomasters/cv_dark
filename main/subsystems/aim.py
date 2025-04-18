@@ -1,20 +1,31 @@
-from math import dist, exp, sqrt
+from math import dist, exp
 import collections
-from time import time, perf_counter
+import numpy as np
+import time
+from time import perf_counter
 from enum import Enum
 
 import numpy as np
 from super_map import LazyDict
-from statistics import mean as average
 
-from toolbox.globals import path_to, config, print, runtime, time_synchronized
-from toolbox.geometry_tools import Position, BoundingBox
+from toolbox.globals import config, print, runtime
+from toolbox.geometry_tools import Position
+# NOTE change in the future
+from toolbox.kalman_filter import KF2D, KF3D
 from subsystems.video_stream import video_stream
 
 class TargetStatus(Enum):
     TARGET_NONE = 0
     TARGET_FOUND = 1
-    TARGET_ENGAGE = 2
+
+
+# NOTE initial kinematic state is set to all ones. This might effect convergence time
+# TODO find better uncertainty for x, y, z
+# TODO Fix feature breaking bug. During the first 20 seconds the kalman filter estimations will become really noisy
+# and inaccurate. Resetting the KF doesn't seem to fix the noisy estimations which is really weird
+kf_2d = KF2D(np.ones((6,1), dtype=np.float32), 0.01, 0.01, 0.05, 4)
+kf_3d = KF3D(np.ones((9,1), dtype=np.float32), 0.01, 0.01, 0.01, 0.05, 4)
+
 
 # 
 # config
@@ -28,99 +39,151 @@ POSE_COMPATIBLE     = config.hardware.camera_has_pose
 # 
 # shared data (imported by modeling and integration)
 # 
+#? is the lazy dict necessary?
 runtime.aiming = LazyDict(
     target_status = TargetStatus.TARGET_NONE,
-    target_3d = (0, 0, 0),
+    target_3d = Position((0, 0, 0)),
     center_point = Position((0, 0)),
+    best_bounding_box=[],
+    current_confidence=0
 )
 
 # 
 # main
 # 
 def when_bounding_boxes_refresh():
-    found_robot       = runtime.modeling.found_robot
-    # best_bounding_box = runtime.modeling.best_bounding_box
-    acceleration      = runtime.camera.acceleration if config.hardware.camera_has_acceleration else None
-    gyro              = runtime.camera.gyro         if config.hardware.camera_has_gyro         else None
+    enemy_boxes             = runtime.modeling.enemy_boxes 
+    enemy_confidences       = runtime.modeling.confidences 
+    screen_center           = runtime.screen_center
+    # Reset variables at beginning of loop
+    center_point            = Position((0, 0))
+    center_point_prediction = Position((0, 0))
+    target_3d_prediction    = Position((0, 0, 0))
+    target_kinematic_state  = None
 
-    enemy_boxes = runtime.modeling.enemy_boxes 
-    enemy_confidences = runtime.modeling.confidences 
-    screen_center = runtime.screen_center
-    # Reset target info at beginning of loop
-    center_point = Position((0, 0))
-    # target_3d = (0, 0, 0)
-    target_status = TargetStatus.TARGET_NONE
+    validBoxes          = []
+    validConfidences    = []
+    valid3dTargets      = []
+
+    best_bounding_box   = None
+    current_confidence  = 0
+    best_target_3d      = Position((0,0,0))
 
     # 
     # update core aiming data
     #
 
-    # filter list of boxes/confidences that are valid before finding best one func.
-    validBoxes = []
-    validConfidences = []
-    valid3dTargets = []
-
-    best_bounding_box = None
-    current_confidence = 0
-    best_target_3d = (0,0,0)
-
-    # if found_robot:
+    # filter list of boxes/confidences that are valid before finding the best one
     if DEPTH_COMPATIBLE:
         for box,confidence in zip(enemy_boxes,enemy_confidences):
-            # check all of the boxes, remove invalid ones if outside ranges
             sampled_depth = get_dist_to_bbox(box)
             if sampled_depth is None:
                 continue
-            elif sampled_depth < MIN_RANGE:
-                continue
-            elif sampled_depth > MAX_RANGE:
+            elif sampled_depth < MIN_RANGE or sampled_depth > MAX_RANGE:
                 continue
             else:
-                target_3d_test = get_xyz_at_color_coords([box.center[0].item(), box.center[1].item()], sampled_depth)
+                target_3d = get_xyz_at_color_coords([box.center[0].item(), box.center[1].item()], sampled_depth)
                 # print(f"\ntarget_3d: {target_3d}")
-                if target_3d_test is None:
+                if target_3d is None:
                     continue
-                    # target_status = TargetStatus.TARGET_NONE
                 else:
                     validBoxes.append(box)
                     validConfidences.append(confidence)
-                    valid3dTargets.append(target_3d_test)
-                #     target_status = TargetStatus.TARGET_FOUND
-        if (validBoxes == []):
-            target_status = TargetStatus.TARGET_NONE
-        else:
-            target_status = TargetStatus.TARGET_FOUND
+                    valid3dTargets.append(target_3d)
+        if (validBoxes != []):
+            # now that we have the valid boxes lets compute the best ones as 3d targets
+            best_bounding_box, current_confidence, best_target_3d  = get_optimal_3d_target(
+                boxes = validBoxes, 
+                confidences = validConfidences,
+                screen_center = screen_center,
+                valid3dTargets = valid3dTargets,
+            )
+        if (best_bounding_box != None):
+            video_stream.update_measurement_timestamp()
+            center_point = Position(best_bounding_box.center) # for logging/displays
+            
+            """!TODO Fix bug: during the first iteration of the kalman filter the 
+            velocity and acceleration could be really high if there's no target found
+            with a short period of time."""
+            time_since_last_measurement = video_stream.current_sensor_timestamp - video_stream.past_sensor_timestamp # in seconds
+            measurement = np.array(best_target_3d, dtype=np.float32)
+            
+            print(f"time_since_last_measurement: {time_since_last_measurement}")
+            if time_since_last_measurement > 0.200: # Target has been lost for 200ms
+                kf_3d.reset() 
+                runtime.aiming.target_status = TargetStatus.TARGET_NONE
+            else:
+                kf_3d.predict(time_since_last_measurement)
+            if  kf_3d.past_measurement is not None and np.linalg.norm(measurement - kf_3d.past_measurement) > 1: # Target is moving too fast
+                kf_3d.reset() 
+                runtime.aiming.target_status = TargetStatus.TARGET_NONE
+            else:
+                kf_3d.correct(measurement)
+
+            try:
+                frame_delay = (time.time() - video_stream.capture_time / 1E3) # seconds
+            except AttributeError:
+                print(f"Warning current camera:{CAMERA} does not have capture time attribute in its VideoStream class")
+                frame_delay = time_since_last_measurement
+            if frame_delay > 0.255:
+                print(f"Warming frame delay of {frame_delay} is really high")
+            # this contains the prediction of all the state variables [x, vx, ax, y, vy, ay, z, vz, az]
+            forward_prediction = kf_3d.forward_predict(frame_delay)
+            print(f"dt aim.py: {frame_delay}")
+            print(f"pos aim.py: {forward_prediction[0]}, {forward_prediction[3]}, {forward_prediction[6]}")
+            target_kinematic_state = forward_prediction
+            target_3d_prediction = Position((forward_prediction[0], forward_prediction[3], forward_prediction[6]))
     else:
-        target_status = TargetStatus.TARGET_FOUND
+        # if camera is not depth capable, find best box
+        # mostly used for testing purposes
+        best_bounding_box, current_confidence = get_best_bounding_box(
+            boxes = enemy_boxes,
+            confidences = enemy_confidences,
+            screen_center = screen_center
+        )
+        if (best_bounding_box != None):
+            video_stream.update_measurement_timestamp()
+            center_point = Position(best_bounding_box.center) # for logging/displays
 
-        # target_status = TargetStatus.TARGET_FOUND
-    # now that we have the valid boxes lets compute the best ones as 3dtargets
-    best_bounding_box, current_confidence, best_target_3d  = get_optimal_3d_target(
-        boxes = validBoxes, 
-        confidences = validConfidences,
-        screen_center = screen_center,
-        valid3dTargets = valid3dTargets,
-    )
+            time_since_last_measurement = video_stream.current_sensor_timestamp - video_stream.past_sensor_timestamp # in seconds
 
-     
-    # if target_3d[1] < 0:
-    #     quit()
-    if(best_bounding_box != None):
-        center_point = Position(best_bounding_box.center) # for logging/displays
+            # pulling out from GPU
+            center_point.x = int(center_point.x.cpu())
+            center_point.y = int(center_point.y.cpu())
+            measurement = np.array([center_point.x, center_point.y], dtype=np.float32)
+            if time_since_last_measurement > 0.200:  # Target has been lost for 200ms
+                kf_2d.reset()
+                runtime.aiming.target_status = TargetStatus.TARGET_NONE
+            else:
+                kf_2d.predict(time_since_last_measurement)
+            
+            if kf_2d.past_measurement is not None and np.linalg.norm(measurement - kf_2d.past_measurement) > 1:  # Target is moving too fast
+                kf_2d.reset()
+                runtime.aiming.target_status = TargetStatus.TARGET_NONE
+            else:
+                kf_2d.correct(measurement)
 
-    # 1. get optimal 3dtarget list
-    # Overall 1. reject noise in 1 frame,
-    # Overall 1.5 Get moving frame data
-    # Overall 2. reject noise overtime
+            try:
+                frame_delay = (time.time() - video_stream.capture_time / 1E3) # seconds
+            except AttributeError:
+                print(f"Warning current camera:{CAMERA} does not have capture time attribute in its VideoStream class")
+                frame_delay = time_since_last_measurement
+            if frame_delay > 0.255:
+                print(f"Warming frame delay of {frame_delay} is really high")
+            # this contains the prediction of all the state variables [x, vx, ax, z, vz, az]
+            forward_prediction = kf_2d.forward_predict(frame_delay)
+            center_point_prediction = Position((forward_prediction[0], forward_prediction[3]))
    
    
     # update the shared data
-    runtime.aiming.target_status      = target_status
-    runtime.aiming.target_3d          = best_target_3d
-    runtime.aiming.center_point       = center_point
-    runtime.modeling.best_bounding_box  = best_bounding_box
-    runtime.modeling.current_confidence = current_confidence
-    runtime.modeling.found_robot        = best_bounding_box is not None
+    runtime.aiming.target_status            = TargetStatus.TARGET_NONE if best_bounding_box is None else TargetStatus.TARGET_FOUND
+    runtime.aiming.target_3d                = best_target_3d
+    runtime.aiming.center_point             = center_point
+    runtime.aiming.center_point_prediction  = center_point_prediction
+    runtime.aiming.best_bounding_box        = best_bounding_box
+    runtime.aiming.current_confidence       = current_confidence
+    runtime.aiming.target_3d_prediction     = target_3d_prediction
+    runtime.aiming.target_kinematic_state   = target_kinematic_state
 
 
 # 
@@ -161,11 +224,11 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
     # Sequentially iterate through all bounding boxes
     for conf, box, targetXYZ in zip(confidences, boxes, valid3dTargets):
         size_score = ((box.width / (runtime.color_image.shape[1])) / size_normalizer) # Compute score using size of box, relative to total image size
-        print(f"size_score: {size_score}")
+        # print(f"size_score: {size_score}")
         center_score = (1 - dist(screen_center,(box[0] + box[2]/2, box[1] + box[3]/2)) / screen_center_normalizer) # scaled to 1
-        print(f"center_score: {center_score}")
+        # print(f"center_score: {center_score}")
         conf_score = conf**2 # Compute score using confidence
-        print(f"conf_score: {conf_score}")
+        # print(f"conf_score: {conf_score}")
 
         # clamped to 0 to 1
         # this is a 2d point - want to draw a circle
@@ -177,7 +240,7 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
             circle_bias_score = 0  # The point is at the edge or outside the circle
         else:
             circle_bias_score = 1 - (distance / radius)  # Calculate the score based on the normalized distance
-        print(f"circle_bias_score: {circle_bias_score}")
+        # print(f"circle_bias_score: {circle_bias_score}")
         
         # linear appraoch (based on max and min range in info.yaml min and max is 1m to 5m)
         # ex. when targetXYZ[1] is 3.5, 
@@ -188,12 +251,12 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
         # (values closer to 1 will result in higher depth_score values)
         # ex. targetXYZ[1] is 3.5, the depth_score calculated using the exponential approach is approximately 0.2865
         depth_score = max(0, min(MIN_RANGE, exp((1 - targetXYZ[1]) / 2)))
-        print(f"depth_score: {depth_score}")
+        # print(f"depth_score: {depth_score}")
         # Compute score using weighted average
         # score = 0.625 * size_score + 0.125 * center_score + 0.125 * depth_score + 0.125 * circle_bias_score 
         score = 0.125 * size_score + 0.125 * center_score + 0.125 * depth_score + 0.625 * circle_bias_score 
         score *= conf_score
-        print(f"score: {score}")
+        # print(f"score: {score}")
 
         # Make current box the best if its score is the best so far
         if score > best_score:
@@ -206,6 +269,50 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
     # if size_score < 5:
     #     return None, 0
     return best_bounding_box, best_conf, best_targ_3d
+
+
+def get_best_bounding_box(boxes, confidences, screen_center):
+    """
+    Decide the single best bounding box to aim at using a score system.
+
+    Input: All detected bounding boxes with their confidences and the screen_center location of the image.
+    Output: Best bounding box and its confidence.
+    """
+    # no boxes
+    if not boxes:
+        return None, 0
+    # if len(boxes) == 1:
+    #     return boxes[0], confidences[0]
+
+    best_bounding_box = boxes[0]
+    best_score = 0
+    best_conf = 0
+
+    screen_center_normalizer = dist((screen_center[0]*2,screen_center[1]*2),(screen_center[0],screen_center[1])) # Find constant used to scale distance part of score to 1
+    size_normalizer = 0.7 # plate at closest distance is 0.7 of the screen
+
+    # Sequentially iterate through all bounding boxes
+    for conf, box in zip(confidences, boxes):
+        size_score = ((box.width / (runtime.color_image.shape[1])) / size_normalizer) # Compute score using size of box, relative to total image size
+        # print(f"size_score: {size_score}")
+        center_score = (1 - dist(screen_center,(box[0] + box[2]/2, box[1] + box[3]/2)) / screen_center_normalizer) # scaled to 1
+        # print(f"center_score: {center_score}")
+        conf_score = conf**2 # Compute score using confidence
+        # print(f"conf_score: {conf_score}")
+        score = 0.75 * size_score + 0.125 * center_score + 0.125 * conf_score # Compute score using weighted average
+        # print(f"score: {score}")
+
+        # Make current box the best if its score is the best so far
+        if score > best_score:
+            best_bounding_box = box
+            best_conf = conf
+            best_score = score
+    # if best_score < 0.15:
+    #     return None, 0
+    # if size_score < 5:
+    #     return None, 0
+    return best_bounding_box, best_conf
+
 
 def get_xyz_at_color_coords(point, depth=None):
     # point is [x, y], return tuple (x, y, z)
@@ -229,7 +336,7 @@ def get_dist_to_bbox(bbox):
     if depth_sample.shape[0] == 0:
         return None
     # print(f"depth_sample: {depth_sample}")
-    print(f"Took: {(aim_end - aim_start)*1000} ms")
+    # print(f"Took: {(aim_end - aim_start)*1000} ms")
     # if np.mean(depth_sample) > 5 or np.mean(depth_sample) < 0:
     #     quit()
     return np.mean(depth_sample)

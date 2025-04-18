@@ -14,7 +14,8 @@ videostream     = config.videostream
 aiming          = config.aiming
 record_interval = videostream.testing.record_interval
 
-MICRO_SECONDS_TO_MILLISECONDS = 1000
+MICRO_SECONDS_TO_SECONDS = 1E-6
+MICRO_SECONDS_TO_MILLISECONDS = 1E-3
 
 align = rs.align(rs.stream.color)
 
@@ -54,6 +55,10 @@ class VideoStream:
 
         self.depth_min = aiming.min_depth
         self.depth_max = aiming.max_depth
+        
+        self.past_sensor_timestamp = 0
+        self.current_sensor_timestamp = 0
+        self.temp_sensor_timestamp = 0
         
         self.video_output = None
         if record_interval > 0:
@@ -95,6 +100,11 @@ class VideoStream:
             # exit loop if successful
             break
     
+    def update_measurement_timestamp(self):
+        self.past_sensor_timestamp = self.temp_sensor_timestamp
+        self.temp_sensor_timestamp = self.current_sensor_timestamp
+        
+    
     def frames(self):
         from numpy import array
         from itertools import count
@@ -122,9 +132,12 @@ class VideoStream:
                     # self.color_frame = frame.get_color_frame()
                     # self.depth_frame = frame.get_depth_frame()
 
-                    capture_time = frame.get_frame_metadata(rs.frame_metadata_value.sensor_timestamp)
-                    frame_time = frame.get_frame_metadata(rs.frame_metadata_value.frame_timestamp)
-                    self.capture_time = (time()*1000) - ((frame_time - capture_time) / MICRO_SECONDS_TO_MILLISECONDS)
+                    sensor_timestamp = frame.get_frame_metadata(rs.frame_metadata_value.sensor_timestamp)
+                    self.current_sensor_timestamp = sensor_timestamp * MICRO_SECONDS_TO_SECONDS
+                    frame_timestamp = frame.get_frame_metadata(rs.frame_metadata_value.frame_timestamp)
+                    
+                    # convert camera's sensor timestamp to a time on the system's clock. Not percise 
+                    self.capture_time = (time()*1000) - ((frame_timestamp - sensor_timestamp) * MICRO_SECONDS_TO_MILLISECONDS)
                     # print("frame_number:", frame_number, "capture_time:", self.capture_time)
                     align_end = perf_counter()
                     align_elapsed = (align_end - align_start) * 1000
@@ -158,6 +171,14 @@ class VideoStream:
         # aim_end = perf_counter()
         # print(f"Took: {(aim_end - aim_start)*1000} ms")
         return depth
+    
+    def point_3d_to_pixel(self, point_3d):
+        # revert point_3d to realsense coordinate system
+        point_3d = self.camera_relative_to_realsense(point_3d)
+
+        pixel = rs.rs2_project_point_to_pixel(self.color_intrin, point_3d)
+
+        return pixel
 
     def get_xyz_at_color_point(self, point, depth=None):
         """
@@ -166,30 +187,42 @@ class VideoStream:
         """
         point_3d = rs.rs2_deproject_pixel_to_point(self.color_intrin, point, depth)
 
-        point_3d = self.retransform_3d_point_to_coordinate_system(point_3d)
-
-        point_3d = self.offset_3d_point_to_camera_center(point_3d)
+        point_3d = self.realsense_to_camera_relative(point_3d=point_3d)
         return point_3d
 
-    def retransform_3d_point_to_coordinate_system(self, point_3d):
+    # TODO think of a good name for this function
+    def realsense_to_camera_relative(self, point_3d):
         """
-        Summary:
+        The camera relative coordinate system is define as:
             X is positive right/negative left
             Y is positive forward/negative backward
             Z is positive up/negative down
+        
+        where the origin is at the center of the camera
         """
         point_3d[1], point_3d[2] = point_3d[2], -point_3d[1]
-        return point_3d
 
-    def offset_3d_point_to_camera_center(self, point_3d):
-        """
-        page 92, https://www.intelrealsense.com/wp-content/uploads/2023/03/Intel-RealSense-D400-Series-Datasheet-March-2023.pdf?_ga=2.223938584.2067846121.1687651427-893813184.1647464980
-        """
+        
+        # page 92, https://www.intelrealsense.com/wp-content/uploads/2023/03/Intel-RealSense-D400-Series-Datasheet-March-2023.pdf?_ga=2.223938584.2067846121.1687651427-893813184.1647464980
+        
         point_3d[0] -= 0.0325 # offset color camera X to center of glass
         point_3d[1] += -0.0042 # offset Y to front of glass
         # point[0] += -0.0325 # offset depth camera X to center of glass
         return point_3d
 
+    def camera_relative_to_realsense(self, point_3d):
+        """
+        This function undoes the transformation that the
+        realsense_to_camera_relative function does
+        """
+
+        point_3d[0] += 0.0325
+        point_3d[1] += 0.0042
+
+        point_3d[2], point_3d[1] = point_3d[1], -point_3d[2]
+
+        return point_3d
+       
     def __del__(self):
         print("Closing Realsense Pipeline")
         self.pipeline.stop()

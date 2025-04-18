@@ -30,10 +30,7 @@ assert hardware_acceleration in ['tensor_rt', 'gpu', 'cpu',]
 runtime.modeling = LazyDict(
     bounding_boxes=[],
     enemy_boxes=[],
-    confidences=[],
-    best_bounding_box=[],
-    current_confidence=0,
-    found_robot=False,
+    confidences=[]
 )
 
 # 
@@ -78,21 +75,11 @@ def when_frame_arrives():
     if config.filter_team_color:
         enemy_boxes, confidences, class_ids = filter_plate_color(all_boxes, confidences, class_ids, our_team_color)
     
-    # best box
-    # best_bounding_box, current_confidence = get_optimal_bounding_box(
-    #     boxes=enemy_boxes,
-    #     confidences=confidences,
-    #     screen_center=screen_center,
-    # )
-    
     # export data
     runtime.screen_center               = screen_center
     runtime.modeling.bounding_boxes     = all_boxes
     runtime.modeling.enemy_boxes        = enemy_boxes
     runtime.modeling.confidences        = confidences
-    # runtime.modeling.best_bounding_box  = best_bounding_box
-    # runtime.modeling.current_confidence = current_confidence
-    # runtime.modeling.found_robot        = best_bounding_box is not None
 
 # 
 # 
