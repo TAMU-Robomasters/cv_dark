@@ -5,12 +5,17 @@ import serial
 import os
 import sys
 import atexit
+import numpy as np
 from ctypes import Structure, c_uint8, c_float, c_bool
 
 # Local imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from super_map import LazyDict
 from toolbox.globals import path_to, config, print, runtime
+from subsystems.aim import kf_3d
+from subsystems.video_stream import video_stream
+from subsystems.aim import TargetStatus
+
 
 # Config
 serial_port = config.communication.serial_port
@@ -30,6 +35,12 @@ class MessageToEmbedded(Structure):
         ("X"               , c_float   ),
         ("Y"               , c_float   ),
         ("Z"               , c_float   ),
+        ("VX"               , c_float   ),
+        ("VY"               , c_float   ),
+        ("VZ"               , c_float   ),
+        ("AX"               , c_float   ),
+        ("AY"               , c_float   ),
+        ("AZ"               , c_float   ),
         ("capture_delay"   , c_uint8   ),
         ("status"          , c_uint8   ),
     ]
@@ -77,7 +88,7 @@ def setup_serial_port():
             return setup_serial_port() # recursion until it works
 
 port = setup_serial_port()
-message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
+message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0)
 # odo_data = OdometryDataFromEmbedded(0.0,0.0,0.0)
 
 
@@ -112,16 +123,33 @@ def when_aiming_refreshes():
     capture_time =  getattr(video_stream, 'capture_time', 0)
     capture_delay = min(int(time.time()*1000 - capture_time), 255) # max 255 ms delay
 
-    # Sending XYZ position (meters), time since frame capture, and status of target relative to front of camera plane
-    if runtime.aiming.target_3d is None:
-        message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = 0.0
+    # Sending XYZ position (meters), velocity, acceleration, time since frame capture, and status of target relative to front of camera plane
+    if runtime.target_status == TargetStatus.TARGET_NONE:
+        message_to_embedded.X = message_to_embedded.Y = message_to_embedded.Z = message_to_embedded.VX = message_to_embedded.VY = message_to_embedded.VZ = message_to_embedded.AX = message_to_embedded.AY = message_to_embedded.AZ = 0.0
     else:
-        message_to_embedded.X = float(runtime.aiming.target_3d[0])
-        message_to_embedded.Y = float(runtime.aiming.target_3d[1])
-        message_to_embedded.Z = float(runtime.aiming.target_3d[2])
+        
+        # estimating where the target is currently at
+        #! not sure if this works
+        print(f"dt communicate.py: {capture_delay / 1E3}")
+        target_kinematic_state = kf_3d.forward_predict(capture_delay / 1E3) # KF works with seconds for time
+        print(f"pos communicate.py {target_kinematic_state[0]}, {target_kinematic_state[3]}, {target_kinematic_state[6]}")
+        message_to_embedded.X = target_kinematic_state[0]
+        message_to_embedded.Y = target_kinematic_state[3]
+        message_to_embedded.Z = target_kinematic_state[6]
+        message_to_embedded.VX = target_kinematic_state[1] 
+        message_to_embedded.VY = target_kinematic_state[4]
+        message_to_embedded.VZ = target_kinematic_state[7]
+        message_to_embedded.AX = target_kinematic_state[2]
+        message_to_embedded.AY = target_kinematic_state[5]
+        message_to_embedded.AZ = target_kinematic_state[8]
+
+    # TODO change capture delay to something more useful
     message_to_embedded.capture_delay = capture_delay
-    message_to_embedded.status = runtime.aiming.target_status.value
-    print(f'''msg({f"X:{message_to_embedded.X:.4f}".rjust(7)}, {f"Y:{message_to_embedded.Y:.4f}".rjust(7)}, {f"Z:{message_to_embedded.Z:.4f}".rjust(7)}, {f"delay:{message_to_embedded.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")
+    message_to_embedded.status = runtime.aiming.target_status.value 
+    print(f'''msg({f"X:{message_to_embedded.X:.4f}".rjust(7)}, {f"Y:{message_to_embedded.Y:.4f}".rjust(7)}, {f"Z:{message_to_embedded.Z:.4f}".rjust(7)},
+        {f"VX:{message_to_embedded.VX:.4f}".rjust(7)}, {f"VY:{message_to_embedded.VY:.4f}".rjust(7)}, {f"VZ:{message_to_embedded.VZ:.4f}".rjust(7)},
+        {f"AX:{message_to_embedded.AX:.4f}".rjust(7)}, {f"AY:{message_to_embedded.AY:.4f}".rjust(7)}, {f"AZ:{message_to_embedded.AZ:.4f}".rjust(7)},
+        {f"delay:{message_to_embedded.capture_delay}"}ms, {f"status: {runtime.aiming.target_status.name}"})''', end=", ")
     
     try:
         port.write(bytes(message_to_embedded))
