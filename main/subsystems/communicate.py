@@ -6,6 +6,7 @@ import os
 import sys
 import atexit
 import numpy as np
+import struct
 from ctypes import Structure, c_uint8, c_float, c_bool
 
 # Local imports
@@ -53,6 +54,7 @@ class OdometryDataFromEmbedded(Structure):
         ("yaw_angle", c_float)
     ]
 
+TranformationFormat = 'f' * 16
 
 # For Debugging
 rxBuffer = []
@@ -188,7 +190,7 @@ def communicate_read():
 
             elif command == TRANSFORM:
                 # TODO: Handle TRANSFORM logic
-                return
+                return np.array(struct.unpack(TranformationFormat, port.read(16)), dtype=np.float32)
 
             else:
                 # Unknown command
@@ -228,5 +230,6 @@ if port is None:
 
 # Main execution
 if __name__ == "__main__":
-	while True:
-		test_communicate_read()
+    while True:
+        floats = communicate_read()
+        print(f"floats: {floats}")
