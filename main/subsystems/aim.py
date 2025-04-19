@@ -1,4 +1,5 @@
 import numpy as np
+import socket
 import time
 import requests
 import json
@@ -27,6 +28,15 @@ class TargetStatus(Enum):
 kf_2d = KF2D(np.ones((6,1), dtype=np.float32), 0.01, 0.01, 0.05, 4)
 kf_3d = KF3D(np.ones((9,1), dtype=np.float32), 0.01, 0.01, 0.01, 0.05, 4)
 
+UDP_IP = "127.0.0.1"
+UDP_PORT = 9876
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+
+def send_data_ascii(data):
+    data_str = str(data.tolist())
+    sock.sendto(data_str.encode('utf-8'), (UDP_IP, UDP_PORT))
+    print(f"Sent ASCII data: {data_str}")
 
 # 
 # config
@@ -152,7 +162,9 @@ def when_bounding_boxes_refresh():
             if frame_delay > 0.255:
                 print(f"Warming frame delay of {frame_delay} is really high")
             # this contains the prediction of all the state variables [x, vx, ax, y, vy, ay, z, vz, az]
+            print(f"{UDP_IP}:{UDP_PORT}")
             forward_prediction = kf_3d.forward_predict(frame_delay)
+            send_data_ascii(forward_prediction)
             print(f"dt aim.py: {frame_delay}")
             print(f"pos aim.py: {forward_prediction[0]}, {forward_prediction[3]}, {forward_prediction[6]}")
             target_kinematic_state = forward_prediction
