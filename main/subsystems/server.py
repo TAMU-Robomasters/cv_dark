@@ -1,6 +1,7 @@
 #todo add server codea
 import sys
-sys.path.append(r'/home/xavier/repos/cv_dark/main')
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # communicate.py reads over data from UART from embedded (the devboard)
 # and then sends it to the server
