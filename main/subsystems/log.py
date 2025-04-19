@@ -1,7 +1,7 @@
 """
 All logging for cv's auto-aim system is done here.
 """
-import 
+import cv2
 import matplotlib.pyplot as plt
 import os
 import numpy as np

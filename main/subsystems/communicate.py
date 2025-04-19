@@ -7,15 +7,11 @@ import sys
 import atexit
 import numpy as np
 import struct
-from super_map import LazyDict
 from ctypes import Structure, c_uint8, c_float, c_bool
 
 # Local imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from toolbox.globals import path_to, config, print, runtime
-from subsystems.aim import kf_3d
-from subsystems.video_stream import video_stream
-from subsystems.aim import TargetStatus
+from toolbox.globals import path_to, config, print 
 
 
 # Config

@@ -119,8 +119,10 @@ def when_bounding_boxes_refresh():
         if (best_bounding_box != None):
             floats_data = get_obj()
             if floats_data is not None:
-                turret_ref_pos = np.array(floats_data["Float Tuple"], dtype=np.float32).reshape((4,4)) @ np.array(best_target_3d, dtype=np.float32)
-                best_target_3d = Position(turret_ref_pos)
+                matrix = np.array(floats_data["Floats"], dtype=np.float32).reshape((4,4))
+                print(matrix)
+                turret_ref_pos = matrix @ np.array([best_target_3d[0], best_target_3d[1], best_target_3d[2], 1], dtype=np.float32)
+                best_target_3d = Position(turret_ref_pos[:3])
                 print(f'best_target_3d: {best_target_3d}')
             video_stream.update_measurement_timestamp()
             center_point = Position(best_bounding_box.center) # for logging/displays
