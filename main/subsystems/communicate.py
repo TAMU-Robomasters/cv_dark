@@ -192,7 +192,7 @@ def communicate_read(message_dict):
             elif command == TRANSFORM:
                 # TODO: Handle TRANSFORM logic
                 float_bytes = port.read(64)
-                print("In reading buffer: {port.in_waiting}")
+                print(f"In reading buffer: {port.in_waiting}")
                 float_tuple = struct.unpack(TRANSFORMATION_FORMAT, float_bytes)
                 
                 if len(float_tuple) != 16:
@@ -221,7 +221,6 @@ def test_communicate_read():
             rxBuffer.append(byte)
             number = byte.decode('ascii')
 
-            # TODO: send this byte to server.py
             send_object(number)
 
         else:
