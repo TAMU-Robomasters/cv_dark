@@ -95,7 +95,7 @@ message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
 # odo_data = OdometryDataFromEmbedded(0.0,0.0,0.0)
 
 
-# Server communication functions
+# Server communication function
 def send_object(object):
     # Send a python object to server
     data = json.dumps({"object": object})

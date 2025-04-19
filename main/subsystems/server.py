@@ -1,6 +1,7 @@
 #todo add server codea
 import sys
 import os
+from collections import deque
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # communicate.py reads over data from UART from embedded (the devboard)
@@ -21,8 +22,10 @@ import json
 
 
 stored_object = None
+BUFFER_SIZE = 100
 
 class NumberHandler(BaseHTTPRequestHandler):
+    data = deque(maxlen=BUFFER_SIZE)
     # Handle a GET request to send the stored object
     def do_GET(self):
         global stored_object
@@ -38,6 +41,7 @@ class NumberHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
         received_data = json.loads(post_data)
+        print(received_data)
 
         if "object" in received_data:
             stored_object = received_data["object"]
