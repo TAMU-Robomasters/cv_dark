@@ -1,7 +1,8 @@
-from math import dist, exp
-import collections
 import numpy as np
 import time
+import requests
+import json
+from math import dist, exp
 from time import perf_counter
 from enum import Enum
 
@@ -35,6 +36,7 @@ MAX_RANGE           = config.aiming.max_range
 CAMERA              = config.hardware.camera
 DEPTH_COMPATIBLE    = config.hardware.camera_has_depth
 POSE_COMPATIBLE     = config.hardware.camera_has_pose
+SERVER_URL = "http://localhost:8000"
 
 # 
 # shared data (imported by modeling and integration)
@@ -48,6 +50,21 @@ runtime.aiming = LazyDict(
     current_confidence=0
 )
 
+# Server communication function
+def get_obj():
+    "# Request floats from server"
+    start_time = time.time()
+    response = requests.get(SERVER_URL)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Stored number: {data['object']} (Processed in {elapsed_time:.4f} seconds)")
+        return data['object']
+    else:
+        print("Error retrieving number.")
+        return None
+        
 # 
 # main
 # 
@@ -68,6 +85,7 @@ def when_bounding_boxes_refresh():
     best_bounding_box   = None
     current_confidence  = 0
     best_target_3d      = Position((0,0,0))
+    target_status       = TargetStatus.TARGET_NONE
 
     # 
     # update core aiming data
@@ -99,6 +117,11 @@ def when_bounding_boxes_refresh():
                 valid3dTargets = valid3dTargets,
             )
         if (best_bounding_box != None):
+            floats_data = get_obj()
+            if floats_data is not None:
+                turret_ref_pos = np.array(floats_data["Float Tuple"], dtype=np.float32).reshape((4,4)) @ np.array(best_target_3d, dtype=np.float32)
+                best_target_3d = Position(turret_ref_pos)
+                print(f'best_target_3d: {best_target_3d}')
             video_stream.update_measurement_timestamp()
             center_point = Position(best_bounding_box.center) # for logging/displays
             
@@ -111,15 +134,14 @@ def when_bounding_boxes_refresh():
             print(f"time_since_last_measurement: {time_since_last_measurement}")
             if time_since_last_measurement > 0.200: # Target has been lost for 200ms
                 kf_3d.reset() 
-                runtime.aiming.target_status = TargetStatus.TARGET_NONE
             else:
                 kf_3d.predict(time_since_last_measurement)
+                target_status = TargetStatus.TARGET_FOUND
             if  kf_3d.past_measurement is not None and np.linalg.norm(measurement - kf_3d.past_measurement) > 1: # Target is moving too fast
                 kf_3d.reset() 
-                runtime.aiming.target_status = TargetStatus.TARGET_NONE
             else:
                 kf_3d.correct(measurement)
-
+                target_status =  TargetStatus.TARGET_FOUND
             try:
                 frame_delay = (time.time() - video_stream.capture_time / 1E3) # seconds
             except AttributeError:
@@ -153,15 +175,15 @@ def when_bounding_boxes_refresh():
             measurement = np.array([center_point.x, center_point.y], dtype=np.float32)
             if time_since_last_measurement > 0.200:  # Target has been lost for 200ms
                 kf_2d.reset()
-                runtime.aiming.target_status = TargetStatus.TARGET_NONE
             else:
                 kf_2d.predict(time_since_last_measurement)
+                target_status = TargetStatus.TARGET_FOUND
             
             if kf_2d.past_measurement is not None and np.linalg.norm(measurement - kf_2d.past_measurement) > 1:  # Target is moving too fast
                 kf_2d.reset()
-                runtime.aiming.target_status = TargetStatus.TARGET_NONE
             else:
                 kf_2d.correct(measurement)
+                target_status = TargetStatus.TARGET_FOUND
 
             try:
                 frame_delay = (time.time() - video_stream.capture_time / 1E3) # seconds
@@ -176,7 +198,7 @@ def when_bounding_boxes_refresh():
    
    
     # update the shared data
-    runtime.aiming.target_status            = TargetStatus.TARGET_NONE if best_bounding_box is None else TargetStatus.TARGET_FOUND
+    runtime.aiming.target_status            = target_status
     runtime.aiming.target_3d                = best_target_3d
     runtime.aiming.center_point             = center_point
     runtime.aiming.center_point_prediction  = center_point_prediction

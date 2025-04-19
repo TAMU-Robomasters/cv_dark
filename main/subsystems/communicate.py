@@ -107,18 +107,6 @@ def send_object(object):
 
     print(f"Server response: {response.text} (Processed in {elapsed_time:.4f} seconds)")
 
-def get_number():
-    "# Request stored number from server"
-    start_time = time.time()
-    response = requests.get(SERVER_URL)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    if response.status_code == 200:
-        data = response.json()
-        print(f"Stored number: {data['number']} (Processed in {elapsed_time:.4f} seconds)")
-    else:
-        print("Error retrieving number.")
-
 
 # Main communication functions
 def when_aiming_refreshes():

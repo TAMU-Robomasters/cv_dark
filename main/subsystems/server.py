@@ -1,6 +1,7 @@
 #todo add server codea
 import sys
 import os
+import bisect
 from collections import deque
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -22,17 +23,18 @@ import json
 
 
 stored_object = None
-BUFFER_SIZE = 100
+BUFFER_SIZE = 10
 
 class NumberHandler(BaseHTTPRequestHandler):
-    data = deque(maxlen=BUFFER_SIZE)
+    time_data = deque(maxlen=BUFFER_SIZE)
+    floats_data = deque(maxlen=BUFFER_SIZE)
     # Handle a GET request to send the stored object
     def do_GET(self):
         global stored_object
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
-        response = {"object": stored_object}
+        response = {"object": {"Timestamp": self.time_data[-3], "Floats": self.floats_data[-3]}}
         self.wfile.write(json.dumps(response).encode())
 
     # Handle POST request to receive an object and store it
@@ -41,10 +43,10 @@ class NumberHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
         received_data = json.loads(post_data)
-        print(received_data)
-
         if "object" in received_data:
             stored_object = received_data["object"]
+            self.time_data.append(stored_object["Message"]["Timestamp"])
+            self.floats_data.append(stored_object["Message"]["Float Tuple"])
             self.send_response(200)
             self.end_headers()
             self.wfile.write(f'Object received: {stored_object}'.encode())
