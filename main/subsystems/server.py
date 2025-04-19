@@ -43,7 +43,7 @@ class NumberHandler(BaseHTTPRequestHandler):
             stored_object = received_data["object"]
             self.send_response(200)
             self.end_headers()
-            self.wfile.write(b"Object stored successfully!")
+            self.wfile.write(f'Object received: {stored_object}'.encode())
         else:
             self.send_response(400)
             self.end_headers()
