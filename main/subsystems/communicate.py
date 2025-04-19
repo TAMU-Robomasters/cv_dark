@@ -54,7 +54,7 @@ class OdometryDataFromEmbedded(Structure):
         ("yaw_angle", c_float)
     ]
 
-TranformationFormat = 'f' * 16
+TRANSFORMATION_FORMAT = 'f' * 16
 
 # For Debugging
 rxBuffer = []
@@ -96,9 +96,9 @@ message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
 
 
 # Server communication functions
-def send_number(number):
-    # Send a number to server
-    data = json.dumps({"number": number})
+def send_object(object):
+    # Send a python object to server
+    data = json.dumps({"object": object})
 
     start_time = time.time()
     response = requests.post(SERVER_URL, data=data)
@@ -191,8 +191,9 @@ def communicate_read():
 
             elif command == TRANSFORM:
                 # TODO: Handle TRANSFORM logic
-                return np.array(struct.unpack(TranformationFormat, port.read(16)), dtype=np.float32)
-
+                float_bytes = port.read(64)
+                print("In reading buffer: {port.in_waiting}")
+                return (time.time(), struct.unpack(TRANSFORMATION_FORMAT, float_bytes))
             else:
                 # Unknown command
                 return
@@ -232,5 +233,7 @@ if port is None:
 # Main execution
 if __name__ == "__main__":
     while True:
-        floats = communicate_read()
-        print(f"floats: {floats}")
+        timestamp, float_array = communicate_read()
+        float_dict = {"Timestamp": timestamp, "Float array": float_array}
+        send_object(float_dict)
+        

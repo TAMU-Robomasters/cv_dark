@@ -19,30 +19,30 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 
 
-stored_number = 0
+stored_object = None
 
 class NumberHandler(BaseHTTPRequestHandler):
-    # Handle a GET request to send the stored number
+    # Handle a GET request to send the stored object
     def do_GET(self):
-        global stored_number
+        global stored_object
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
-        response = {"number": stored_number}
+        response = {"object": stored_object}
         self.wfile.write(json.dumps(response).encode())
 
-    # Handle POST request to receive a number and store it
+    # Handle POST request to receive an object and store it
     def do_POST(self):
-        global stored_number
+        global stored_object
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
         received_data = json.loads(post_data)
 
-        if "number" in received_data:
-            stored_number = received_data["number"]
+        if "object" in received_data:
+            stored_object = received_data["object"]
             self.send_response(200)
             self.end_headers()
-            self.wfile.write(b"Number stored successfully!")
+            self.wfile.write(b"Object stored successfully!")
         else:
             self.send_response(400)
             self.end_headers()
