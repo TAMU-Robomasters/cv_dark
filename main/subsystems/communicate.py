@@ -160,7 +160,7 @@ def when_aiming_refreshes():
         print(f"\n[Communication]: error when writing over UART: {error}")
         port = setup_serial_port() # attempt re-setup
 
-def communicate_read():
+def communicate_read(message_dict):
     global port
     try:
         byte = port.read(1)
@@ -193,7 +193,15 @@ def communicate_read():
                 # TODO: Handle TRANSFORM logic
                 float_bytes = port.read(64)
                 print("In reading buffer: {port.in_waiting}")
-                return (time.time(), struct.unpack(TRANSFORMATION_FORMAT, float_bytes))
+                float_tuple = struct.unpack(TRANSFORMATION_FORMAT, float_bytes)
+                
+                if len(float_tuple) != 16:
+                    return False
+                
+                timestamp = time.time()
+                message_dict["Message"] = {"Timestamp": timestamp, "Float Tuple": float_tuple}
+                
+                return True 
             else:
                 # Unknown command
                 return
@@ -214,7 +222,7 @@ def test_communicate_read():
             number = byte.decode('ascii')
 
             # TODO: send this byte to server.py
-            send_number(number)
+            send_object(number)
 
         else:
             print("no byte")
@@ -233,7 +241,7 @@ if port is None:
 # Main execution
 if __name__ == "__main__":
     while True:
-        timestamp, float_array = communicate_read()
-        float_dict = {"Timestamp": timestamp, "Float array": float_array}
-        send_object(float_dict)
+        message_dict = {"Message": "None"}
+        if communicate_read(message_dict):
+            send_object(message_dict)
         
