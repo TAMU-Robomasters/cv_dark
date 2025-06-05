@@ -155,8 +155,11 @@ class VideoStream:
     def get_depth_at_point(self, point):
         # aim_start = perf_counter()
         # print("color point:", point)
+        if config.hardware.flip_camera:
+            point[0] = runtime.color_image.shape[1] - point[0]
+            point[1] = runtime.color_image.shape[0] - point[1]
         depth = self.depth_frame.get_distance(point[0], point[1])
-        if depth < self.depth_min or depth > self.depth_max:
+        if depth < self.depth_min or depth > self.depth_max:    
             # print(f"depth: {depth} is out of range")
             return None
         # aim_end = perf_counter()
