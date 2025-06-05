@@ -209,7 +209,11 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
 
 def get_xyz_at_color_coords(point, depth=None):
     # point is [x, y], return tuple (x, y, z)
+    if config.hardware.flip_camera:
+        point = [runtime.color_image.shape[1] - point[0], runtime.color_image.shape[0] - point[1]]
     point_3d = video_stream.get_xyz_at_color_point(point, depth=depth)
+    if config.hardware.flip_camera: # rotate 180 degrees
+        point_3d[0], point_3d[1], point_3d[2] = -point_3d[0], point_3d[1], -point_3d[2]
     return point_3d
 
 def get_dist_to_bbox(bbox):
