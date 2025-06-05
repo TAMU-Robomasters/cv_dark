@@ -45,6 +45,7 @@
                 camera_has_pose: false
                 camera_has_acceleration: false
                 camera_has_gyro: false
+                flip_camera: false
             model:
                 load_from_pickle: false
                 which_model: yolo_v8 
@@ -191,6 +192,10 @@
         CAMERA=NONE:
             hardware:
                 camera: null
+        
+        FLIP_CAMERA:
+            hardware:
+                flip_camera: true
 
         GUI:
             log:
