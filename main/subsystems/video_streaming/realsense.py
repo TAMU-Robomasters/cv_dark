@@ -131,7 +131,7 @@ class VideoStream:
                     # print("Took: " + str(align_elapsed) + " ms")
                     
                     if config.hardware.flip_camera: # rotate 180 degrees
-                        yield frame_number, np.flipud(np.fliplr(np.asanyarray(self.color_frame.get_data()))), np.flipud(np.fliplr(np.asanyarray(self.depth_frame.get_data())))
+                        yield frame_number, np.rot90(np.asanyarray(self.color_frame.get_data()), k=2), np.rot90(np.asanyarray(self.depth_frame.get_data()), k=2)
                     else:
                         yield frame_number, np.asanyarray(self.color_frame.get_data()), np.asanyarray(self.depth_frame.get_data())
                 except Exception as error: # failure to connect to realsense
