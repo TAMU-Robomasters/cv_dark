@@ -130,7 +130,7 @@ class VideoStream:
                     align_elapsed = (align_end - align_start) * 1000
                     # print("Took: " + str(align_elapsed) + " ms")
                     
-                    if config.hardware.flip_camera: # rotate 180 degrees and copy the array to avoid negative strides for pytorch tensors
+                    if config.hardware.flip_realsense: # rotate 180 degrees and copy the array to avoid negative strides for pytorch tensors
                         yield frame_number, np.rot90(np.asanyarray(self.color_frame.get_data()), k=2).copy(), np.rot90(np.asanyarray(self.depth_frame.get_data()), k=2).copy()
                     else:
                         yield frame_number, np.asanyarray(self.color_frame.get_data()), np.asanyarray(self.depth_frame.get_data())
@@ -155,7 +155,7 @@ class VideoStream:
     def get_depth_at_point(self, point):
         # aim_start = perf_counter()
         # print("color point:", point)
-        if config.hardware.flip_camera:
+        if config.hardware.flip_realsense:
             point[0] = runtime.color_image.shape[1] - point[0]
             point[1] = runtime.color_image.shape[0] - point[1]
         depth = self.depth_frame.get_distance(point[0], point[1])
