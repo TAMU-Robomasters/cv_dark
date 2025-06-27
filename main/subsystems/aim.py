@@ -25,14 +25,64 @@ CAMERA              = config.hardware.camera
 DEPTH_COMPATIBLE    = config.hardware.camera_has_depth
 POSE_COMPATIBLE     = config.hardware.camera_has_pose
 
+window_size = 100
+num_bins = 9
+threshold = 20
+
 # 
 # shared data (imported by modeling and integration)
 # 
 runtime.aiming = LazyDict(
     target_status = TargetStatus.TARGET_NONE,
     target_3d = (0, 0, 0),
+    target_3d_x_array = list(np.zeros(window_size)),
+    target_3d_array = [],
     center_point = Position((0, 0)),
 )
+
+class Timeout:
+    """
+    A simple timeout class to measure elapsed time and check if a timeout has occurred.
+    Usage:
+        t = Timeout(seconds=2.0)
+        t.start()
+        # ... do something ...
+        if t.expired():
+            # handle timeout
+    """
+    def __init__(self, seconds):
+        self.seconds = seconds
+        self._start_time = None
+
+    def start(self):
+        self._start_time = perf_counter()
+        timeout_started = True
+
+    def expired(self):
+        if self._start_time is None:
+            return False
+        return (perf_counter() - self._start_time) >= self.seconds
+
+    def reset(self):
+        self._start_time = perf_counter()
+
+    def time_left(self):
+        if self._start_time is None:
+            return self.seconds
+        elapsed = perf_counter() - self._start_time
+        return max(0.0, self.seconds - elapsed)
+    
+
+    
+not_spinning_timeout = Timeout(seconds=0.7)
+is_spinning_timeout = Timeout(seconds=1)
+
+# State tracking for spinning logic
+spinning_state = "not_spinning"  # can be 'spinning', 'not_spinning', or 'transition'
+is_spinning_timeout_running = False
+not_spinning_timeout_running = False
+
+
 
 # 
 # main
@@ -93,6 +143,8 @@ def when_bounding_boxes_refresh():
     else:
         target_status = TargetStatus.TARGET_FOUND
 
+
+
         # target_status = TargetStatus.TARGET_FOUND
     # now that we have the valid boxes lets compute the best ones as 3dtargets
     best_bounding_box, current_confidence, best_target_3d  = get_optimal_3d_target(
@@ -102,7 +154,14 @@ def when_bounding_boxes_refresh():
         valid3dTargets = valid3dTargets,
     )
 
-     
+    # --- Spinning logic: average best_target_3d if spinning ---
+    from numpy import mean as np_mean
+    if is_target_spinning() and len(runtime.aiming.target_3d_array) >= 3:
+        # Use the last 3 plus the current best_target_3d
+        last_3 = runtime.aiming.target_3d_array[-3:]
+        all_targets = last_3 + [best_target_3d]
+        best_target_3d = tuple(np_mean(all_targets, axis=0))
+
     # if target_3d[1] < 0:
     #     quit()
     if(best_bounding_box != None):
@@ -121,6 +180,8 @@ def when_bounding_boxes_refresh():
     runtime.modeling.best_bounding_box  = best_bounding_box
     runtime.modeling.current_confidence = current_confidence
     runtime.modeling.found_robot        = best_bounding_box is not None
+    runtime.aiming.target_3d_x_array.append(best_target_3d[0])
+    runtime.aiming.target_3d_array.append(best_target_3d)
 
 
 # 
@@ -265,3 +326,59 @@ def get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.25, h
             y = int(bbytl + y_range * j)
             coords.append([x, y])
     return np.array(coords)
+
+def is_target_spinning() -> bool:
+    global spinning_state, is_spinning_timeout_running, not_spinning_timeout_running
+    y_window = np.array(runtime.aiming.target_3d_x_array[-window_size:])
+    yft = np.fft.fft(y_window)
+    power_spectrum = np.abs(yft)**2
+    power_spectrum[0:2] = 0
+    
+    cumulative_power = np.zeros(num_bins)
+    for i in range(num_bins):
+        first_index = i * (window_size // num_bins)
+        last_index = first_index + (window_size // num_bins)
+        cumulative_power[i] = np.sum(power_spectrum[first_index:last_index])
+
+    # --- Spinning logic ---
+    prev_state = spinning_state
+    if cumulative_power[0] >= threshold:
+        if spinning_state == "not_spinning" and not is_spinning_timeout_running:
+            is_spinning_timeout.start()
+            is_spinning_timeout_running = True
+            spinning_state = "transition"
+        elif is_spinning_timeout_running and spinning_state == "transition":
+            # If power drops below threshold while in transition, reset
+            if cumulative_power[0] < threshold:
+                is_spinning_timeout.reset()
+                is_spinning_timeout_running = False
+                spinning_state = "not_spinning"
+        # If confirmed spinning
+        if is_spinning_timeout.expired():
+            spinning_state = "spinning"
+            is_spinning_timeout_running = False
+            not_spinning_timeout_running = False
+    else:
+        if spinning_state == "spinning" and not not_spinning_timeout_running:
+            not_spinning_timeout.start()
+            not_spinning_timeout_running = True
+            spinning_state = "transition"
+        elif not_spinning_timeout_running and spinning_state == "transition":
+            # If power rises above threshold while in transition, reset
+            if cumulative_power[0] >= threshold:
+                not_spinning_timeout.reset()
+                not_spinning_timeout_running = False
+                spinning_state = "spinning"
+        # If confirmed not spinning
+        if not_spinning_timeout.expired():
+            spinning_state = "not_spinning"
+            not_spinning_timeout_running = False
+            is_spinning_timeout_running = False
+
+    if spinning_state != prev_state:
+        if spinning_state == "spinning":
+            print("I'm spinning!")
+        elif spinning_state == "not_spinning":
+            print("I'm not spinning!")
+
+    return spinning_state == "spinning"
