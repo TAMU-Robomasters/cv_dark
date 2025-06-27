@@ -335,6 +335,7 @@ def is_target_spinning() -> bool:
     yft = np.fft.fft(y_window)
     power_spectrum = np.abs(yft)**2
     power_spectrum[0:2] = 0
+
     
     cumulative_power = np.zeros(num_bins)
     for i in range(num_bins):
@@ -342,6 +343,7 @@ def is_target_spinning() -> bool:
         last_index = first_index + (window_size // num_bins)
         cumulative_power[i] = np.sum(power_spectrum[first_index:last_index])
 
+    print(f"power: {cumulative_power[0]}")
     # --- Spinning logic ---
     prev_state = spinning_state
     if cumulative_power[0] >= threshold:
