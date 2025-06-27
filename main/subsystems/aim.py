@@ -180,7 +180,7 @@ def when_bounding_boxes_refresh():
     runtime.modeling.best_bounding_box  = best_bounding_box
     runtime.modeling.current_confidence = current_confidence
     runtime.modeling.found_robot        = best_bounding_box is not None
-    runtime.aiming.target_3d_x_array.append(best_target_3d[0])
+    runtime.aiming.target_3d_x_array.append(best_target_3d.x)
     runtime.aiming.target_3d_array.append(best_target_3d)
 
 
