@@ -75,7 +75,7 @@ class Timeout:
 
     
 not_spinning_timeout = Timeout(seconds=0.7)
-is_spinning_timeout = Timeout(seconds=1)
+is_spinning_timeout = Timeout(seconds=0.9)
 
 # State tracking for spinning logic
 spinning_state = "not_spinning"  # can be 'spinning', 'not_spinning', or 'transition'
@@ -159,6 +159,7 @@ def when_bounding_boxes_refresh():
     print('hi')
     if is_target_spinning():
         print(len(runtime.aiming.target_3d_array))
+        print(runtime.aiming.target_3d_array)
         # Use the last 3 plus the current best_target_3d
         last_3 = runtime.aiming.target_3d_array[-3:]
         all_targets = last_3 + [best_target_3d]
