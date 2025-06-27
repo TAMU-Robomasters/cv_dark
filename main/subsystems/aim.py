@@ -183,7 +183,7 @@ def when_bounding_boxes_refresh():
     runtime.modeling.found_robot        = best_bounding_box is not None
     if best_target_3d is not None:
         runtime.aiming.target_3d_x_array.append(best_target_3d[0])
-        runtime.aiming.target_3d_array.append(best_target_3d)
+        runtime.aiming.target_3d_array.append(list(best_target_3d))
 
 
 # 
