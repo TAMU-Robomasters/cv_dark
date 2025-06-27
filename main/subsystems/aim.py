@@ -27,7 +27,7 @@ POSE_COMPATIBLE     = config.hardware.camera_has_pose
 
 window_size = 100
 num_bins = 9
-threshold = 20
+threshold = 3
 
 # 
 # shared data (imported by modeling and integration)
@@ -157,8 +157,7 @@ def when_bounding_boxes_refresh():
     # --- Spinning logic: average best_target_3d if spinning ---
     from numpy import mean as np_mean
     print('hi')
-    print(is_target_spinning())
-    if is_target_spinning() and len(runtime.aiming.target_3d_array) >= 3:
+    if is_target_spinning():
         # Use the last 3 plus the current best_target_3d
         last_3 = runtime.aiming.target_3d_array[-3:]
         all_targets = last_3 + [best_target_3d]
