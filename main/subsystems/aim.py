@@ -158,6 +158,7 @@ def when_bounding_boxes_refresh():
     from numpy import mean as np_mean
     print('hi')
     if is_target_spinning():
+        print(len(runtime.aiming.target_3d_array))
         # Use the last 3 plus the current best_target_3d
         last_3 = runtime.aiming.target_3d_array[-3:]
         all_targets = last_3 + [best_target_3d]
