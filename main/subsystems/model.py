@@ -1,28 +1,29 @@
 # library imports
-import numpy as np
 import cv2
-import os
-import time
+import math
+import numpy as np
 from super_map import LazyDict
-
-from math import dist, sqrt
 
 # project imports
 from toolbox.globals import path_to, config, print, runtime
 from toolbox.geometry_tools import BoundingBox, Position
-from toolbox.image_tools import Image
-import subsystems.aim as aiming
+
+ARMOR_HEIGHT_RATIO = 12.5/5.2
+ARMOR_WIDTH_RATION = 5.5/13
+
+class Lights:
+    def __init__(self, cx, cy, w, h, angle):
+        self.cx = cx
+        self.cy = cy
+        self.w = w
+        self.h = h
+        self.angle = angle
 
 # 
 # config
 # 
-our_team_color        = config.our_team_color
-hardware_acceleration = config.model.hardware_acceleration
-input_dimension       = config.model.input_dimension
-which_model           = config.model.which_model
+ENEMY_COLOR       = config.our_team_color
 
-# config check
-assert hardware_acceleration in ['tensor_rt', 'gpu', 'cpu',]
 
 # 
 # shared data (imported by aiming and integration)
@@ -38,24 +39,6 @@ runtime.modeling = LazyDict(
 
 # 
 # 
-# load model
-# 
-# 
-model = LazyDict(
-    W=None,
-    H=None,
-)
-
-if which_model == 'yolo_v8':
-    from subsystems.modeling.yolo_v8 import init_yolo_v8
-    init_yolo_v8(model)
-else:
-    raise Exception("Model specified under /'model.which_model/' is not supported")
-
-np.seterr(all='raise')
-
-# 
-# 
 # main function
 # 
 # 
@@ -65,106 +48,208 @@ def when_frame_arrives():
     # 
     # all boxes
     # 
-    all_boxes, confidences, class_ids = model.get_bounding_boxes(
-        frame=frame,
-        minimum_confidence=config.model.minimum_confidence,
-    )
+    enemy_boxes = get_enemy_bounding_boxes(frame)
     
-    screen_center = compute_screen_center(frame)
+    screen_center = (frame.shape[1] // 2, frame.shape[0] // 2)
     # print("Screen center: " + str(screen_center))
-    # 
-    # remove our team
-    # 
-    if config.filter_team_color:
-        enemy_boxes, confidences, class_ids = filter_plate_color(all_boxes, confidences, class_ids, our_team_color)
-    
-    # best box
-    # best_bounding_box, current_confidence = get_optimal_bounding_box(
-    #     boxes=enemy_boxes,
-    #     confidences=confidences,
-    #     screen_center=screen_center,
-    # )
-    
+
+
     # export data
     runtime.screen_center               = screen_center
-    runtime.modeling.bounding_boxes     = all_boxes
+    runtime.modeling.bounding_boxes     = enemy_boxes
     runtime.modeling.enemy_boxes        = enemy_boxes
-    runtime.modeling.confidences        = confidences
+    # runtime.modeling.confidences        = confidences
     # runtime.modeling.best_bounding_box  = best_bounding_box
     # runtime.modeling.current_confidence = current_confidence
     # runtime.modeling.found_robot        = best_bounding_box is not None
 
-# 
-# 
+
+
+#
+#
 # helpers
-# 
-# 
-def get_optimal_bounding_box(boxes, confidences, screen_center):
-    """
-    Decide the single best bounding box to aim at using a score system.
-
-    Input: All detected bounding boxes with their confidences and the screen_center location of the image.
-    Output: Best bounding box and its confidence.
-    """
-    # no boxes
-    if not boxes:
-        return None, 0
-    # if len(boxes) == 1:
-    #     return boxes[0], confidences[0]
-
-    best_bounding_box = boxes[0]
-    best_score = 0
-    best_conf = 0
-
-    screen_center_normalizer = dist((screen_center[0]*2,screen_center[1]*2),(screen_center[0],screen_center[1])) # Find constant used to scale distance part of score to 1
-    size_normalizer = 0.7 # plate at closest distance is 0.7 of the screen
-
-    # Sequentially iterate through all bounding boxes
-    for conf, box in zip(confidences, boxes):
-        size_score = ((box.width / (runtime.color_image.shape[1])) / size_normalizer) # Compute score using size of box, relative to total image size
-        print(f"size_score: {size_score}")
-        center_score = (1 - dist(screen_center,(box[0] + box[2]/2, box[1] + box[3]/2)) / screen_center_normalizer) # scaled to 1
-        print(f"center_score: {center_score}")
-        conf_score = conf**2 # Compute score using confidence
-        print(f"conf_score: {conf_score}")
-        score = 0.75 * size_score + 0.125 * center_score + 0.125 * conf_score # Compute score using weighted average
-        print(f"score: {score}")
-
-        # Make current box the best if its score is the best so far
-        if score > best_score:
-            best_bounding_box = box
-            best_conf = conf
-            best_score = score
-    # if best_score < 0.15:
-    #     return None, 0
-    # if size_score < 5:
-    #     return None, 0
-    return best_bounding_box, best_conf
-
+#
+#
 color_to_class_id = dict(
     red=0,
     blue=1,
 )
+def get_enemy_bounding_boxes(frame):
+    contours = get_contours(frame)
+    lights = get_lights(contours)
+    if len(lights) > 1:
+        pairs = pairing(lights)
+        panels = []
+        for pair in pairs:
+            corners = armour_corners(pair)
+            panels.append(corners)
+    
+    bounding_boxes_corners = [cv2.boundingRect(panel) for panel in panels] # returns tuple of bottom left and top right points
+    bounding_boxes = [BoundingBox.from_points(top_left=(corners[0],corners[3]), bottom_right=(corners[2],corners[1])) for corners in bounding_boxes_corners]
+    return bounding_boxes
+    
 
-def filter_plate_color(boxes, confidences, class_ids, color_to_remove):
+def get_contours(frame):
     """
-    Filter bounding boxes based on team color.
-
-    Input: Zipped model result of boxes, confidences, and class_ids
-    Output: Filtered boxes, confidences, and class_ids
+    function will split color channels, threshold, and find contours.
+    :param frame: input frame
+    :param enemy_color: color of the enemy
+    :return: contours
     """
-    filtered_boxes = []
-    filtered_confidences = []
-    filtered_class_ids = []
 
-    # only do this if there are boxes
-    if boxes:
-        filtered_data = [(box, conf, class_id) for box, conf, class_id in zip(boxes, confidences, class_ids) if class_id == color_to_class_id[color_to_remove]]
-        # only unzip if there are boxes left after filtering
-        if filtered_data:
-            filtered_boxes, filtered_confidences, filtered_class_ids = zip(*filtered_data)
-    return filtered_boxes, filtered_confidences, filtered_class_ids
+    if (ENEMY_COLOR == 'BLUE'):
+        _, thresh = cv2.threshold(frame[:,:,0], 215, 240, cv2.THRESH_BINARY) # tune before match
+    elif (ENEMY_COLOR == 'RED'):
+        _, thresh = cv2.threshold(frame[:,:,2], 215, 240, cv2.THRESH_BINARY) # tune before match
+    else:
+        print('invalid color')
 
-def compute_screen_center(color_image):
-    # print("Color image shape: " + str(color_image.shape))
-    return (color_image.shape[1] // 2, color_image.shape[0] // 2)
+    kernel = np.ones((3,3),np.uint8)
+    closing = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+
+    contours, _ = cv2.findContours(closing, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    return contours
+
+
+def get_lights(contours):
+    """
+    creating bounding boxes around lights
+    :param frame:
+    :param contours:
+    :return: list of bounding boxes
+    """
+    b_boxes = []
+    for contour in contours:# have to keep
+        rect = cv2.minAreaRect(contour)
+        h_holder, w_holder = rect[1]
+
+        if rect[1][0] > rect[1][1]:
+            h,w = rect[1]
+        else:
+            w,h = rect[1]
+
+        angle = rect[2]
+        if w_holder > h_holder:
+            angle += 90
+
+        # filter out bad detections: true if bad
+        if ((abs(angle-90) > 45)):
+            continue
+        else:
+            b_box = Lights(rect[0][0], rect[0][1], w, h, angle)
+            b_boxes.append(b_box)
+
+    return b_boxes
+
+def pairing(b_boxes):
+    """
+    Pairs lights together based off of similarity score using vectorized operations
+    
+    :param b_boxes: List of light objects to be paired
+    :return: list of pairs of lights
+    """
+    n = len(b_boxes)
+    if n <= 1:
+        return []
+
+    # Convert light objects to structured array in one go
+    light_data = np.array([(light.cx, light.cy, light.angle, light.h) 
+                          for light in b_boxes],
+                         dtype=[('cx', 'f8'), ('cy', 'f8'), 
+                               ('angle', 'f8'), ('h', 'f8')])
+
+    # Extract arrays using structured array fields
+    cx = light_data['cx']
+    cy = light_data['cy']
+    angles = light_data['angle']
+    heights = light_data['h']
+
+    # Create meshgrids for vectorized calculations
+    cx1, cx2 = np.meshgrid(cx, cx)
+    cy1, cy2 = np.meshgrid(cy, cy)
+    angles1, angles2 = np.meshgrid(angles, angles)
+    heights1, heights2 = np.meshgrid(heights, heights)
+
+    # Calculate all metrics at once
+    dx = cx1 - cx2
+    dy = cy1 - cy2
+    distances = np.hypot(dx, dy)
+    angle_diffs = np.abs(angles1 - angles2)
+    misalignment_angles = np.abs(np.degrees(np.arctan2(dy, dx)))
+    height_ratios = heights1 / heights2
+    avg_heights = (heights1 + heights2) / 2
+    expected_distances = np.abs((avg_heights / ARMOR_WIDTH_RATION) - distances)
+
+    # Calculate scores
+    scores = angle_diffs + 1.25 * misalignment_angles + expected_distances*0.5 + height_ratios
+
+    # Create mask for valid pairs
+    valid_mask = (
+        (angle_diffs < 45) &  # Angle difference threshold
+        (misalignment_angles < 30) &  # Misalignment threshold
+        (height_ratios > 0.5) & (height_ratios < 2.0) &  # Height ratio threshold
+        (scores < 50)  # Score threshold
+    )
+
+    # Set invalid pairs (same light) to infinite score
+    np.fill_diagonal(scores, np.inf)
+
+    pairs = []
+    used = set()
+
+    # Get pairs in order of increasing score
+    while True:
+        # Find minimum score indices
+        min_idx = np.unravel_index(scores.argmin(), scores.shape)
+        min_score = scores[min_idx]
+        
+        if min_score == np.inf or not valid_mask[min_idx]:
+            break
+
+        i, j = min_idx
+        if i not in used and j not in used:
+            pairs.append([b_boxes[i], b_boxes[j]])
+            used.add(i)
+            used.add(j)
+
+        # Mark this pair as used by setting its score to infinity
+        scores[i, j] = scores[j, i] = np.inf
+
+    return pairs
+
+def armour_corners(pair):
+    """
+    an absolute monster of math. 
+    :param pairs: list of pairs
+    :param frame:
+    :return: list of 4 points
+    """
+    # Since pair is a list of two Lights objects
+    light1, light2 = pair[0], pair[1]
+    # Determine left and right lights based on x-coordinate
+    if light1.cx <= light2.cx:
+        left = light1
+        right = light2
+    else:
+        left = light2
+        right = light1
+
+    top_left = [int(left.cx + left.w * 0.5 - (left.h * ARMOR_HEIGHT_RATIO) * 0.5 * math.cos(
+        math.radians(left.angle))), int((left.cy - (
+                (left.h * ARMOR_HEIGHT_RATIO) * 0.5 * math.sin(math.radians(left.angle)))))]
+    top_right = [int(right.cx - right.w * 0.5 - (right.h * ARMOR_HEIGHT_RATIO) * 0.5 * math.cos(
+        math.radians(right.angle))), int((right.cy - (
+                (right.h * ARMOR_HEIGHT_RATIO) * 0.5 * math.sin(math.radians(right.angle)))))]
+    bottom_left = [int(left.cx + left.w * 0.5 + (left.h * ARMOR_HEIGHT_RATIO) * 0.5 * math.cos(
+        math.radians(left.angle))), int((left.cy + (
+                (left.h * ARMOR_HEIGHT_RATIO) * 0.5 * math.sin(math.radians(left.angle)))))]
+    bottom_right = [int(
+        right.cx - right.w * 0.5 + (right.h * ARMOR_HEIGHT_RATIO) * 0.5 * math.cos(
+            math.radians(right.angle))), int((right.cy + (
+                (right.h * ARMOR_HEIGHT_RATIO) * 0.5 * math.sin(math.radians(right.angle)))))]
+
+    points = np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.int32)
+    points = points.reshape((-1, 1, 2))
+    
+    return  points

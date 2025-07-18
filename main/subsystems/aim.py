@@ -38,13 +38,13 @@ runtime.aiming = LazyDict(
 # main
 # 
 def when_bounding_boxes_refresh():
-    found_robot       = runtime.modeling.found_robot
+    # found_robot       = runtime.modeling.found_robot
     # best_bounding_box = runtime.modeling.best_bounding_box
     acceleration      = runtime.camera.acceleration if config.hardware.camera_has_acceleration else None
     gyro              = runtime.camera.gyro         if config.hardware.camera_has_gyro         else None
 
     enemy_boxes = runtime.modeling.enemy_boxes 
-    enemy_confidences = runtime.modeling.confidences 
+    # enemy_confidences = runtime.modeling.confidences 
     screen_center = runtime.screen_center
     # Reset target info at beginning of loop
     center_point = Position((0, 0))
@@ -66,7 +66,7 @@ def when_bounding_boxes_refresh():
 
     # if found_robot:
     if DEPTH_COMPATIBLE:
-        for box,confidence in zip(enemy_boxes,enemy_confidences):
+        for box in enemy_boxes:
             # check all of the boxes, remove invalid ones if outside ranges
             sampled_depth = get_dist_to_bbox(box)
             if sampled_depth is None:
@@ -83,7 +83,6 @@ def when_bounding_boxes_refresh():
                     # target_status = TargetStatus.TARGET_NONE
                 else:
                     validBoxes.append(box)
-                    validConfidences.append(confidence)
                     valid3dTargets.append(target_3d_test)
                 #     target_status = TargetStatus.TARGET_FOUND
         if (validBoxes == []):
@@ -95,9 +94,8 @@ def when_bounding_boxes_refresh():
 
         # target_status = TargetStatus.TARGET_FOUND
     # now that we have the valid boxes lets compute the best ones as 3dtargets
-    best_bounding_box, current_confidence, best_target_3d  = get_optimal_3d_target(
+    best_bounding_box, best_target_3d  = get_optimal_3d_target(
         boxes = validBoxes, 
-        confidences = validConfidences,
         screen_center = screen_center,
         valid3dTargets = valid3dTargets,
     )
@@ -119,7 +117,7 @@ def when_bounding_boxes_refresh():
     runtime.aiming.target_3d          = best_target_3d
     runtime.aiming.center_point       = center_point
     runtime.modeling.best_bounding_box  = best_bounding_box
-    runtime.modeling.current_confidence = current_confidence
+    runtime.modeling.current_confidence = 0
     runtime.modeling.found_robot        = best_bounding_box is not None
 
 
@@ -136,7 +134,7 @@ def when_bounding_boxes_refresh():
 # Temporal, overtime noise rejection
 # ------------
 # 
-def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
+def get_optimal_3d_target(boxes, screen_center, valid3dTargets):
 #    """
 #     Decide the single best bounding box to aim at using a score system.
 
@@ -159,13 +157,11 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
     size_normalizer = 0.7 # plate at closest distance is 0.7 of the screen
 
     # Sequentially iterate through all bounding boxes
-    for conf, box, targetXYZ in zip(confidences, boxes, valid3dTargets):
+    for box, targetXYZ in zip(boxes, valid3dTargets):
         size_score = ((box.width / (runtime.color_image.shape[1])) / size_normalizer) # Compute score using size of box, relative to total image size
         print(f"size_score: {size_score}")
         center_score = (1 - dist(screen_center,(box[0] + box[2]/2, box[1] + box[3]/2)) / screen_center_normalizer) # scaled to 1
         print(f"center_score: {center_score}")
-        conf_score = conf**2 # Compute score using confidence
-        print(f"conf_score: {conf_score}")
 
         # clamped to 0 to 1
         # this is a 2d point - want to draw a circle
@@ -192,20 +188,18 @@ def get_optimal_3d_target(boxes, confidences, screen_center, valid3dTargets):
         # Compute score using weighted average
         # score = 0.625 * size_score + 0.125 * center_score + 0.125 * depth_score + 0.125 * circle_bias_score 
         score = 0.125 * size_score + 0.125 * center_score + 0.125 * depth_score + 0.625 * circle_bias_score 
-        score *= conf_score
         print(f"score: {score}")
 
         # Make current box the best if its score is the best so far
         if score > best_score:
             best_bounding_box = box
-            best_conf = conf
             best_targ_3d = targetXYZ
             best_score = score
     # if best_score < 0.15:
     #     return None, 0
     # if size_score < 5:
     #     return None, 0
-    return best_bounding_box, best_conf, best_targ_3d
+    return best_bounding_box, best_targ_3d
 
 def get_xyz_at_color_coords(point, depth=None):
     # point is [x, y], return tuple (x, y, z)
