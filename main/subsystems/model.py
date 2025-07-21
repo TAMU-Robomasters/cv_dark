@@ -7,6 +7,7 @@ from super_map import LazyDict
 # project imports
 from toolbox.globals import path_to, config, print, runtime
 from toolbox.geometry_tools import BoundingBox, Position
+from subsystems.modeling.classical.icon_detection import icon_detection
 
 ARMOR_HEIGHT_RATIO = 12.5/5.2
 ARMOR_WIDTH_RATION = 5.5/13
@@ -22,7 +23,7 @@ class Lights:
 # 
 # config
 # 
-ENEMY_COLOR       = config.our_team_color
+OUR_TEAM_COLOR       = config.our_team_color
 
 
 # 
@@ -77,15 +78,21 @@ color_to_class_id = dict(
 def get_enemy_bounding_boxes(frame):
     contours = get_contours(frame)
     lights = get_lights(contours)
+    panels = []
     if len(lights) > 1:
         pairs = pairing(lights)
         panels = []
         for pair in pairs:
             corners = armour_corners(pair)
-            panels.append(corners)
+            good_panel = icon_detection(corners, frame)
+            if good_panel:
+                panels.append(corners)
+            else:
+                pairs.remove(pair)
     
-    bounding_boxes_corners = [cv2.boundingRect(panel) for panel in panels] # returns tuple of bottom left and top right points
-    bounding_boxes = [BoundingBox.from_points(top_left=(corners[0],corners[3]), bottom_right=(corners[2],corners[1])) for corners in bounding_boxes_corners]
+    bounding_boxes_corners = [cv2.boundingRect(panel) for panel in panels] # returns list of tuples of (x,y,w,h) x,y is top left corner
+    print(bounding_boxes_corners)
+    bounding_boxes = [BoundingBox.from_points(top_left=(corners[0],corners[1]), bottom_right=(corners[0]+corners[2],corners[1]+corners[3])) for corners in bounding_boxes_corners]
     return bounding_boxes
     
 
@@ -97,9 +104,9 @@ def get_contours(frame):
     :return: contours
     """
 
-    if (ENEMY_COLOR == 'BLUE'):
+    if (OUR_TEAM_COLOR == 'red'):
         _, thresh = cv2.threshold(frame[:,:,0], 215, 240, cv2.THRESH_BINARY) # tune before match
-    elif (ENEMY_COLOR == 'RED'):
+    elif (OUR_TEAM_COLOR == 'blue'):
         _, thresh = cv2.threshold(frame[:,:,2], 215, 240, cv2.THRESH_BINARY) # tune before match
     else:
         print('invalid color')

@@ -76,7 +76,9 @@ def when_bounding_boxes_refresh():
             elif sampled_depth > MAX_RANGE:
                 continue
             else:
-                target_3d_test = get_xyz_at_color_coords([box.center[0].item(), box.center[1].item()], sampled_depth)
+                # for gpu
+                # target_3d_test = get_xyz_at_color_coords([box.center[0].item(), box.center[1].item()], sampled_depth)
+                target_3d_test = get_xyz_at_color_coords([box.center[0], box.center[1]], sampled_depth)
                 # print(f"\ntarget_3d: {target_3d}")
                 if target_3d_test is None:
                     continue
@@ -143,7 +145,7 @@ def get_optimal_3d_target(boxes, screen_center, valid3dTargets):
 #     """
     # no boxes
     if not boxes:
-        return None, 0 , None
+        return None, None
     # if len(boxes) == 1:
     #     return boxes[0], confidences[0]
 
@@ -240,11 +242,20 @@ def reject_depth_outliers(depth_sample):
     return depth_sample[np.abs(depth_sample - median) < 3 * mad]
 
 def get_depth_sample_coords(bbox, points_per_dimension=3, width_coverage=0.25, height_coverage=0.25):
-    bbox_width_coverage = bbox.width.item() * width_coverage
-    bbox_height_coverage = bbox.height.item() * height_coverage
+    
+    # for gpu
+    # bbox_width_coverage = bbox.width.item() * width_coverage
+    # bbox_height_coverage = bbox.height.item() * height_coverage
+    
+    bbox_width_coverage = bbox.width * width_coverage
+    bbox_height_coverage = bbox.height * height_coverage
 
-    bbxtl = max(bbox.center[0].item() - (bbox_width_coverage // 2), 0)
-    bbytl = max(bbox.center[1].item() - (bbox_height_coverage // 2), 0)
+    # for gpu
+    # bbxtl = max(bbox.center[0].item() - (bbox_width_coverage // 2), 0)
+    # bbytl = max(bbox.center[1].item() - (bbox_height_coverage // 2), 0)
+    
+    bbxtl = max(bbox.center[0] - (bbox_width_coverage // 2), 0)
+    bbytl = max(bbox.center[1] - (bbox_height_coverage // 2), 0)
 
     bbxbr = min(bbxtl + bbox_width_coverage, runtime.color_image.shape[1] - 1)
     bbybr = min(bbytl + bbox_height_coverage, runtime.color_image.shape[0] - 1)

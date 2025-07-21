@@ -81,6 +81,9 @@ class VideoStream:
                 self.color_to_depth_extrin = self.cfg.get_stream(rs.stream.color).as_video_stream_profile().get_extrinsics_to(self.cfg.get_stream(rs.stream.depth))
 
                 sensors = self.pipeline.get_active_profile().get_device().query_sensors()
+                #change exposure
+                color_sensor = sensors[1]
+                color_sensor.set_option(rs.option.exposure, 40)
                 for sensor in sensors:
                     sensor.set_option(rs.option.global_time_enabled, False)                # print("depth_scale:", self.depth_scale)
                 print("color_intrin:", self.color_intrin)
