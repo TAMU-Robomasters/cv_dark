@@ -91,7 +91,6 @@ def get_enemy_bounding_boxes(frame):
                 pairs.remove(pair)
     
     bounding_boxes_corners = [cv2.boundingRect(panel) for panel in panels] # returns list of tuples of (x,y,w,h) x,y is top left corner
-    print(bounding_boxes_corners)
     bounding_boxes = [BoundingBox.from_points(top_left=(corners[0],corners[1]), bottom_right=(corners[0]+corners[2],corners[1]+corners[3])) for corners in bounding_boxes_corners]
     return bounding_boxes
     
