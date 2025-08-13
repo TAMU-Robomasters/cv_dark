@@ -83,9 +83,10 @@ class VideoStream:
                 sensors = self.pipeline.get_active_profile().get_device().query_sensors()
                 #change exposure
                 color_sensor = sensors[1]
-                color_sensor.set_option(rs.option.exposure, 40)
-                for sensor in sensors:
-                    sensor.set_option(rs.option.global_time_enabled, False)                # print("depth_scale:", self.depth_scale)
+                color_sensor.set_option(rs.option.exposure, 60)
+                for sensor in sensors: # sync up sensor timestamps with os monotonic time
+                    sensor.set_option(rs.option.global_time_enabled, True)              
+                # print("depth_scale:", self.depth_scale)
                 print("color_intrin:", self.color_intrin)
                 print("depth_intrin:", self.depth_intrin)
                 print("color fps: ", self.cfg.get_stream(rs.stream.color).fps)
@@ -126,8 +127,8 @@ class VideoStream:
                     # self.depth_frame = frame.get_depth_frame()
 
                     capture_time = frame.get_frame_metadata(rs.frame_metadata_value.sensor_timestamp)
-                    frame_time = frame.get_frame_metadata(rs.frame_metadata_value.frame_timestamp)
-                    self.capture_time = (time()*1000) - ((frame_time - capture_time) / MICRO_SECONDS_TO_MILLISECONDS)
+                    # frame_time = frame.get_frame_metadata(rs.frame_metadata_value.frame_timestamp)
+                    self.capture_time = capture_time / MICRO_SECONDS_TO_MILLISECONDS
                     # print("frame_number:", frame_number, "capture_time:", self.capture_time)
                     align_end = perf_counter()
                     align_elapsed = (align_end - align_start) * 1000

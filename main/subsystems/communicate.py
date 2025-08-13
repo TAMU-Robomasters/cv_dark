@@ -1,6 +1,6 @@
 from ctypes import Structure, c_uint8, c_float, c_bool
 import serial
-from time import time
+from time import time, monotonic
 
 from super_map import LazyDict
 
@@ -61,7 +61,13 @@ message_to_embedded = MessageToEmbedded(ord('a'), 0.0, 0.0, 0.0, 0, 0)
 def when_aiming_refreshes():
     global port
     capture_time =  getattr(video_stream, 'capture_time', 0)
-    capture_delay = min(int(time()*1000 - capture_time), 255) # max 255 ms delay
+    print("capture", capture_time)
+    print("monotonic", monotonic()*1E3)
+    print("time", time()*1E3)
+    # capture_delay = min(int(monotonic()*1000 - capture_time), 255) # max 255 ms delay
+    # TODO: figure out how to get a good capture delay value automatically
+    capture_delay = 45
+    print(capture_delay)
 
     # Sending XYZ position (meters), time since frame capture, and status of target relative to front of camera plane
     if runtime.aiming.target_3d is None:
